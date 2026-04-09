@@ -1,0 +1,18 @@
+<h1>My OCW Site</h1>
+
+<h2>Courses</h2>
+
+{% if courses %}
+    <ul>
+    {% for course in courses %}
+        <li>
+            <a href="{% url 'course_detail' course.id %}">
+                <strong>{{ course.title }}</strong>
+            </a><br>
+            {{ course.description }}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No courses yet.</p>
+{% endif %}

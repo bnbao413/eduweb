@@ -1,0 +1,91 @@
+<h1>{{ course.title }}</h1>
+
+<p>{{ course.description }}</p>
+
+<h2>Units</h2>
+
+{% if course.units.all %}
+    {% for unit in course.units.all %}
+        <details>
+            <summary><strong>{{ unit.title }}</strong></summary>
+
+            {% if unit.description %}
+                <p>{{ unit.description }}</p>
+            {% endif %}
+
+            <h4>Lessons</h4>
+            {% if unit.lessons.all %}
+                <ul>
+                {% for lesson in unit.lessons.all %}
+                    <li>
+                        <a href="{% url 'lesson_detail' lesson.id %}">
+                            <strong>{{ lesson.title }}</strong>
+                        </a><br>
+                        {{ lesson.content }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No lessons yet.</p>
+            {% endif %}
+
+            <h4>Textbook Pages</h4>
+{% if unit.textbook_pages.all %}
+    <ul>
+    {% for page in unit.textbook_pages.all %}
+        <li>
+            <a href="{% url 'textbook_detail' page.id %}">
+                {{ page.title }}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No textbook pages yet.</p>
+{% endif %}
+
+           <h4>Notes</h4>
+{% if unit.notes_pages.all %}
+    <ul>
+    {% for note in unit.notes_pages.all %}
+        <li>
+            <a href="{% url 'notes_detail' note.id %}">
+                {{ note.title }}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No notes yet.</p>
+{% endif %}
+            <h4>Practice Sets</h4>
+            {% if unit.practice_sets.all %}
+                <ul>
+                {% for practice in unit.practice_sets.all %}
+                    <li>
+                        <strong>{{ practice.title }}</strong><br>
+                        {{ practice.instructions }}
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No practice sets yet.</p>
+            {% endif %}
+
+            <h4>Unit Test</h4>
+            {% if unit.unit_test %}
+                <p>
+                    <strong>{{ unit.unit_test.title }}</strong><br>
+                    {{ unit.unit_test.instructions }}
+                </p>
+            {% else %}
+                <p>No unit test yet.</p>
+            {% endif %}
+        </details>
+        <br>
+    {% endfor %}
+{% else %}
+    <p>No units yet.</p>
+{% endif %}
+
+<a href="/">← Back to courses</a>
