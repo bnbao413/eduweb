@@ -1,12 +1,57 @@
-<h1>{{ page.title }}</h1>
+{% extends "base.html" %}
 
-<p><strong>Course:</strong> {{ page.unit.course.title }}</p>
-<p><strong>Unit:</strong> {{ page.unit.title }}</p>
+{% block content %}
 
-<div>
-    {{ page.content }}
+<div class="page-header">
+
+    <div>
+        <h1>{{ page.title }}</h1>
+
+        <p><strong>Course:</strong> {{ page.unit.course.title }}</p>
+        <p><strong>Unit:</strong> {{ page.unit.title }}</p>
+    </div>
+
+    <div class="page-jump">
+        <details>
+            <summary>Jump to page ▼</summary>
+
+            <select onchange="if (this.value) window.location.href=this.value;">
+                <option value="">Select a page</option>
+                {% for p in all_pages %}
+                    <option value="{% url 'textbook_detail' p.id %}" {% if p.id == page.id %}selected{% endif %}>
+                        {{ p.order }}. {{ p.title }}
+                    </option>
+                {% endfor %}
+            </select>
+        </details>
+    </div>
+
 </div>
 
-<p>
+
+<div id="content" class="content-area">
+    {{ html_content|safe }}
+</div>
+
+<div class="nav-links">
+    <div>
+        {% if previous_page %}
+            <a href="{% url 'textbook_detail' previous_page.id %}">← Previous Page</a>
+        {% endif %}
+    </div>
+    <div>
+        {% if next_page %}
+            <a href="{% url 'textbook_detail' next_page.id %}">Next Page →</a>
+        {% endif %}
+    </div>
+</div>
+
+<p style="margin-top: 24px;">
     <a href="{% url 'course_detail' page.unit.course.id %}">← Back to course</a>
 </p>
+
+<p>
+    <a href="{% url 'textbook_edit' page.id %}">Edit this page</a>
+</p>
+
+{% endblock %}

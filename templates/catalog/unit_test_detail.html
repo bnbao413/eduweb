@@ -1,0 +1,12 @@
+<h1>{{ test.title }}</h1>
+
+<p><strong>Course:</strong> {{ test.unit.course.title }}</p>
+<p><strong>Unit:</strong> {{ test.unit.title }}</p>
+
+<div>
+    {{ test.instructions }}
+</div>
+
+<p>
+    <a href="{% url 'course_detail' test.unit.course.id %}">← Back to course</a>
+</p>
