@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ exam.title }}</h1>
+
+<p><strong>Course:</strong> {{ exam.course.title }}</p>
+
+<p>{{ exam.instructions }}</p>
+
+{% if exam.numbas_url %}
+    <iframe
+        src="{{ exam.numbas_url }}"
+        width="100%"
+        height="800"
+        style="border:none;">
+    </iframe>
+{% else %}
+    <p>No Numbas URL has been added yet.</p>
+{% endif %}
+
+<p>
+    <a href="{% url 'course_detail' exam.course.id %}">← Back to course</a>
+</p>
+{% endblock %}

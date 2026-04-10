@@ -1,3 +1,6 @@
+{% extends "base.html" %}
+
+{% block content %}
 <h1>{{ practice.title }}</h1>
 
 <p><strong>Course:</strong> {{ practice.unit.course.title }}</p>
@@ -10,3 +13,4 @@
 <p>
     <a href="{% url 'course_detail' practice.unit.course.id %}">← Back to course</a>
 </p>
+{% endblock %}
