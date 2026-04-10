@@ -10,5 +10,13 @@ urlpatterns = [
     path('pratice/<int:practice_id>/', views.practice_detail, name='practice_detail'),
     path('unit-test/<int:test_id>/', views.unit_test_detail, name='unit_test_detail'),
     path('textbook/<int:textbook_id>/edit/', views.textbook_edit, name='textbook_edit'),
+    path('notes/<int:notes_id>/', views.notes_detail, name='notes_detail'),
+    path('notes/<int:notes_id>/edit/', views.notes_edit, name='notes_edit'),
+    path('practice/<int:practice_id>/start/', views.start_practice, name='start_practice'),
+    path('unit-test/<int:test_id>/start/', views.start_unit_test, name='start_unit_test'),
+
+
+    
+
 ]
 

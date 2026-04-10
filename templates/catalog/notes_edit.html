@@ -2,9 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Edit Textbook Page</title>
-
+    <title>Edit Notes Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+
 
     <style>
         body {
@@ -12,16 +12,19 @@
             margin: 2rem;
         }
 
+
         .editor-layout {
             display: flex;
             gap: 2rem;
             align-items: flex-start;
         }
 
+
         .editor-pane,
         .preview-pane {
             width: 50%;
         }
+
 
         textarea {
             width: 100%;
@@ -32,6 +35,7 @@
             box-sizing: border-box;
         }
 
+
         .preview-box {
             border: 1px solid #ccc;
             padding: 1rem;
@@ -40,6 +44,7 @@
             overflow-wrap: break-word;
         }
 
+
         input[type="text"] {
             width: 100%;
             padding: 0.75rem;
@@ -47,11 +52,13 @@
             box-sizing: border-box;
         }
 
+
         button {
             margin-top: 1rem;
             padding: 0.75rem 1rem;
             cursor: pointer;
         }
+
 
         .preview-box h1,
         .preview-box h2,
@@ -59,14 +66,17 @@
             margin-top: 1.25rem;
         }
 
+
         .preview-box p {
             line-height: 1.7;
         }
+
 
         .preview-box code {
             background: #eee;
             padding: 0.1rem 0.3rem;
         }
+
 
         .preview-box pre {
             background: #eee;
@@ -76,17 +86,21 @@
     </style>
 </head>
 <body>
-    <h1>Edit Textbook Page</h1>
+    <h1>Edit Notes Page</h1>
+
 
     <p><strong>Current page:</strong> {{ page.title }}</p>
 
+
     <form method="post">
         {% csrf_token %}
+
 
         <p>
             <label for="{{ form.title.id_for_label }}">Title</label><br>
             {{ form.title }}
         </p>
+
 
         <div class="editor-layout">
             <div class="editor-pane">
@@ -94,31 +108,49 @@
                 <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
             </div>
 
+
             <div class="preview-pane">
                 <h2>Live Preview</h2>
                 <div id="preview" class="preview-box"></div>
             </div>
         </div>
 
+
         <button type="submit">Save</button>
     </form>
 
+
     <p>
-        <a href="{% url 'textbook_detail' page.id %}">← Back to textbook page</a>
+        <a href="{% url 'notes_detail' page.id %}">← Back to notes page</a>
     </p>
+
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
 
+
     <script>
         const input = document.getElementById("content-input");
         const preview = document.getElementById("preview");
-        
+
+
+        function simpleMathToLatex(text) {
+            return text
+                .replace(/log_(\d+)\((.*?)\)/g, '\\log_{$1}($2)')
+                .replace(/(\w+)\^(\d+)/g, '$1^{$2}')
+                .replace(/lim\s*x->\s*(\d+)/g, '\\lim_{x \\to $1}')
+                .replace(/sqrt\((.*?)\)/g, '\\sqrt{$1}');
+        }
+
 
         function updatePreview() {
-            const raw = input.value;
+            let raw = input.value;
+            raw = simpleMathToLatex(raw);
+
+
             preview.innerHTML = marked.parse(raw);
+
 
             renderMathInElement(preview, {
                 delimiters: [
@@ -131,10 +163,10 @@
             });
         }
 
+
         input.addEventListener("input", updatePreview);
         updatePreview();
     </script>
-
-    
 </body>
 </html>
+

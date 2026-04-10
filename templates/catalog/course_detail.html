@@ -45,50 +45,50 @@
             {% endif %}
 
             <h4>Notes</h4>
-            {% if unit.notes_pages.all %}
-                <ul>
-                {% for note in unit.notes_pages.all %}
-                    <li>
-                        <a href="{% url 'notes_detail' note.id %}">
-                            {{ note.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>No notes yet.</p>
-            {% endif %}
+{% if unit.notes_pages.all %}
+    <ul>
+        {% for page in unit.notes_pages.all %}
+            <li>
+                <a href="{% url 'notes_detail' page.id %}">
+                    <strong>{{ page.title }}</strong>
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No notes yet.</p>
+{% endif %}
+
+
 
             <h4>Practice Sets</h4>
-            {% if unit.practice_sets.all %}
-                <ul>
-                {% for practice in unit.practice_sets.all %}
-                    <li>
-                        <a href="{% url 'practice_detail' practice.id %}">
-                            {{ practice.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>No practice sets yet.</p>
-            {% endif %}
+{% if unit.practice_sets.all %}
+    <ul>
+    {% for practice in unit.practice_sets.all %}
+        <li>
+            <a href="{% url 'start_practice' practice.id %}">
+                {{ practice.title }}
+            </a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No practice sets yet.</p>
+{% endif %}
+
+
 
             <h4>Unit Test</h4>
-            {% if unit.unit_test %}
-                <p>
-                    <a href="{% url 'unit_test_detail' unit.unit_test.id %}">
-                        {{ unit.unit_test.title }}
-                    </a>
-                </p>
-            {% else %}
-                <p>No unit test yet.</p>
-            {% endif %}
-        </details>
-        <br>
-    {% endfor %}
+{% if unit.unit_test %}
+    <p>
+        <a href="{% url 'start_unit_test' unit.unit_test.id %}">
+            {{ unit.unit_test.title }}
+        </a>
+    </p>
 {% else %}
-    <p>No units yet.</p>
+    <p>No unit test yet.</p>
 {% endif %}
+
+
 
 <a href="/">← Back to courses</a>

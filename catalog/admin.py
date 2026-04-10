@@ -8,8 +8,10 @@ from .models import (
     PracticeSet,
     UnitTest,
     FinalExam,
+    CourseAccess,
 )
 
+admin.site.register(CourseAccess)
 admin.site.register(Course)
 admin.site.register(Unit)
 admin.site.register(Lesson)

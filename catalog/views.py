@@ -1,7 +1,12 @@
 import markdown
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from .models import Course, Lesson, TextbookPage, NotesPage, PracticeSet, UnitTest, CourseAccess
+
+
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Course, Lesson, TextbookPage, NotesPage, PracticeSet, UnitTest
-from .forms import TextbookPageForm
+from .forms import TextbookPageForm, NotesPageForm
 
 def home(request):
     courses = Course.objects.all()
@@ -56,11 +61,42 @@ def textbook_detail(request, textbook_id):
 
 
 def notes_detail(request, notes_id):
-    note = get_object_or_404(
-        NotesPage.objects.select_related('unit__course'),
-        id=notes_id
-    )
-    return render(request, 'catalog/notes_detail.html', {'note': note})
+    page = get_object_or_404(NotesPage, id=notes_id)
+
+    unit_pages = list(page.unit.notes_pages.all())
+
+    index = unit_pages.index(page)
+
+    prev_page = unit_pages[index - 1] if index > 0 else None
+    next_page = unit_pages[index + 1] if index < len(unit_pages) - 1 else None
+
+    return render(request, 'catalog/notes_detail.html', {
+        'page': page,
+        'prev_page': prev_page,
+        'next_page': next_page,
+    })
+
+
+
+
+def notes_edit(request, notes_id):
+    page = get_object_or_404(NotesPage, id=notes_id)
+
+
+    if request.method == 'POST':
+        form = NotesPageForm(request.POST, instance=page)
+        if form.is_valid():
+            form.save()
+            return redirect('notes_detail', notes_id=page.id)
+    else:
+        form = NotesPageForm(instance=page)
+
+
+    return render(request, 'catalog/notes_edit.html', {
+        'form': form,
+        'page': page,
+    })
+
 
 def practice_detail(request, practice_id):
     practice = get_object_or_404(
@@ -91,3 +127,53 @@ def textbook_edit(request, textbook_id):
         'form': form,
         'page': page,
     })
+
+@login_required
+def start_practice(request, practice_id):
+    practice = get_object_or_404(
+        PracticeSet.objects.select_related('unit__course'),
+        id=practice_id
+    )
+
+
+    has_access = CourseAccess.objects.filter(
+        user=request.user,
+        course=practice.unit.course,
+        has_access=True
+    ).exists()
+
+
+    if not has_access:
+        return HttpResponseForbidden("You do not have access to this practice set.")
+
+
+    return render(request, 'catalog/start_practice.html', {
+        'practice': practice,
+    })
+
+
+
+
+@login_required
+def start_unit_test(request, test_id):
+    test = get_object_or_404(
+        UnitTest.objects.select_related('unit__course'),
+        id=test_id
+    )
+
+
+    has_access = CourseAccess.objects.filter(
+        user=request.user,
+        course=test.unit.course,
+        has_access=True
+    ).exists()
+
+
+    if not has_access:
+        return HttpResponseForbidden("You do not have access to this unit test.")
+
+
+    return render(request, 'catalog/start_unit_test.html', {
+        'test': test,
+    })
+
