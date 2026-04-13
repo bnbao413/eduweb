@@ -2,13 +2,43 @@ import json
 import markdown
 
 from django.shortcuts import render, get_object_or_404, redirect
+
+
+def page_not_found(request, exception):
+    return render(request, '404.html', status=404)
+
+
+def server_error(request):
+    return render(request, '500.html', status=500)
+
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth import login
+from django.db import IntegrityError
 from .models import (
     Course, Lesson, TextbookPage, NotesPage, PracticeSet, UnitTest, FinalExam,
     VideoCheckpoint, CheckpointChoice, CheckpointResponse,
 )
-from .forms import TextbookPageForm, NotesPageForm
+from .forms import TextbookPageForm, NotesPageForm, RegisterForm
+
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            try:
+                user = form.save()
+                login(request, user)
+                return redirect('home')
+            except IntegrityError:
+                form.add_error('username', 'That username is already taken. Please choose another.')
+    else:
+        form = RegisterForm()
+    return render(request, 'registration/register.html', {'form': form})
 
 def home(request):
     courses = Course.objects.all()
@@ -197,6 +227,7 @@ def notes_detail(request, notes_id):
 
 
 
+@staff_member_required
 def notes_edit(request, notes_id):
     page = get_object_or_404(NotesPage, id=notes_id)
 
@@ -230,6 +261,35 @@ def unit_test_detail(request, test_id):
     )
     return render(request, 'catalog/unit_test_detail.html', {'test': unit_test})
 
+def start_practice(request, practice_id):
+    practice = get_object_or_404(
+        PracticeSet.objects.select_related('unit__course'),
+        id=practice_id
+    )
+    return render(request, 'catalog/start_practice.html', {'practice': practice})
+
+def start_unit_test(request, test_id):
+    test = get_object_or_404(
+        UnitTest.objects.select_related('unit__course'),
+        id=test_id
+    )
+    return render(request, 'catalog/start_unit_test.html', {'test': test})
+
+def final_exam_detail(request, exam_id):
+    exam = get_object_or_404(
+        FinalExam.objects.select_related('course'),
+        id=exam_id
+    )
+    return render(request, 'catalog/final_exam_detail.html', {'exam': exam})
+
+def start_final_exam(request, exam_id):
+    exam = get_object_or_404(
+        FinalExam.objects.select_related('course'),
+        id=exam_id
+    )
+    return render(request, 'catalog/start_final_exam.html', {'exam': exam})
+
+@staff_member_required
 def textbook_edit(request, textbook_id):
     page = get_object_or_404(TextbookPage, id=textbook_id)
 
@@ -246,38 +306,4 @@ def textbook_edit(request, textbook_id):
         'page': page,
     })
 
-def start_practice(request, practice_id):
-    practice = get_object_or_404(
-        PracticeSet.objects.select_related('unit__course'),
-        id=practice_id
-    )
-    return render(request, 'catalog/start_practice.html', {
-        'practice': practice,
-    })
-
-
-
-
-def start_unit_test(request, test_id):
-    test = get_object_or_404(
-        UnitTest.objects.select_related('unit__course'),
-        id=test_id
-    )
-    return render(request, 'catalog/start_unit_test.html', {
-        'test': test,
-    })
-
-def final_exam_detail(request, exam_id):
-    exam = get_object_or_404(
-        FinalExam.objects.select_related('course'),
-        id=exam_id
-    )
-    return render(request, 'catalog/final_exam_detail.html', {'exam': exam})
-
-def start_final_exam(request, exam_id):
-    exam = get_object_or_404(
-        FinalExam.objects.select_related('course'),
-        id=exam_id
-    )
-    return render(request, 'catalog/start_final_exam.html', {'exam': exam})
 

@@ -41,9 +41,11 @@
 </p>
 
 
+{% if user.is_staff %}
 <p>
     <a href="{% url 'notes_edit' page.id %}">Edit this page</a>
 </p>
+{% endif %}
 
 
 {% endblock %}

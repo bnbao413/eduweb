@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 
 
+
 class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
@@ -18,6 +19,9 @@ class Unit(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"
@@ -70,27 +74,28 @@ class PracticeSet(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='practice_sets')
     title = models.CharField(max_length=200)
     instructions = models.TextField(blank=True)
-    numbas_url = models.URLField(blank=True)
     order = models.IntegerField(default=0)
-
 
     def __str__(self):
         return self.title
-
-
 
 
 class UnitTest(models.Model):
     unit = models.OneToOneField(Unit, on_delete=models.CASCADE, related_name='unit_test')
     title = models.CharField(max_length=200)
     instructions = models.TextField(blank=True)
-    numbas_url = models.URLField(blank=True)
-
 
     def __str__(self):
         return self.title
-    
 
+
+class FinalExam(models.Model):
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='final_exam')
+    title = models.CharField(max_length=200)
+    instructions = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.title
 
 
 
@@ -150,11 +155,3 @@ class CheckpointResponse(models.Model):
         return f"{self.user.username} — {self.checkpoint} — {grade}"
 
 
-class FinalExam(models.Model):
-    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name='final_exam')
-    title = models.CharField(max_length=200)
-    instructions = models.TextField(blank=True)
-    numbas_url = models.URLField(blank=True)
-
-    def __str__(self):
-        return self.title

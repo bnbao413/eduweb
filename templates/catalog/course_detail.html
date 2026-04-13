@@ -5,11 +5,12 @@
 
 <p>{{ course.description }}</p>
 
-<h2>Units</h2>
+<details>
+<summary><h2 style="display:inline; cursor:pointer;">Units</h2></summary>
 
 {% if course.units.all %}
     {% for unit in course.units.all %}
-        <details>
+        <details style="margin-left:1rem;">
             <summary><strong>{{ unit.title }}</strong></summary>
 
             {% if unit.description %}
@@ -94,16 +95,37 @@
     <p>No units yet.</p>
 {% endif %}
 
-<h2>Final Exam</h2>
-{% if course.final_exam %}
-    <p>
-        <a href="{% url 'start_final_exam' course.final_exam.id %}">
-            {{ course.final_exam.title }}
-        </a>
-    </p>
-{% else %}
-    <p>No final exam yet.</p>
-{% endif %}
+</details>
+
+<details>
+<summary><h2 style="display:inline; cursor:pointer;">Final Exam</h2></summary>
+
+    <div style="margin-left:1rem;">
+        <h4>Lessons</h4>
+        <p>No lessons yet.</p>
+
+        <h4>Textbook Pages</h4>
+        <p>No textbook pages yet.</p>
+
+        <h4>Notes</h4>
+        <p>No notes yet.</p>
+
+        <h4>Practice Sets</h4>
+        <p>No practice sets yet.</p>
+
+        <h4>Final Exam</h4>
+        {% if course.final_exam %}
+            <p>
+                <a href="{% url 'start_final_exam' course.final_exam.id %}">
+                    {{ course.final_exam.title }}
+                </a>
+            </p>
+        {% else %}
+            <p>No final exam yet.</p>
+        {% endif %}
+    </div>
+
+</details>
 
 <a href="/">← Back to courses</a>
 {% endblock %}

@@ -1,20 +1,15 @@
 {% extends "base.html" %}
 
 {% block content %}
-
 <div class="page-header">
-
     <div>
         <h1>{{ page.title }}</h1>
-
         <p><strong>Course:</strong> {{ page.unit.course.title }}</p>
         <p><strong>Unit:</strong> {{ page.unit.title }}</p>
     </div>
-
     <div class="page-jump">
         <details>
             <summary>Jump to page ▼</summary>
-
             <select onchange="if (this.value) window.location.href=this.value;">
                 <option value="">Select a page</option>
                 {% for p in all_pages %}
@@ -25,9 +20,7 @@
             </select>
         </details>
     </div>
-
 </div>
-
 
 <div id="content" class="content-area">
     {{ html_content|safe }}
@@ -50,8 +43,9 @@
     <a href="{% url 'course_detail' page.unit.course.id %}">← Back to course</a>
 </p>
 
+{% if user.is_staff %}
 <p>
     <a href="{% url 'textbook_edit' page.id %}">Edit this page</a>
 </p>
-
+{% endif %}
 {% endblock %}

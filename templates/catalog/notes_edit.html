@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Edit Notes Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
 
 
     <style>
@@ -62,7 +63,6 @@
         .math-toolbar {
             display: flex;
             flex-wrap: wrap;
-            align-items: center;
             gap: 4px;
             margin-bottom: 6px;
             padding: 6px 8px;
@@ -74,19 +74,21 @@
         .toolbar-label {
             font-size: 0.8rem;
             color: #666;
+            align-self: center;
             margin-right: 2px;
         }
 
         .toolbar-sep {
             color: #bbb;
             margin: 0 2px;
+            align-self: center;
             user-select: none;
         }
 
         .math-toolbar button {
             margin: 0;
-            padding: 3px 7px;
-            font-size: 0.85rem;
+            padding: 3px 8px;
+            font-size: 0.9rem;
             cursor: pointer;
             background: #fff;
             border: 1px solid #bbb;
@@ -100,6 +102,59 @@
             border-color: #88a;
         }
 
+        #math-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .math-modal-box {
+            background: #fff;
+            padding: 1.5rem 2rem;
+            border-radius: 8px;
+            min-width: 440px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+        }
+
+        .math-modal-box h3 {
+            margin: 0 0 0.75rem;
+        }
+
+        .mq-container {
+            border: 2px solid #4a90d9;
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-size: 1.6rem;
+            min-height: 3.5rem;
+            cursor: text;
+        }
+
+        .math-modal-modes {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .math-modal-modes label {
+            margin-right: 1rem;
+            cursor: pointer;
+        }
+
+        .math-modal-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .math-modal-actions button {
+            margin-top: 0;
+            padding: 0.5rem 1.2rem;
+        }
 
         .preview-box h1,
         .preview-box h2,
@@ -146,6 +201,46 @@
         <div class="editor-layout">
             <div class="editor-pane">
                 <h2>Editor</h2>
+                <div class="math-toolbar">
+                    <span class="toolbar-label">Math:</span>
+                    <button type="button" title="Fraction" onclick="openMath('\\frac{}{}')">a/b</button>
+                    <button type="button" title="Square root" onclick="openMath('\\sqrt{}')">√</button>
+                    <button type="button" title="nth root" onclick="openMath('\\sqrt[n]{}')">ⁿ√</button>
+                    <button type="button" title="Superscript" onclick="openMath('x^{}')">xⁿ</button>
+                    <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
+                    <span class="toolbar-sep">|</span>
+                    <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
+                    <button type="button" title="Double integral" onclick="openMath('\\iint_{ }^{ }')">∬</button>
+                    <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
+                    <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
+                    <button type="button" title="Limit" onclick="openMath('\\lim_{ }')">lim</button>
+                    <span class="toolbar-sep">|</span>
+                    <button type="button" title="Logarithm" onclick="openMath('\\log\\left(\\right)')">log</button>
+                    <button type="button" title="Log base n" onclick="openMath('\\log_{ }\\left(\\right)')">logₙ</button>
+                    <button type="button" title="Natural log" onclick="openMath('\\ln\\left(\\right)')">ln</button>
+                    <button type="button" title="Sine" onclick="openMath('\\sin\\left(\\right)')">sin</button>
+                    <button type="button" title="Cosine" onclick="openMath('\\cos\\left(\\right)')">cos</button>
+                    <button type="button" title="Tangent" onclick="openMath('\\tan\\left(\\right)')">tan</button>
+                    <span class="toolbar-sep">|</span>
+                    <button type="button" title="Pi" onclick="insSym('\\pi')">π</button>
+                    <button type="button" title="Infinity" onclick="insSym('\\infty')">∞</button>
+                    <button type="button" title="Alpha" onclick="insSym('\\alpha')">α</button>
+                    <button type="button" title="Beta" onclick="insSym('\\beta')">β</button>
+                    <button type="button" title="Theta" onclick="insSym('\\theta')">θ</button>
+                    <button type="button" title="Lambda" onclick="insSym('\\lambda')">λ</button>
+                    <button type="button" title="Mu" onclick="insSym('\\mu')">μ</button>
+                    <button type="button" title="Sigma" onclick="insSym('\\sigma')">σ</button>
+                    <span class="toolbar-sep">|</span>
+                    <button type="button" title="Less or equal" onclick="insSym('\\leq')">≤</button>
+                    <button type="button" title="Greater or equal" onclick="insSym('\\geq')">≥</button>
+                    <button type="button" title="Not equal" onclick="insSym('\\neq')">≠</button>
+                    <button type="button" title="Approximately" onclick="insSym('\\approx')">≈</button>
+                    <button type="button" title="Times" onclick="insSym('\\times')">×</button>
+                    <button type="button" title="Dot product" onclick="insSym('\\cdot')">·</button>
+                    <button type="button" title="Plus-minus" onclick="insSym('\\pm')">±</button>
+                    <span class="toolbar-sep">|</span>
+                    <button type="button" title="Insert link" onclick="openLinkModal()">🔗 Link</button>
+                </div>
                 <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
             </div>
 
@@ -167,15 +262,115 @@
 
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.js"></script>
 
+    <div id="link-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:1.5rem 2rem; border-radius:8px; min-width:380px; box-shadow:0 4px 24px rgba(0,0,0,0.25);">
+            <h3 style="margin:0 0 1rem;">Insert Link</h3>
+            <label style="display:block; margin-bottom:0.25rem; font-size:0.9rem;">Display text</label>
+            <input type="text" id="link-text" placeholder="e.g. Khan Academy" style="width:100%; padding:0.5rem; margin-bottom:0.75rem; box-sizing:border-box;">
+            <label style="display:block; margin-bottom:0.25rem; font-size:0.9rem;">URL</label>
+            <input type="text" id="link-url" placeholder="https://..." style="width:100%; padding:0.5rem; margin-bottom:1rem; box-sizing:border-box;">
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+                <button type="button" onclick="closeLinkModal()">Cancel</button>
+                <button type="button" onclick="insertLink()">Insert</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="math-modal">
+        <div class="math-modal-box">
+            <h3>Math Editor</h3>
+            <div class="math-modal-modes">
+                <label><input type="radio" name="math-mode" value="inline" checked> Inline ($...$)</label>
+                <label><input type="radio" name="math-mode" value="display"> Display ($$...$$)</label>
+            </div>
+            <div id="mq-field" class="mq-container"></div>
+            <div class="math-modal-actions">
+                <button type="button" onclick="closeMathModal()">Cancel</button>
+                <button type="button" onclick="insertMath()">Insert</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const input = document.getElementById("content-input");
         const preview = document.getElementById("preview");
 
+        let mathField, savedStart, savedEnd;
 
+        // ── Toolbar helpers ──────────────────────────────────────────
+        function ins(before, after) {
+            const start = input.selectionStart;
+            const end   = input.selectionEnd;
+            const sel   = input.value.slice(start, end);
+            input.setRangeText(before + sel + after, start, end, 'select');
+            if (start === end) input.setSelectionRange(start + before.length, start + before.length);
+            input.focus();
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function insSym(latex) {
+            ins('$' + latex + '$', '');
+        }
+
+        // ── Link modal ───────────────────────────────────────────────
+        let linkSavedStart, linkSavedEnd;
+
+        function openLinkModal() {
+            linkSavedStart = input.selectionStart;
+            linkSavedEnd   = input.selectionEnd;
+            const sel = input.value.slice(linkSavedStart, linkSavedEnd);
+            document.getElementById('link-text').value = sel;
+            document.getElementById('link-url').value  = '';
+            const modal = document.getElementById('link-modal');
+            modal.style.display = 'flex';
+            document.getElementById(sel ? 'link-url' : 'link-text').focus();
+        }
+
+        function closeLinkModal() {
+            document.getElementById('link-modal').style.display = 'none';
+            input.focus();
+        }
+
+        function insertLink() {
+            const text = document.getElementById('link-text').value || 'link';
+            const url  = document.getElementById('link-url').value.trim();
+            if (!url) { closeLinkModal(); return; }
+            const markdown = `[${text}](${url})`;
+            input.setRangeText(markdown, linkSavedStart, linkSavedEnd, 'end');
+            closeLinkModal();
+            input.dispatchEvent(new Event('input'));
+        }
+
+        // ── MathQuill visual editor ──────────────────────────────────
+        function openMath(latex) {
+            savedStart = input.selectionStart;
+            savedEnd   = input.selectionEnd;
+            mathField.latex(latex);
+            const modal = document.getElementById('math-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => mathField.focus(), 50);
+        }
+
+        function closeMathModal() {
+            document.getElementById('math-modal').style.display = 'none';
+            input.focus();
+        }
+
+        function insertMath() {
+            const latex   = mathField.latex();
+            const mode    = document.querySelector('input[name="math-mode"]:checked').value;
+            const wrapped = mode === 'display' ? '$$\n' + latex + '\n$$' : '$' + latex + '$';
+            input.setRangeText(wrapped, savedStart, savedEnd, 'end');
+            closeMathModal();
+            input.dispatchEvent(new Event('input'));
+        }
+
+        // ── Preview rendering ────────────────────────────────────────
         function simpleMathToLatex(text) {
             return text
                 .replace(/log_(\d+)\((.*?)\)/g, '\\log_{$1}($2)')
@@ -184,29 +379,45 @@
                 .replace(/sqrt\((.*?)\)/g, '\\sqrt{$1}');
         }
 
-
         function updatePreview() {
             let raw = input.value;
             raw = simpleMathToLatex(raw);
 
+            const saved = [];
+            raw = raw.replace(/\$\$[\s\S]*?\$\$/g, m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
+            raw = raw.replace(/\$[^$\n]+?\$/g,      m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
 
-            preview.innerHTML = marked.parse(raw);
+            let html = marked.parse(raw);
+            html = html.replace(/@@MATH(\d+)@@/g, (_, i) => saved[+i]);
 
-
-            renderMathInElement(preview, {
-                delimiters: [
-                    { left: "$$", right: "$$", display: true },
-                    { left: "\\[", right: "\\]", display: true },
-                    { left: "$", right: "$", display: false },
-                    { left: "\\(", right: "\\)", display: false }
-                ],
-                throwOnError: false
-            });
+            const delimiters = [
+                { left: "$$", right: "$$", display: true },
+                { left: "\\[", right: "\\]", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false }
+            ];
+            preview.innerHTML = html;
+            renderMathInElement(preview, { delimiters, throwOnError: false });
         }
 
+        // ── Init after all deferred scripts have loaded ──────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const MQ = MathQuill.getInterface(2);
+            mathField = MQ.MathField(document.getElementById('mq-field'), {
+                spaceBehavesLikeTab: true,
+                handlers: { enter: insertMath }
+            });
 
-        input.addEventListener("input", updatePreview);
-        updatePreview();
+            document.getElementById('math-modal').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeMathModal();
+            });
+            document.getElementById('link-modal').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeLinkModal();
+            });
+
+            input.addEventListener("input", updatePreview);
+            updatePreview();
+        });
     </script>
 </body>
 </html>
