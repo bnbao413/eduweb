@@ -32,6 +32,7 @@
             min-height: 600px;
             font-family: monospace;
             font-size: 1rem;
+            line-height: 1.9;
             padding: 1rem;
             box-sizing: border-box;
         }
@@ -40,10 +41,12 @@
         .preview-box {
             border: 1px solid #ccc;
             padding: 1rem;
-            min-height: 600px;
+            height: 600px;
             background: #fafafa;
             overflow-wrap: break-word;
+            overflow-y: auto;
         }
+
 
 
         input[type="text"] {
@@ -63,43 +66,60 @@
         .math-toolbar {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
+            gap: 6px;
             margin-bottom: 6px;
-            padding: 6px 8px;
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 8px;
+            background: #eef0f7;
+            border: 1px solid #c8cfe0;
+            border-radius: 6px;
         }
 
-        .toolbar-label {
-            font-size: 0.8rem;
-            color: #666;
-            align-self: center;
-            margin-right: 2px;
+        .toolbar-group {
+            border: 1px solid #c5cce0;
+            border-radius: 5px;
+            background: #fff;
+            padding: 4px 6px 5px;
+            display: inline-flex;
+            flex-direction: column;
+            align-self: flex-start;
         }
 
-        .toolbar-sep {
-            color: #bbb;
-            margin: 0 2px;
-            align-self: center;
-            user-select: none;
+        .toolbar-group-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #4a5980;
+            text-align: center;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+            border-bottom: 1px solid #dde2f0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .toolbar-group-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            align-items: center;
         }
 
         .math-toolbar button {
             margin: 0;
-            padding: 3px 8px;
-            font-size: 0.9rem;
+            padding: 2px 5px;
+            font-size: 0.82rem;
             cursor: pointer;
-            background: #fff;
-            border: 1px solid #bbb;
+            background: #f7f8fc;
+            border: 1px solid #c5cce0;
             border-radius: 3px;
             font-family: serif;
             line-height: 1.4;
+            white-space: nowrap;
         }
 
         .math-toolbar button:hover {
             background: #dde8ff;
-            border-color: #88a;
+            border-color: #7799cc;
         }
 
         #math-modal {
@@ -179,6 +199,94 @@
             padding: 1rem;
             overflow-x: auto;
         }
+
+        /* ── Paper / page mode ── */
+        .paper-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            background: #f0f2f8;
+            border: 1px solid #d0d4e8;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+        }
+        .paper-controls label { color: #555; font-weight: 600; }
+        .paper-controls select,
+        .paper-controls input[type="number"] {
+            font-size: 0.82rem;
+            padding: 3px 5px;
+            border: 1px solid #c5cce0;
+            border-radius: 3px;
+            background: #fff;
+        }
+        .paper-controls button {
+            margin-top: 0;
+            padding: 3px 10px;
+            font-size: 0.82rem;
+        }
+        #pages-container {
+            background: #808080;
+            padding: 20px 16px;
+            overflow-y: auto;
+            max-height: 900px;
+            display: none;
+        }
+        .page-sheet {
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            margin: 0 auto 24px;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .page-sheet textarea {
+            width: 100%;
+            display: block;
+            resize: none;
+            overflow-y: auto;
+            scrollbar-width: none;
+            border: none;
+            outline: none;
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 1.9;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            background: transparent;
+            min-height: unset;
+        }
+        .page-sheet textarea::-webkit-scrollbar { display: none; }
+        .page-num {
+            position: absolute;
+            bottom: 8px;
+            right: 14px;
+            font-size: 0.72rem;
+            color: #ccc;
+            font-family: sans-serif;
+            pointer-events: none;
+            user-select: none;
+        }
+        #editor-area { position: relative; }
+        #editor-blocker {
+            position: absolute;
+            inset: 0;
+            min-height: 200px;
+            background: rgba(235,237,245,0.93);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            color: #666;
+            z-index: 10;
+            border: 1px dashed #b0b8d0;
+            border-radius: 4px;
+            cursor: default;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -198,52 +306,356 @@
         </p>
 
 
-        <div class="editor-layout">
-            <div class="editor-pane">
-                <h2>Editor</h2>
-                <div class="math-toolbar">
-                    <span class="toolbar-label">Math:</span>
+        <button type="submit">Save</button>
+        <span style="margin-left:1.25rem; font-size:0.9rem; color:#444;">Download as:</span>
+        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="pdf" checked> PDF</label>
+        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="png"> PNG</label>
+        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="jpg"> JPG</label>
+        <button type="button" onclick="downloadFiles()" style="margin-left:0.5rem; background:#1a73e8; color:#fff; border:none; border-radius:4px; padding:0.75rem 1rem; cursor:pointer;">⬇ Download</button>
+
+        <div class="math-toolbar">
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Format</div>
+                        <div class="toolbar-group-buttons" style="max-width:480px;">
+                            <select id="font-picker" title="Font family — select text first" onchange="applyFont(this.value); this.value='';" style="font-size:0.78rem;padding:2px 3px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;cursor:pointer;max-width:120px;height:22px;">
+                                <option value="">Font…</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="'Times New Roman', serif">Times New Roman</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                <option value="'Comic Sans MS', cursive">Comic Sans</option>
+                                <option value="Impact, sans-serif">Impact</option>
+                            </select>
+                            <input type="number" id="size-picker" title="Font size — select text, type size, press Enter" placeholder="Size" min="1" max="999" step="1" style="font-size:0.78rem;padding:2px 4px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;width:58px;height:22px;">
+                            <span style="font-size:0.78rem;color:#666;">px</span>
+                            <button type="button" title="Bold" onclick="ins('**','**')" style="font-weight:700;">B</button>
+                            <button type="button" title="Italic" onclick="ins('*','*')" style="font-style:italic;">I</button>
+                            <button type="button" title="Underline" onclick="ins('<u>','</u>')"><u>U</u></button>
+                            <button type="button" title="Strikethrough" onclick="ins('<s>','</s>')"><s>S</s></button>
+                            <label title="Text color — select text, then pick color" style="display:inline-flex;align-items:center;gap:2px;cursor:pointer;padding:2px 5px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;font-size:0.82rem;line-height:1.4;font-family:serif;white-space:nowrap;">
+                                A <input type="color" id="text-color-picker" value="#e53e3e" style="width:20px;height:14px;padding:0;border:none;cursor:pointer;vertical-align:middle;">
+                            </label>
+                            <label title="Highlight — select text, then pick color" style="display:inline-flex;align-items:center;gap:2px;cursor:pointer;padding:2px 5px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;font-size:0.82rem;line-height:1.4;font-family:serif;white-space:nowrap;">
+                                H <input type="color" id="highlight-picker" value="#ffff66" style="width:20px;height:14px;padding:0;border:none;cursor:pointer;vertical-align:middle;">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Structures</div>
+                        <div class="toolbar-group-buttons">
                     <button type="button" title="Fraction" onclick="openMath('\\frac{}{}')">a/b</button>
+                    <button type="button" title="Binomial coefficient" onclick="openMath('\\binom{}{}')">C(n,k)</button>
                     <button type="button" title="Square root" onclick="openMath('\\sqrt{}')">√</button>
                     <button type="button" title="nth root" onclick="openMath('\\sqrt[n]{}')">ⁿ√</button>
                     <button type="button" title="Superscript" onclick="openMath('x^{}')">xⁿ</button>
                     <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
-                    <span class="toolbar-sep">|</span>
                     <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
                     <button type="button" title="Double integral" onclick="openMath('\\iint_{ }^{ }')">∬</button>
+                    <button type="button" title="Triple integral" onclick="openMath('\\iiint_{ }^{ }')">∭</button>
+                    <button type="button" title="Contour integral" onclick="openMath('\\oint_{ }^{ }')">∮</button>
+                    <button type="button" title="Surface integral" onclick="openMath('\\oiint')">∯</button>
                     <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
                     <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
-                    <button type="button" title="Limit" onclick="openMath('\\lim_{ }')">lim</button>
-                    <span class="toolbar-sep">|</span>
-                    <button type="button" title="Logarithm" onclick="openMath('\\log\\left(\\right)')">log</button>
-                    <button type="button" title="Log base n" onclick="openMath('\\log_{ }\\left(\\right)')">logₙ</button>
-                    <button type="button" title="Natural log" onclick="openMath('\\ln\\left(\\right)')">ln</button>
-                    <button type="button" title="Sine" onclick="openMath('\\sin\\left(\\right)')">sin</button>
-                    <button type="button" title="Cosine" onclick="openMath('\\cos\\left(\\right)')">cos</button>
-                    <button type="button" title="Tangent" onclick="openMath('\\tan\\left(\\right)')">tan</button>
-                    <span class="toolbar-sep">|</span>
-                    <button type="button" title="Pi" onclick="insSym('\\pi')">π</button>
-                    <button type="button" title="Infinity" onclick="insSym('\\infty')">∞</button>
-                    <button type="button" title="Alpha" onclick="insSym('\\alpha')">α</button>
-                    <button type="button" title="Beta" onclick="insSym('\\beta')">β</button>
-                    <button type="button" title="Theta" onclick="insSym('\\theta')">θ</button>
-                    <button type="button" title="Lambda" onclick="insSym('\\lambda')">λ</button>
-                    <button type="button" title="Mu" onclick="insSym('\\mu')">μ</button>
-                    <button type="button" title="Sigma" onclick="insSym('\\sigma')">σ</button>
-                    <span class="toolbar-sep">|</span>
-                    <button type="button" title="Less or equal" onclick="insSym('\\leq')">≤</button>
-                    <button type="button" title="Greater or equal" onclick="insSym('\\geq')">≥</button>
-                    <button type="button" title="Not equal" onclick="insSym('\\neq')">≠</button>
-                    <button type="button" title="Approximately" onclick="insSym('\\approx')">≈</button>
-                    <button type="button" title="Times" onclick="insSym('\\times')">×</button>
-                    <button type="button" title="Dot product" onclick="insSym('\\cdot')">·</button>
-                    <button type="button" title="Plus-minus" onclick="insSym('\\pm')">±</button>
-                    <span class="toolbar-sep">|</span>
-                    <button type="button" title="Insert link" onclick="openLinkModal()">🔗 Link</button>
+                    <button type="button" title="Big union" onclick="openMath('\\bigcup_{ }^{ }')">⋃</button>
+                    <button type="button" title="Big intersection" onclick="openMath('\\bigcap_{ }^{ }')">⋂</button>
+                    <button type="button" title="Big wedge (exterior)" onclick="openMath('\\bigwedge_{ }')">⋀</button>
+                    <button type="button" title="Big vee" onclick="openMath('\\bigvee_{ }')">⋁</button>
+                    <button type="button" title="Limit" onclick="openMath('\\lim_{x\\to }')">lim</button>
+                    <button type="button" title="Limsup" onclick="openMath('\\limsup_{n\\to\\infty}')">limsup</button>
+                    <button type="button" title="Liminf" onclick="openMath('\\liminf_{n\\to\\infty}')">liminf</button>
+                    <button type="button" title="Direct limit / colimit" onclick="openMath('\\varinjlim_{ }')">colim</button>
+                    <button type="button" title="Inverse / projective limit" onclick="openMath('\\varprojlim_{ }')">lim←</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Calculus</div>
+                        <div class="toolbar-group-buttons">
+                    <button type="button" title="Partial derivative" onclick="insSym('\\partial')">∂</button>
+                    <button type="button" title="Nabla / gradient / div / curl" onclick="insSym('\\nabla')">∇</button>
+                    <button type="button" title="d/dx operator" onclick="openMath('\\frac{d}{dx}')">d/dx</button>
+                    <button type="button" title="∂/∂x operator" onclick="openMath('\\frac{\\partial}{\\partial x}')">∂/∂x</button>
+                    <button type="button" title="d'Alembertian / box operator" onclick="insSym('\\square')">□</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Trig</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Sine" onclick="openMath('\\sin\\left(\\right)')">sin</button>
+                            <button type="button" title="Cosine" onclick="openMath('\\cos\\left(\\right)')">cos</button>
+                            <button type="button" title="Tangent" onclick="openMath('\\tan\\left(\\right)')">tan</button>
+                            <button type="button" title="Arcsine" onclick="openMath('\\arcsin\\left(\\right)')">arcsin</button>
+                            <button type="button" title="Arccosine" onclick="openMath('\\arccos\\left(\\right)')">arccos</button>
+                            <button type="button" title="Arctangent" onclick="openMath('\\arctan\\left(\\right)')">arctan</button>
+                            <button type="button" title="Secant" onclick="openMath('\\sec\\left(\\right)')">sec</button>
+                            <button type="button" title="Cosecant" onclick="openMath('\\csc\\left(\\right)')">csc</button>
+                            <button type="button" title="Cotangent" onclick="openMath('\\cot\\left(\\right)')">cot</button>
+                            <button type="button" title="Hyperbolic sine" onclick="openMath('\\sinh\\left(\\right)')">sinh</button>
+                            <button type="button" title="Hyperbolic cosine" onclick="openMath('\\cosh\\left(\\right)')">cosh</button>
+                            <button type="button" title="Hyperbolic tangent" onclick="openMath('\\tanh\\left(\\right)')">tanh</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Functions</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Logarithm" onclick="openMath('\\log\\left(\\right)')">log</button>
+                            <button type="button" title="Log base n" onclick="openMath('\\log_{ }\\left(\\right)')">logₙ</button>
+                            <button type="button" title="Natural log" onclick="openMath('\\ln\\left(\\right)')">ln</button>
+                            <button type="button" title="Exponential" onclick="openMath('\\exp\\left(\\right)')">exp</button>
+                            <button type="button" title="Supremum" onclick="openMath('\\sup_{ }')">sup</button>
+                            <button type="button" title="Infimum" onclick="openMath('\\inf_{ }')">inf</button>
+                            <button type="button" title="Maximum" onclick="openMath('\\max_{ }')">max</button>
+                            <button type="button" title="Minimum" onclick="openMath('\\min_{ }')">min</button>
+                            <button type="button" title="GCD" onclick="openMath('\\gcd\\left(\\right)')">gcd</button>
+                            <button type="button" title="LCM" onclick="insSym('\\operatorname{lcm}')">lcm</button>
+                            <button type="button" title="Determinant" onclick="openMath('\\det\\left(\\right)')">det</button>
+                            <button type="button" title="Trace" onclick="insSym('\\operatorname{tr}')">tr</button>
+                            <button type="button" title="Rank" onclick="insSym('\\operatorname{rank}')">rank</button>
+                            <button type="button" title="Kernel / null space" onclick="insSym('\\ker')">ker</button>
+                            <button type="button" title="Span" onclick="insSym('\\operatorname{span}')">span</button>
+                            <button type="button" title="Argument" onclick="insSym('\\arg')">arg</button>
+                            <button type="button" title="Real part" onclick="insSym('\\operatorname{Re}')">Re</button>
+                            <button type="button" title="Imaginary part" onclick="insSym('\\operatorname{Im}')">Im</button>
+                            <button type="button" title="Residue" onclick="insSym('\\operatorname{Res}')">Res</button>
+                            <button type="button" title="Homomorphisms" onclick="insSym('\\operatorname{Hom}')">Hom</button>
+                            <button type="button" title="Automorphisms" onclick="insSym('\\operatorname{Aut}')">Aut</button>
+                            <button type="button" title="Endomorphisms" onclick="insSym('\\operatorname{End}')">End</button>
+                            <button type="button" title="Galois group" onclick="insSym('\\operatorname{Gal}')">Gal</button>
+                            <button type="button" title="Spectrum" onclick="insSym('\\operatorname{Spec}')">Spec</button>
+                            <button type="button" title="Ext functor" onclick="insSym('\\operatorname{Ext}')">Ext</button>
+                            <button type="button" title="Tor functor" onclick="insSym('\\operatorname{Tor}')">Tor</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Greek</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Alpha" onclick="insSym('\\alpha')">α</button>
+                            <button type="button" title="Beta" onclick="insSym('\\beta')">β</button>
+                            <button type="button" title="Gamma" onclick="insSym('\\gamma')">γ</button>
+                            <button type="button" title="Gamma (upper)" onclick="insSym('\\Gamma')">Γ</button>
+                            <button type="button" title="Delta" onclick="insSym('\\delta')">δ</button>
+                            <button type="button" title="Delta (upper)" onclick="insSym('\\Delta')">Δ</button>
+                            <button type="button" title="Epsilon" onclick="insSym('\\varepsilon')">ε</button>
+                            <button type="button" title="Zeta" onclick="insSym('\\zeta')">ζ</button>
+                            <button type="button" title="Eta" onclick="insSym('\\eta')">η</button>
+                            <button type="button" title="Theta" onclick="insSym('\\theta')">θ</button>
+                            <button type="button" title="Theta (upper)" onclick="insSym('\\Theta')">Θ</button>
+                            <button type="button" title="Iota" onclick="insSym('\\iota')">ι</button>
+                            <button type="button" title="Kappa" onclick="insSym('\\kappa')">κ</button>
+                            <button type="button" title="Lambda" onclick="insSym('\\lambda')">λ</button>
+                            <button type="button" title="Lambda (upper)" onclick="insSym('\\Lambda')">Λ</button>
+                            <button type="button" title="Mu" onclick="insSym('\\mu')">μ</button>
+                            <button type="button" title="Nu" onclick="insSym('\\nu')">ν</button>
+                            <button type="button" title="Xi" onclick="insSym('\\xi')">ξ</button>
+                            <button type="button" title="Xi (upper)" onclick="insSym('\\Xi')">Ξ</button>
+                            <button type="button" title="Pi" onclick="insSym('\\pi')">π</button>
+                            <button type="button" title="Pi (upper)" onclick="insSym('\\Pi')">Π</button>
+                            <button type="button" title="Rho" onclick="insSym('\\rho')">ρ</button>
+                            <button type="button" title="Sigma" onclick="insSym('\\sigma')">σ</button>
+                            <button type="button" title="Sigma (upper)" onclick="insSym('\\Sigma')">Σ</button>
+                            <button type="button" title="Tau" onclick="insSym('\\tau')">τ</button>
+                            <button type="button" title="Upsilon" onclick="insSym('\\upsilon')">υ</button>
+                            <button type="button" title="Upsilon (upper)" onclick="insSym('\\Upsilon')">Υ</button>
+                            <button type="button" title="Phi" onclick="insSym('\\varphi')">φ</button>
+                            <button type="button" title="Phi (upper)" onclick="insSym('\\Phi')">Φ</button>
+                            <button type="button" title="Chi" onclick="insSym('\\chi')">χ</button>
+                            <button type="button" title="Psi" onclick="insSym('\\psi')">ψ</button>
+                            <button type="button" title="Psi (upper)" onclick="insSym('\\Psi')">Ψ</button>
+                            <button type="button" title="Omega" onclick="insSym('\\omega')">ω</button>
+                            <button type="button" title="Omega (upper)" onclick="insSym('\\Omega')">Ω</button>
+                            <button type="button" title="Infinity" onclick="insSym('\\infty')">∞</button>
+                            <button type="button" title="Script ell" onclick="insSym('\\ell')">ℓ</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Set Theory</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Element of" onclick="insSym('\\in')">∈</button>
+                            <button type="button" title="Not element of" onclick="insSym('\\notin')">∉</button>
+                            <button type="button" title="Subset" onclick="insSym('\\subset')">⊂</button>
+                            <button type="button" title="Subset or equal" onclick="insSym('\\subseteq')">⊆</button>
+                            <button type="button" title="Superset" onclick="insSym('\\supset')">⊃</button>
+                            <button type="button" title="Superset or equal" onclick="insSym('\\supseteq')">⊇</button>
+                            <button type="button" title="Union" onclick="insSym('\\cup')">∪</button>
+                            <button type="button" title="Intersection" onclick="insSym('\\cap')">∩</button>
+                            <button type="button" title="Empty set" onclick="insSym('\\varnothing')">∅</button>
+                            <button type="button" title="For all" onclick="insSym('\\forall')">∀</button>
+                            <button type="button" title="There exists" onclick="insSym('\\exists')">∃</button>
+                            <button type="button" title="Does not exist" onclick="insSym('\\nexists')">∄</button>
+                            <button type="button" title="Set minus" onclick="insSym('\\setminus')">∖</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Num Sets</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Natural numbers" onclick="insSym('\\mathbb{N}')">ℕ</button>
+                            <button type="button" title="Integers" onclick="insSym('\\mathbb{Z}')">ℤ</button>
+                            <button type="button" title="Rationals" onclick="insSym('\\mathbb{Q}')">ℚ</button>
+                            <button type="button" title="Reals" onclick="insSym('\\mathbb{R}')">ℝ</button>
+                            <button type="button" title="Complex" onclick="insSym('\\mathbb{C}')">ℂ</button>
+                            <button type="button" title="Primes / projective" onclick="insSym('\\mathbb{P}')">ℙ</button>
+                            <button type="button" title="Quaternions" onclick="insSym('\\mathbb{H}')">ℍ</button>
+                            <button type="button" title="Finite field" onclick="insSym('\\mathbb{F}')">𝔽</button>
+                            <button type="button" title="Expectation" onclick="insSym('\\mathbb{E}')">𝔼</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Logic</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Implies" onclick="insSym('\\Rightarrow')">⇒</button>
+                            <button type="button" title="If and only if" onclick="insSym('\\Leftrightarrow')">⇔</button>
+                            <button type="button" title="Logical and" onclick="insSym('\\wedge')">∧</button>
+                            <button type="button" title="Logical or" onclick="insSym('\\vee')">∨</button>
+                            <button type="button" title="Negation" onclick="insSym('\\neg')">¬</button>
+                            <button type="button" title="Therefore" onclick="insSym('\\therefore')">∴</button>
+                            <button type="button" title="Because" onclick="insSym('\\because')">∵</button>
+                            <button type="button" title="Proves / turnstile" onclick="insSym('\\vdash')">⊢</button>
+                            <button type="button" title="Models / satisfies" onclick="insSym('\\models')">⊨</button>
+                            <button type="button" title="Top / tautology" onclick="insSym('\\top')">⊤</button>
+                            <button type="button" title="Bottom / contradiction" onclick="insSym('\\bot')">⊥</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Relations</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Less or equal" onclick="insSym('\\leq')">≤</button>
+                            <button type="button" title="Greater or equal" onclick="insSym('\\geq')">≥</button>
+                            <button type="button" title="Not equal" onclick="insSym('\\neq')">≠</button>
+                            <button type="button" title="Approximately" onclick="insSym('\\approx')">≈</button>
+                            <button type="button" title="Congruent / equivalent" onclick="insSym('\\equiv')">≡</button>
+                            <button type="button" title="Isomorphic" onclick="insSym('\\cong')">≅</button>
+                            <button type="button" title="Similar" onclick="insSym('\\sim')">∼</button>
+                            <button type="button" title="Proportional to" onclick="insSym('\\propto')">∝</button>
+                            <button type="button" title="Perpendicular" onclick="insSym('\\perp')">⊥</button>
+                            <button type="button" title="Parallel" onclick="insSym('\\parallel')">∥</button>
+                            <button type="button" title="Much less" onclick="insSym('\\ll')">≪</button>
+                            <button type="button" title="Much greater" onclick="insSym('\\gg')">≫</button>
+                            <button type="button" title="Divides" onclick="insSym('\\mid')">∣</button>
+                            <button type="button" title="Does not divide" onclick="insSym('\\nmid')">∤</button>
+                            <button type="button" title="Precedes" onclick="insSym('\\prec')">≺</button>
+                            <button type="button" title="Succeeds" onclick="insSym('\\succ')">≻</button>
+                            <button type="button" title="Precedes or equal" onclick="insSym('\\preceq')">≼</button>
+                            <button type="button" title="Succeeds or equal" onclick="insSym('\\succeq')">≽</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Algebra</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Plus-minus" onclick="insSym('\\pm')">±</button>
+                            <button type="button" title="Times / cross product" onclick="insSym('\\times')">×</button>
+                            <button type="button" title="Dot product" onclick="insSym('\\cdot')">·</button>
+                            <button type="button" title="Division" onclick="insSym('\\div')">÷</button>
+                            <button type="button" title="Composition" onclick="insSym('\\circ')">∘</button>
+                            <button type="button" title="Direct sum" onclick="insSym('\\oplus')">⊕</button>
+                            <button type="button" title="Tensor product" onclick="insSym('\\otimes')">⊗</button>
+                            <button type="button" title="Right semidirect" onclick="insSym('\\rtimes')">⋊</button>
+                            <button type="button" title="Left semidirect" onclick="insSym('\\ltimes')">⋉</button>
+                            <button type="button" title="Normal subgroup (≤)" onclick="insSym('\\trianglelefteq')">⊴</button>
+                            <button type="button" title="Normal subgroup (proper)" onclick="insSym('\\triangleleft')">⊲</button>
+                            <button type="button" title="Adjoint / dagger" onclick="insSym('\\dagger')">†</button>
+                            <button type="button" title="Convolution / star" onclick="insSym('\\ast')">∗</button>
+                            <button type="button" title="Wedge / exterior" onclick="insSym('\\wedge')">∧</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Brackets</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Floor" onclick="openMath('\\lfloor  \\rfloor')">⌊⌋</button>
+                            <button type="button" title="Ceiling" onclick="openMath('\\lceil  \\rceil')">⌈⌉</button>
+                            <button type="button" title="Absolute value" onclick="openMath('\\left|  \\right|')">|x|</button>
+                            <button type="button" title="Norm" onclick="openMath('\\lVert  \\rVert')">‖x‖</button>
+                            <button type="button" title="Inner product" onclick="openMath('\\langle  ,  \\rangle')">⟨,⟩</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Accents</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Hat" onclick="openMath('\\hat{}')">x̂</button>
+                            <button type="button" title="Bar / overline" onclick="openMath('\\overline{}')">x̄</button>
+                            <button type="button" title="Tilde" onclick="openMath('\\tilde{}')">x̃</button>
+                            <button type="button" title="Vector arrow" onclick="openMath('\\vec{}')">x⃗</button>
+                            <button type="button" title="Dot" onclick="openMath('\\dot{}')">ẋ</button>
+                            <button type="button" title="Double dot" onclick="openMath('\\ddot{}')">ẍ</button>
+                            <button type="button" title="Check" onclick="openMath('\\check{}')">x̌</button>
+                            <button type="button" title="Underline" onclick="openMath('\\underline{}')">x̲</button>
+                            <button type="button" title="Overbrace" onclick="openMath('\\overbrace{}^{}')">⏞</button>
+                            <button type="button" title="Underbrace" onclick="openMath('\\underbrace{}_{}')">⏟</button>
+                            <button type="button" title="Prime" onclick="insSym('\\prime')">′</button>
+                            <button type="button" title="Calligraphic" onclick="openMath('\\mathcal{}')">𝒜</button>
+                            <button type="button" title="Fraktur" onclick="openMath('\\mathfrak{}')">𝔄</button>
+                            <button type="button" title="Bold math" onclick="openMath('\\mathbf{}')">𝐀</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Arrows</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Right arrow" onclick="insSym('\\to')">→</button>
+                            <button type="button" title="Left arrow" onclick="insSym('\\leftarrow')">←</button>
+                            <button type="button" title="Left-right arrow" onclick="insSym('\\leftrightarrow')">↔</button>
+                            <button type="button" title="Maps to" onclick="insSym('\\mapsto')">↦</button>
+                            <button type="button" title="Long right arrow" onclick="insSym('\\longrightarrow')">⟶</button>
+                            <button type="button" title="Injection / mono" onclick="insSym('\\hookrightarrow')">↪</button>
+                            <button type="button" title="Surjection / epi" onclick="insSym('\\twoheadrightarrow')">↠</button>
+                            <button type="button" title="Up arrow" onclick="insSym('\\uparrow')">↑</button>
+                            <button type="button" title="Down arrow" onclick="insSym('\\downarrow')">↓</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Matrix</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="2×2 matrix" onclick="openMath('\\begin{pmatrix} {} &amp; {} \\\\ {} &amp; {} \\end{pmatrix}')">M₂</button>
+                            <button type="button" title="3×3 matrix" onclick="openMath('\\begin{pmatrix} {} &amp; {} &amp; {} \\\\ {} &amp; {} &amp; {} \\\\ {} &amp; {} &amp; {} \\end{pmatrix}')">M₃</button>
+                            <button type="button" title="2×2 determinant" onclick="openMath('\\begin{vmatrix} {} &amp; {} \\\\ {} &amp; {} \\end{vmatrix}')">|D|</button>
+                            <button type="button" title="Column vector (3)" onclick="openMath('\\begin{pmatrix} {} \\\\ {} \\\\ {} \\end{pmatrix}')">v₃</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Insert</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Insert link" onclick="openLinkModal()">🔗 Link</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Align</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Align left" onclick="setAlign('left')">⇤ L</button>
+                            <button type="button" title="Align center" onclick="setAlign('center')">↔ C</button>
+                            <button type="button" title="Align right" onclick="setAlign('right')">R ⇥</button>
+                            <button type="button" title="Justify" onclick="setAlign('justify')">⇔ J</button>
+                        </div>
+                    </div>
+        </div>
+        <div class="editor-layout">
+            <div class="editor-pane">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
+                    <h2 style="margin:0;">Editor</h2>
+                    <span id="page-count" style="display:none;font-size:0.8rem;color:#888;font-family:sans-serif;"></span>
                 </div>
-                <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
+                <div class="paper-controls">
+                    <label>Page size:</label>
+                    <select id="paper-size-select" onchange="handlePaperSizeChange()">
+                        <option value="" disabled selected>Select page size…</option>
+                        <option value="none">No limit</option>
+                        <option value="letter">Letter (8.5×11")</option>
+                        <option value="a4">A4 (210×297mm)</option>
+                        <option value="legal">Legal (8.5×14")</option>
+                        <option value="a5">A5 (148×210mm)</option>
+                        <option value="custom">Custom…</option>
+                    </select>
+                    <span id="custom-dim-inputs" style="display:none; align-items:center; gap:4px;">
+                        <input type="number" id="custom-w" value="8.5" min="1" max="40" step="0.1" style="width:55px;"> ×
+                        <input type="number" id="custom-h" value="11" min="1" max="60" step="0.1" style="width:55px;">
+                        <span style="font-size:0.82rem;color:#666;">in</span>
+                        <button type="button" onclick="applyCustomSize()">Apply</button>
+                    </span>
+                </div>
+                <div id="editor-area">
+                    <div id="editor-blocker">Select a page size above to begin editing</div>
+                    <div id="pages-container"></div>
+                    <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
+                </div>
             </div>
-
 
             <div class="preview-pane">
                 <h2>Live Preview</h2>
@@ -252,7 +664,6 @@
         </div>
 
 
-        <button type="submit">Save</button>
     </form>
 
 
@@ -266,6 +677,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <div id="link-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
         <div style="background:#fff; padding:1.5rem 2rem; border-radius:8px; min-width:380px; box-shadow:0 4px 24px rgba(0,0,0,0.25);">
@@ -281,6 +694,14 @@
         </div>
     </div>
 
+    <div id="draft-confirm" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:1.25rem 1.75rem; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.3); z-index:1200; text-align:center; min-width:220px;">
+        <p style="margin:0 0 1rem; font-size:0.95rem;">Remove this draft?</p>
+        <div style="display:flex; gap:0.5rem; justify-content:center;">
+            <button type="button" onclick="confirmDeleteDraft()" style="padding:0.4rem 1rem; background:#e53e3e; color:#fff; border:none; border-radius:4px; cursor:pointer;">Remove draft</button>
+            <button type="button" onclick="cancelDeleteDraft()" style="padding:0.4rem 1rem; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
     <div id="math-modal">
         <div class="math-modal-box">
             <h3>Math Editor</h3>
@@ -289,18 +710,23 @@
                 <label><input type="radio" name="math-mode" value="display"> Display ($$...$$)</label>
             </div>
             <div id="mq-field" class="mq-container"></div>
+            <div id="drafts-bar" style="display:none; margin-top:0.75rem;">
+                <div style="font-size:0.8rem; color:#666; margin-bottom:0.35rem;">Drafts — click to restore:</div>
+                <div id="drafts-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
+            </div>
             <div class="math-modal-actions">
                 <button type="button" onclick="closeMathModal()">Cancel</button>
+                <button type="button" onclick="saveDraft()" style="background:#f5f0d8; border:1px solid #c9b96a; border-radius:4px; padding:0.5rem 1.2rem; cursor:pointer; margin-top:0;">Draft</button>
                 <button type="button" onclick="insertMath()">Insert</button>
             </div>
         </div>
     </div>
 
     <script>
-        const input = document.getElementById("content-input");
+        let input = document.getElementById("content-input");
         const preview = document.getElementById("preview");
 
-        let mathField, savedStart, savedEnd;
+        let mathField, savedStart, savedEnd, initialTemplate;
 
         // ── Toolbar helpers ──────────────────────────────────────────
         function ins(before, after) {
@@ -314,7 +740,76 @@
         }
 
         function insSym(latex) {
-            ins('$' + latex + '$', '');
+            const pos = input.selectionStart;
+            const prevChar = pos > 0 ? input.value[pos - 1] : '';
+            const prefix = prevChar === '$' ? ' ' : '';
+            ins(prefix + '$' + latex + '$', '');
+        }
+
+        // ── Text formatting ──────────────────────────────────────────
+        let _fmtSel = [0, 0];
+        function _saveFmtSel() { _fmtSel = [input.selectionStart, input.selectionEnd]; }
+
+        function applyFont(family) {
+            if (!family) return;
+            const [s, e] = _fmtSel;
+            if (s === e) { input.focus(); return; }
+            const sel = input.value.slice(s, e);
+            input.setRangeText(`<span style="font-family:${family}">${sel}</span>`, s, e, 'end');
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        }
+
+        function applyFontSize(size) {
+            if (!size) return;
+            const [s, e] = _fmtSel;
+            if (s === e) { input.focus(); return; }
+            const sel = input.value.slice(s, e);
+            input.setRangeText(`<span style="font-size:${size}">${sel}</span>`, s, e, 'end');
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        }
+
+        function applyTextColor(color) {
+            const [s, e] = _fmtSel;
+            const sel = input.value.slice(s, e);
+            if (!sel) return;
+            input.setRangeText(`<span style="color:${color}">${sel}</span>`, s, e, 'end');
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        }
+
+        function applyHighlight(color) {
+            const [s, e] = _fmtSel;
+            const sel = input.value.slice(s, e);
+            if (!sel) return;
+            input.setRangeText(`<span style="background-color:${color}">${sel}</span>`, s, e, 'end');
+            input.dispatchEvent(new Event('input'));
+            input.focus();
+        }
+
+        // ── Text alignment ───────────────────────────────────────────
+        function setAlign(align) {
+            const val   = input.value;
+            let selStart = input.selectionStart;
+            let selEnd   = input.selectionEnd;
+
+            if (selStart === selEnd) {
+                selStart = val.lastIndexOf('\n', selStart - 1) + 1;
+                const next = val.indexOf('\n', selEnd);
+                selEnd = next === -1 ? val.length : next;
+            }
+
+            let selected = val.slice(selStart, selEnd);
+
+            // Replace existing alignment wrapper instead of double-wrapping
+            const existing = selected.match(/^<div style="text-align:\w+">\n\n([\s\S]*?)\n\n<\/div>$/);
+            const inner = existing ? existing[1] : selected;
+
+            const wrapped = `<div style="text-align:${align}">\n\n${inner}\n\n</div>`;
+            input.setRangeText(wrapped, selStart, selEnd, 'end');
+            input.dispatchEvent(new Event('input'));
+            input.focus();
         }
 
         // ── Link modal ───────────────────────────────────────────────
@@ -350,7 +845,9 @@
         function openMath(latex) {
             savedStart = input.selectionStart;
             savedEnd   = input.selectionEnd;
+            initialTemplate = latex;
             mathField.latex(latex);
+            renderDrafts();
             const modal = document.getElementById('math-modal');
             modal.style.display = 'flex';
             setTimeout(() => mathField.focus(), 50);
@@ -362,12 +859,378 @@
         }
 
         function insertMath() {
-            const latex   = mathField.latex();
+            let latex = mathField.latex();
+            latex = latex.replace(/\\placeholder\{[^}]*\}/g, '{}');
+            latex = latex.replace(/\\MathQuillMathField\{[^}]*\}/g, '{}');
             const mode    = document.querySelector('input[name="math-mode"]:checked').value;
-            const wrapped = mode === 'display' ? '$$\n' + latex + '\n$$' : '$' + latex + '$';
+            const prevChar = savedStart > 0 ? input.value[savedStart - 1] : '';
+            const prefix  = (mode === 'inline' && prevChar === '$') ? ' ' : '';
+            const wrapped = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
             input.setRangeText(wrapped, savedStart, savedEnd, 'end');
             closeMathModal();
             input.dispatchEvent(new Event('input'));
+        }
+
+        // ── Math drafts ──────────────────────────────────────────────
+        const DRAFTS_KEY = 'mathDrafts_notes';
+        let mathDrafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '[]');
+
+        function saveDraft() {
+            const latex = mathField.latex().trim();
+            if (!latex) return;
+            mathDrafts.push(latex);
+            localStorage.setItem(DRAFTS_KEY, JSON.stringify(mathDrafts));
+            renderDrafts();
+        }
+
+        function loadDraft(i) {
+            mathField.latex(mathDrafts[i]);
+            setTimeout(() => mathField.focus(), 50);
+        }
+
+        let pendingDeleteIndex = -1;
+
+        function deleteDraft(i) {
+            pendingDeleteIndex = i;
+            document.getElementById('draft-confirm').style.display = 'block';
+        }
+
+        function confirmDeleteDraft() {
+            if (pendingDeleteIndex >= 0) {
+                mathDrafts.splice(pendingDeleteIndex, 1);
+                localStorage.setItem(DRAFTS_KEY, JSON.stringify(mathDrafts));
+                renderDrafts();
+                pendingDeleteIndex = -1;
+            }
+            document.getElementById('draft-confirm').style.display = 'none';
+        }
+
+        function cancelDeleteDraft() {
+            pendingDeleteIndex = -1;
+            document.getElementById('draft-confirm').style.display = 'none';
+        }
+
+        function renderDrafts() {
+            const bar  = document.getElementById('drafts-bar');
+            const list = document.getElementById('drafts-list');
+            if (!mathDrafts.length) { bar.style.display = 'none'; return; }
+            bar.style.display = 'block';
+            list.innerHTML = '';
+            mathDrafts.forEach((latex, i) => {
+                const tab = document.createElement('div');
+                tab.style.cssText = 'display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.5rem;background:#f0f4ff;border:1px solid #aac;border-radius:4px;cursor:pointer;max-width:220px;overflow:hidden;';
+                const preview = document.createElement('span');
+                preview.style.cssText = 'font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
+                try { preview.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false }); }
+                catch(e) { preview.textContent = latex; }
+                const del = document.createElement('span');
+                del.textContent = '×';
+                del.style.cssText = 'color:#999;cursor:pointer;font-size:1rem;line-height:1;flex-shrink:0;';
+                del.addEventListener('click', e => { e.stopPropagation(); deleteDraft(i); });
+                tab.appendChild(preview);
+                tab.appendChild(del);
+                tab.addEventListener('click', () => loadDraft(i));
+                list.appendChild(tab);
+            });
+        }
+
+        // ── Download ─────────────────────────────────────────────────
+        async function downloadFiles() {
+            const formats = [...document.querySelectorAll('input[name="dl-format"]:checked')].map(el => el.value);
+            if (!formats.length) { alert('Select at least one format.'); return; }
+
+            const btn = document.querySelector('button[onclick="downloadFiles()"]');
+            btn.disabled = true;
+            btn.textContent = 'Preparing…';
+
+            try {
+                await document.fonts.ready;
+                await new Promise(r => setTimeout(r, 300));
+
+                const titleEl = document.getElementById('id_title');
+                const title   = (titleEl ? titleEl.value.trim() : '') || 'notes';
+                const canvases = [];
+
+                if (pageMode) {
+                    // Capture each rendered page sheet individually
+                    for (const sheet of [...preview.children]) {
+                        const c = await html2canvas(sheet, {
+                            scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff'
+                        });
+                        canvases.push(c);
+                    }
+                } else {
+                    // Expand preview to full content height before capture
+                    const origHeight = preview.style.height;
+                    const origOverflow = preview.style.overflowY;
+                    preview.style.height = 'auto';
+                    preview.style.overflowY = 'visible';
+                    await new Promise(r => setTimeout(r, 100));
+                    const c = await html2canvas(preview, {
+                        scale: 3, useCORS: true, logging: false, backgroundColor: '#fafafa'
+                    });
+                    preview.style.height = origHeight;
+                    preview.style.overflowY = origOverflow;
+                    canvases.push(c);
+                }
+
+                if (!canvases.length) { alert('Nothing to download.'); return; }
+
+                for (const fmt of formats) {
+                    if (fmt === 'pdf') {
+                        const { jsPDF } = window.jspdf;
+                        let pdf;
+                        if (pageMode) {
+                            const w = pageDims.wIn, h = pageDims.hIn;
+                            pdf = new jsPDF({ orientation: h >= w ? 'p' : 'l', unit: 'in', format: [w, h] });
+                            for (let i = 0; i < canvases.length; i++) {
+                                if (i > 0) pdf.addPage([w, h], h >= w ? 'p' : 'l');
+                                pdf.addImage(canvases[i].toDataURL('image/png'), 'PNG', 0, 0, w, h);
+                            }
+                        } else {
+                            pdf = new jsPDF('p', 'in', 'letter');
+                            const margin = 0.75;
+                            const pageW  = pdf.internal.pageSize.getWidth() - margin * 2;
+                            const imgH   = (canvases[0].height / canvases[0].width) * pageW;
+                            pdf.addImage(canvases[0].toDataURL('image/png'), 'PNG', margin, margin, pageW, imgH);
+                        }
+                        pdf.save(title + '.pdf');
+                    } else {
+                        const mime = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+                        for (let i = 0; i < canvases.length; i++) {
+                            const link = document.createElement('a');
+                            link.download = title + (canvases.length > 1 ? `_p${i + 1}` : '') + '.' + fmt;
+                            link.href = canvases[i].toDataURL(mime, 0.95);
+                            link.click();
+                            await new Promise(r => setTimeout(r, 150));
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 150));
+                }
+            } catch (e) {
+                alert('Download failed: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '⬇ Download';
+            }
+        }
+
+        // ── Page mode ────────────────────────────────────────────────
+        const PAPER_PRESETS = {
+            letter: { wIn: 8.5,  hIn: 11    },
+            a4:     { wIn: 8.27, hIn: 11.69 },
+            legal:  { wIn: 8.5,  hIn: 14    },
+            a5:     { wIn: 5.83, hIn: 8.27  },
+        };
+        const PAGE_DISPLAY_W = 560;
+        const MARGIN_IN = 1.0;
+
+        let pageMode = false;
+        let pageDims = null;
+        let pageTextareas = [];
+
+        function _calcDims(wIn, hIn) {
+            const scale = PAGE_DISPLAY_W / wIn;
+            const mPx   = Math.round(MARGIN_IN * scale);
+            return { pageW: PAGE_DISPLAY_W, pageH: Math.round(hIn * scale), mPx,
+                     cW: PAGE_DISPLAY_W - 2 * mPx, cH: Math.round(hIn * scale) - 2 * mPx,
+                     wIn, hIn };
+        }
+
+        function handlePaperSizeChange() {
+            const val = document.getElementById('paper-size-select').value;
+            const ci  = document.getElementById('custom-dim-inputs');
+            document.getElementById('editor-blocker').style.display = 'none';
+            ci.style.display = val === 'custom' ? 'inline-flex' : 'none';
+            if (val === 'none')   { exitPageMode(); return; }
+            if (val === 'custom') return;
+            const p = PAPER_PRESETS[val];
+            enterPageMode(p.wIn, p.hIn);
+        }
+
+        function updatePageCount() {
+            const el = document.getElementById('page-count');
+            if (!pageMode) { el.style.display = 'none'; return; }
+            const n = pageTextareas.length;
+            el.textContent = n === 1 ? '1 page' : `${n} pages`;
+            el.style.display = '';
+        }
+
+        function applyCustomSize() {
+            const w = parseFloat(document.getElementById('custom-w').value) || 8.5;
+            const h = parseFloat(document.getElementById('custom-h').value) || 11;
+            enterPageMode(w, h);
+        }
+
+        function enterPageMode(wIn, hIn) {
+            const mainTa = document.getElementById('content-input');
+            // If switching sizes while already in page mode, collect content first
+            const existing = pageMode
+                ? pageTextareas.map(ta => ta.value).join('\n')
+                : mainTa.value;
+
+            pageMode      = true;
+            pageDims      = _calcDims(wIn, hIn);
+            pageTextareas = [];
+
+            mainTa.style.display = 'none';
+            const container = document.getElementById('pages-container');
+            container.style.display = 'block';
+            container.innerHTML = '';
+
+            if (existing.trim()) _reflowIntoPages(existing);
+            else                 _addPage();
+
+            input = pageTextareas[0];
+            input.focus();
+            updatePageCount();
+            updatePreview();
+        }
+
+        function exitPageMode() {
+            if (!pageMode) return;
+            const combined = pageTextareas.map(ta => ta.value).join('\n');
+            const mainTa   = document.getElementById('content-input');
+            mainTa.value   = combined;
+            mainTa.style.display = '';
+            input = mainTa;
+
+            document.getElementById('pages-container').style.display = 'none';
+            document.getElementById('pages-container').innerHTML = '';
+            pageTextareas = [];
+            pageMode = false;
+            pageDims = null;
+            input.focus();
+            updatePageCount();
+            updatePreview();
+        }
+
+        function _addPage() {
+            const container = document.getElementById('pages-container');
+            const sheet = document.createElement('div');
+            sheet.className = 'page-sheet';
+            sheet.style.width  = pageDims.pageW + 'px';
+            sheet.style.height = pageDims.pageH + 'px';
+            sheet.style.padding = pageDims.mPx + 'px';
+
+            const ta = document.createElement('textarea');
+            ta.style.height = pageDims.cH + 'px';
+
+            const pn = document.createElement('div');
+            pn.className = 'page-num';
+            pn.textContent = pageTextareas.length + 1;
+
+            sheet.appendChild(ta);
+            sheet.appendChild(pn);
+            container.appendChild(sheet);
+
+            const idx = pageTextareas.length;
+            pageTextareas.push(ta);
+
+            ta.addEventListener('focus', () => { input = ta; });
+            ta.addEventListener('input', () => {
+                input = ta;
+                _checkOverflow(idx);
+                updatePreview();
+            });
+            ta.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && ta.value === '' && idx > 0) {
+                    e.preventDefault();
+                    _removePage(idx);
+                }
+            });
+            return ta;
+        }
+
+        function _findSplitChar(text) {
+            const div = document.createElement('div');
+            div.style.cssText =
+                `position:fixed;left:-9999px;top:0;` +
+                `width:${pageDims.cW}px;` +
+                `font-family:monospace;font-size:1rem;line-height:1.9;` +
+                `white-space:pre-wrap;word-break:break-word;box-sizing:border-box;`;
+            document.body.appendChild(div);
+            div.textContent = text;
+            if (div.scrollHeight <= pageDims.cH) {
+                document.body.removeChild(div);
+                return text.length;
+            }
+            let lo = 0, hi = text.length;
+            while (lo < hi - 1) {
+                const mid = (lo + hi) >> 1;
+                div.textContent = text.slice(0, mid);
+                if (div.scrollHeight <= pageDims.cH) lo = mid; else hi = mid;
+            }
+            document.body.removeChild(div);
+            if (lo > 0 && lo < text.length && text[lo] !== '\n') {
+                const boundary = Math.max(text.lastIndexOf(' ', lo), text.lastIndexOf('\n', lo));
+                if (boundary > 0) return boundary + 1;
+            }
+            return lo;
+        }
+
+        function _checkOverflow(idx) {
+            const ta = pageTextareas[idx];
+            const splitAt = _findSplitChar(ta.value);
+            if (splitAt >= ta.value.length) return;
+
+            const keep     = ta.value.slice(0, splitAt);
+            const overflow = ta.value.slice(splitAt);
+            const cursor   = ta.selectionStart;
+
+            ta.value = keep;
+
+            const nextIdx = idx + 1;
+            if (nextIdx >= pageTextareas.length) _addPage();
+            const nextTa = pageTextareas[nextIdx];
+            nextTa.value = overflow + (nextTa.value ? '\n' + nextTa.value : '');
+
+            _checkOverflow(nextIdx);
+            _updatePageNums();
+
+            if (cursor > keep.length) {
+                const pos = cursor - keep.length;
+                nextTa.focus();
+                nextTa.setSelectionRange(pos, pos);
+                input = nextTa;
+                nextTa.closest('.page-sheet').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        function _removePage(idx) {
+            const ta      = pageTextareas[idx];
+            const leftover = ta.value;
+            ta.closest('.page-sheet').remove();
+            pageTextareas.splice(idx, 1);
+            const prevTa = pageTextareas[idx - 1];
+            if (leftover) prevTa.value += (prevTa.value ? '\n' : '') + leftover;
+            prevTa.focus();
+            prevTa.setSelectionRange(prevTa.value.length, prevTa.value.length);
+            input = prevTa;
+            _updatePageNums();
+            updatePreview();
+        }
+
+        function _updatePageNums() {
+            pageTextareas.forEach((ta, i) => {
+                const pn = ta.closest('.page-sheet').querySelector('.page-num');
+                if (pn) pn.textContent = i + 1;
+            });
+            updatePageCount();
+        }
+
+        function _reflowIntoPages(text) {
+            let remaining = text;
+            while (remaining.length > 0) {
+                const ta = _addPage();
+                const splitAt = _findSplitChar(remaining);
+                if (splitAt >= remaining.length) {
+                    ta.value = remaining;
+                    break;
+                }
+                ta.value = remaining.slice(0, splitAt);
+                remaining = remaining.slice(splitAt);
+            }
         }
 
         // ── Preview rendering ────────────────────────────────────────
@@ -379,33 +1242,79 @@
                 .replace(/sqrt\((.*?)\)/g, '\\sqrt{$1}');
         }
 
-        function updatePreview() {
-            let raw = input.value;
+        function _renderRaw(raw) {
             raw = simpleMathToLatex(raw);
-
             const saved = [];
-            raw = raw.replace(/\$\$[\s\S]*?\$\$/g, m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
-            raw = raw.replace(/\$[^$\n]+?\$/g,      m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
-
+            raw = raw.replace(/(^|\n)\$\$([\s\S]*?)\$\$/g, (_, pre, content) => {
+                saved.push('$$' + content + '$$');
+                return pre + `@@MATH${saved.length - 1}@@`;
+            });
+            raw = raw.replace(/\$[^$\n]+?\$/g, m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
+            raw = raw.replace(/\n{3,}/g, m => '\n\n' + '<br>\n\n'.repeat(m.length - 2));
+            raw = raw.replace(/ {2,}/g, m => '&nbsp;'.repeat(m.length));
             let html = marked.parse(raw);
             html = html.replace(/@@MATH(\d+)@@/g, (_, i) => saved[+i]);
+            return html;
+        }
 
-            const delimiters = [
-                { left: "$$", right: "$$", display: true },
-                { left: "\\[", right: "\\]", display: true },
-                { left: "$", right: "$", display: false },
-                { left: "\\(", right: "\\)", display: false }
-            ];
-            preview.innerHTML = html;
-            renderMathInElement(preview, { delimiters, throwOnError: false });
+        const MATH_DELIMITERS = [
+            { left: "$$", right: "$$", display: true  },
+            { left: "\\[", right: "\\]", display: true  },
+            { left: "$",  right: "$",  display: false },
+            { left: "\\(", right: "\\)", display: false }
+        ];
+
+        function updatePreview() {
+            if (pageMode) {
+                preview.style.cssText =
+                    `background:#808080;padding:20px 16px;overflow-y:auto;` +
+                    `min-height:${pageDims.pageH + 40}px;border:none;`;
+                preview.innerHTML = '';
+
+                pageTextareas.forEach((ta, i) => {
+                    const sheet = document.createElement('div');
+                    sheet.style.cssText =
+                        `width:${pageDims.pageW}px;height:${pageDims.pageH}px;` +
+                        `background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.4);` +
+                        `margin:0 auto 24px;padding:${pageDims.mPx}px;` +
+                        `box-sizing:border-box;overflow:hidden;position:relative;`;
+
+                    const inner = document.createElement('div');
+                    inner.style.cssText =
+                        `width:${pageDims.cW}px;height:${pageDims.cH}px;` +
+                        `overflow:hidden;overflow-wrap:break-word;word-break:break-word;`;
+                    inner.innerHTML = _renderRaw(ta.value);
+
+                    const pn = document.createElement('div');
+                    pn.style.cssText =
+                        'position:absolute;bottom:8px;right:14px;font-size:0.72rem;' +
+                        'color:#ccc;font-family:sans-serif;pointer-events:none;';
+                    pn.textContent = i + 1;
+
+                    sheet.appendChild(inner);
+                    sheet.appendChild(pn);
+                    preview.appendChild(sheet);
+                    renderMathInElement(inner, { delimiters: MATH_DELIMITERS, throwOnError: false });
+                });
+            } else {
+                preview.removeAttribute('style');
+                preview.innerHTML = _renderRaw(input.value);
+                renderMathInElement(preview, { delimiters: MATH_DELIMITERS, throwOnError: false });
+            }
         }
 
         // ── Init after all deferred scripts have loaded ──────────────
         document.addEventListener('DOMContentLoaded', () => {
             const MQ = MathQuill.getInterface(2);
             mathField = MQ.MathField(document.getElementById('mq-field'), {
-                spaceBehavesLikeTab: true,
-                handlers: { enter: insertMath }
+                handlers: {
+                    enter: insertMath,
+                    edit: function() {
+                        if (mathField.latex().trim() === '' && initialTemplate) {
+                            mathField.latex(initialTemplate);
+                        }
+                    }
+                }
             });
 
             document.getElementById('math-modal').addEventListener('click', e => {
@@ -413,6 +1322,28 @@
             });
             document.getElementById('link-modal').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeLinkModal();
+            });
+
+            // Save textarea selection before format pickers steal focus
+            ['font-picker','size-picker','text-color-picker','highlight-picker'].forEach(id => {
+                document.getElementById(id).addEventListener('mousedown', _saveFmtSel);
+            });
+            document.getElementById('size-picker').addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const v = e.target.value.trim();
+                    if (v) { applyFontSize(v + 'px'); e.target.value = ''; input.focus(); }
+                }
+            });
+            document.getElementById('text-color-picker').addEventListener('change', e => applyTextColor(e.target.value));
+            document.getElementById('highlight-picker').addEventListener('change', e => applyHighlight(e.target.value));
+
+            // Combine pages into the main field before form POST
+            document.querySelector('form[method="post"]').addEventListener('submit', () => {
+                if (pageMode) {
+                    document.getElementById('content-input').value =
+                        pageTextareas.map(ta => ta.value).join('\n');
+                }
             });
 
             input.addEventListener("input", updatePreview);

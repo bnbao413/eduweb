@@ -3,20 +3,18 @@
 {% block content %}
 <h1>EdTech Startup</h1>
 
-<h2>Courses</h2>
-
-{% if courses %}
-    <ul>
-    {% for course in courses %}
-        <li>
-            <a href="{% url 'course_detail' course.id %}">
-                <strong>{{ course.title }}</strong>
-            </a><br>
-            {{ course.description }}
-        </li>
+{% if subjects %}
+    {% for subject in subjects %}
+        <div style="margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ddd;">
+            <h2 style="margin-bottom: 0.25rem;">
+                <a href="{% url 'subject_detail' subject.id %}">{{ subject.title }}</a>
+            </h2>
+            {% if subject.description %}
+                <p style="margin-top:0.4rem;">{{ subject.description }}</p>
+            {% endif %}
+        </div>
     {% endfor %}
-    </ul>
 {% else %}
-    <p>No courses yet.</p>
+    <p>No subjects yet.</p>
 {% endif %}
 {% endblock %}

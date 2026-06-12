@@ -1,31 +1,14 @@
 {% extends "base.html" %}
 
-
 {% block content %}
 <h1>{{ practice.title }}</h1>
-
 
 <p><strong>Course:</strong> {{ practice.unit.course.title }}</p>
 <p><strong>Unit:</strong> {{ practice.unit.title }}</p>
 
-
 <p>{{ practice.instructions }}</p>
-
-
-{% if practice.numbas_url %}
-    <iframe
-        src="{{ practice.numbas_url }}"
-        width="100%"
-        height="800"
-        style="border:none;">
-    </iframe>
-{% else %}
-    <p>No Numbas URL has been added yet.</p>
-{% endif %}
-
 
 <p>
     <a href="{% url 'course_detail' practice.unit.course.id %}">← Back to course</a>
 </p>
 {% endblock %}
-

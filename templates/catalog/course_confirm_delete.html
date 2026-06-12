@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Delete "{{ course.title }}"?</h1>
+<p>This will permanently delete the course and all its units, lessons, textbook pages, notes, practice sets, and tests.</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" style="background:#c0392b; color:white; border:none; padding:0.75rem 1.5rem; cursor:pointer; font-size:1rem;">Yes, delete permanently</button>
+    &nbsp;
+    <a href="{% url 'course_detail' course.id %}">Cancel</a>
+</form>
+{% endblock %}

@@ -6,88 +6,64 @@
 <p>{{ course.description }}</p>
 
 <details>
-<summary><h2 style="display:inline; cursor:pointer;">Units</h2></summary>
+<summary style="font-size:1.5rem; font-weight:bold; cursor:pointer; margin-bottom:0.5rem;">Units</summary>
 
 {% if course.units.all %}
     {% for unit in course.units.all %}
-        <details style="margin-left:1rem;">
-            <summary><strong>{{ unit.title }}</strong></summary>
+        <details style="margin-left:1rem; margin-bottom:0.5rem;">
+            <summary style="cursor:pointer;"><strong>{{ unit.title }}</strong></summary>
 
             {% if unit.description %}
                 <p>{{ unit.description }}</p>
             {% endif %}
 
-            <h4>Lessons</h4>
-            {% if unit.lessons.all %}
-                <ul>
-                {% for lesson in unit.lessons.all %}
-                    <li>
-                        <a href="{% url 'lesson_detail' lesson.id %}">
-                            <strong>{{ lesson.title }}</strong>
-                        </a><br>
-                        {{ lesson.content }}
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>No lessons yet.</p>
-            {% endif %}
-
-            <h4>Textbook Pages</h4>
-            {% if unit.textbook_pages.all %}
-                <ul>
-                {% for page in unit.textbook_pages.all %}
-                    <li>
-                        <a href="{% url 'textbook_detail' page.id %}">
-                            {{ page.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>No textbook pages yet.</p>
-            {% endif %}
-
-            <h4>Notes</h4>
-            {% if unit.notes_pages.all %}
-                <ul>
-                    {% for page in unit.notes_pages.all %}
-                        <li>
-                            <a href="{% url 'notes_detail' page.id %}">
-                                <strong>{{ page.title }}</strong>
-                            </a>
-                        </li>
+            <details style="margin-left:1rem; margin-top:0.5rem;">
+                <summary style="cursor:pointer;">Textbook Pages</summary>
+                {% if unit.textbook_pages.all %}
+                    <ul>
+                    {% for page in unit.textbook_pages.all %}
+                        <li><a href="{% url 'textbook_detail' page.id %}">{{ page.title }}</a></li>
                     {% endfor %}
-                </ul>
-            {% else %}
-                <p>No notes yet.</p>
-            {% endif %}
+                    </ul>
+                {% else %}
+                    <p>No textbook pages yet.</p>
+                {% endif %}
+            </details>
 
-            <h4>Practice Sets</h4>
-            {% if unit.practice_sets.all %}
-                <ul>
-                {% for practice in unit.practice_sets.all %}
-                    <li>
-                        <a href="{% url 'start_practice' practice.id %}">
-                            {{ practice.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <p>No practice sets yet.</p>
-            {% endif %}
+            <details style="margin-left:1rem; margin-top:0.5rem;">
+                <summary style="cursor:pointer;">Notes</summary>
+                {% if unit.notes_pages.all %}
+                    <ul>
+                    {% for page in unit.notes_pages.all %}
+                        <li><a href="{% url 'notes_detail' page.id %}">{{ page.title }}</a></li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No notes yet.</p>
+                {% endif %}
+            </details>
 
-            <h4>Unit Test</h4>
-            {% if unit.unit_test %}
-                <p>
-                    <a href="{% url 'start_unit_test' unit.unit_test.id %}">
-                        {{ unit.unit_test.title }}
-                    </a>
-                </p>
-            {% else %}
-                <p>No unit test yet.</p>
-            {% endif %}
+            <details style="margin-left:1rem; margin-top:0.5rem;">
+                <summary style="cursor:pointer;">Practice Sets</summary>
+                {% if unit.practice_sets.all %}
+                    <ul>
+                    {% for practice in unit.practice_sets.all %}
+                        <li><a href="{% url 'start_practice' practice.id %}">{{ practice.title }}</a></li>
+                    {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No practice sets yet.</p>
+                {% endif %}
+            </details>
+
+            <details style="margin-left:1rem; margin-top:0.5rem;">
+                <summary style="cursor:pointer;">Unit Test</summary>
+                {% if unit.unit_test %}
+                    <p><a href="{% url 'start_unit_test' unit.unit_test.id %}">{{ unit.unit_test.title }}</a></p>
+                {% else %}
+                    <p>No unit test yet.</p>
+                {% endif %}
+            </details>
 
         </details>
     {% endfor %}
@@ -97,23 +73,10 @@
 
 </details>
 
-<details>
-<summary><h2 style="display:inline; cursor:pointer;">Final Exam</h2></summary>
+<details style="margin-top:1rem;">
+<summary style="font-size:1.5rem; font-weight:bold; cursor:pointer; margin-bottom:0.5rem;">Final Exam</summary>
 
     <div style="margin-left:1rem;">
-        <h4>Lessons</h4>
-        <p>No lessons yet.</p>
-
-        <h4>Textbook Pages</h4>
-        <p>No textbook pages yet.</p>
-
-        <h4>Notes</h4>
-        <p>No notes yet.</p>
-
-        <h4>Practice Sets</h4>
-        <p>No practice sets yet.</p>
-
-        <h4>Final Exam</h4>
         {% if course.final_exam %}
             <p>
                 <a href="{% url 'start_final_exam' course.final_exam.id %}">
@@ -127,5 +90,5 @@
 
 </details>
 
-<a href="/">← Back to courses</a>
+<a href="/">← Back</a>
 {% endblock %}

@@ -5,17 +5,9 @@
 
 <p><strong>Course:</strong> {{ exam.course.title }}</p>
 
-<div>
-    {{ exam.instructions }}
-</div>
+<div>{{ exam.instructions }}</div>
 
-{% if exam.numbas_url %}
-    <p>
-        <a href="{% url 'start_final_exam' exam.id %}">Start Final Exam</a>
-    </p>
-{% else %}
-    <p>No exam has been added yet.</p>
-{% endif %}
+<p><a href="{% url 'start_final_exam' exam.id %}">Start Final Exam</a></p>
 
 <p>
     <a href="{% url 'course_detail' exam.course.id %}">← Back to course</a>

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ subject.title }}</h1>
+
+{% if subject.description %}
+    <p>{{ subject.description }}</p>
+{% endif %}
+
+{% if courses %}
+    {% for course in courses %}
+        <div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ddd;">
+            <h2 style="margin-bottom: 0.25rem;">
+                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+                {% if user.is_staff %}
+                    <a href="{% url 'course_delete' course.id %}" style="font-size:0.75rem; font-weight:normal; color:#c0392b; margin-left:0.75rem;">[Delete]</a>
+                {% endif %}
+            </h2>
+            {% if course.description %}
+                <p style="margin-top:0.4rem;">{{ course.description }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No courses yet.</p>
+{% endif %}
+
+<a href="/">← Back</a>
+{% endblock %}
