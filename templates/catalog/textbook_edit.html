@@ -126,7 +126,8 @@
             background: #fff;
             padding: 1.5rem 2rem;
             border-radius: 8px;
-            min-width: 440px;
+            min-width: 540px;
+            max-width: 90vw;
             box-shadow: 0 4px 24px rgba(0,0,0,0.25);
         }
 
@@ -185,20 +186,29 @@
         <button type="button" id="export-btn" onclick="exportPDF()" style="background:#1a3a6e;color:#fff;border:none;border-radius:4px;padding:0.75rem 1rem;cursor:pointer;margin-left:0.5rem;">Export PDF</button>
 
         <div class="math-toolbar">
+                    <div class="toolbar-group" style="position:relative;">
+                        <div class="toolbar-group-label">Search</div>
+                        <div class="toolbar-group-buttons">
+                            <input type="text" id="toolbar-sym-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false" style="font-size:0.78rem;padding:2px 7px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;width:150px;height:22px;">
+                        </div>
+                        <div id="toolbar-search-results" style="display:none;position:absolute;top:100%;left:0;z-index:300;background:#fff;border:1px solid #c5cce0;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,0.15);min-width:240px;max-height:260px;overflow-y:auto;margin-top:2px;"></div>
+                    </div>
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Format</div>
                         <div class="toolbar-group-buttons" style="max-width:480px;">
-                            <select id="font-picker" title="Font family — select text first" onchange="applyFont(this.value); this.value='';" style="font-size:0.78rem;padding:2px 3px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;cursor:pointer;max-width:120px;height:22px;">
-                                <option value="">Font…</option>
-                                <option value="Arial, sans-serif">Arial</option>
-                                <option value="'Times New Roman', serif">Times New Roman</option>
-                                <option value="Georgia, serif">Georgia</option>
-                                <option value="'Courier New', monospace">Courier New</option>
-                                <option value="Verdana, sans-serif">Verdana</option>
-                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                                <option value="'Comic Sans MS', cursive">Comic Sans</option>
-                                <option value="Impact, sans-serif">Impact</option>
-                            </select>
+                            <div style="position:relative;display:inline-block;vertical-align:middle">
+                                <button type="button" id="font-dropdown-btn" title="Font family — select text first" onclick="toggleFontDropdown()" style="font-size:0.78rem;padding:2px 6px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;cursor:pointer;height:22px;min-width:72px;text-align:left;white-space:nowrap">Font ▾</button>
+                                <div id="font-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:200;background:#fff;border:1px solid #c5cce0;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,0.15);min-width:170px;margin-top:2px;overflow:hidden">
+                                    <button type="button" data-font="Arial, sans-serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:Arial,sans-serif">Arial</button>
+                                    <button type="button" data-font="'Times New Roman', serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:'Times New Roman',serif">Times New Roman</button>
+                                    <button type="button" data-font="Georgia, serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:Georgia,serif">Georgia</button>
+                                    <button type="button" data-font="'Courier New', monospace" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:'Courier New',monospace">Courier New</button>
+                                    <button type="button" data-font="Verdana, sans-serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:Verdana,sans-serif">Verdana</button>
+                                    <button type="button" data-font="'Trebuchet MS', sans-serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:'Trebuchet MS',sans-serif">Trebuchet MS</button>
+                                    <button type="button" data-font="'Comic Sans MS', cursive" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:'Comic Sans MS',cursive">Comic Sans</button>
+                                    <button type="button" data-font="Impact, sans-serif" onclick="applyFont(this.dataset.font)" style="display:block;width:100%;padding:5px 10px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;font-family:Impact,sans-serif">Impact</button>
+                                </div>
+                            </div>
                             <input type="number" id="size-picker" title="Font size — select text, type size, press Enter" placeholder="Size" min="1" max="999" step="1" style="font-size:0.78rem;padding:2px 4px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;width:58px;height:22px;">
                             <span style="font-size:0.78rem;color:#666;">px</span>
                             <button type="button" title="Bold" onclick="ins('**','**')" style="font-weight:700;">B</button>
@@ -251,6 +261,23 @@
                         </div>
                     </div>
                     <div class="toolbar-group">
+                        <div class="toolbar-group-label">Physics</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="hbar (reduced Planck)" onclick="openMath('\\hbar')">ℏ</button>
+                            <button type="button" title="hslash" onclick="openMath('\\hslash')">ℏ̸</button>
+                            <button type="button" title="Bra ⟨·|" onclick="openMath('\\langle  |')">⟨·|</button>
+                            <button type="button" title="Ket |·⟩" onclick="openMath('|  \\rangle')">|·⟩</button>
+                            <button type="button" title="Braket ⟨·|·⟩" onclick="openMath('\\langle  |  \\rangle')">⟨·|·⟩</button>
+                            <button type="button" title="Dagger / Hermitian conjugate" onclick="openMath('\\dagger')">†</button>
+                            <button type="button" title="Double dagger" onclick="openMath('\\ddagger')">‡</button>
+                            <button type="button" title="Real part" onclick="openMath('\\Re')">ℜ</button>
+                            <button type="button" title="Imaginary part" onclick="openMath('\\Im')">ℑ</button>
+                            <button type="button" title="Weierstrass p" onclick="openMath('\\wp')">℘</button>
+                            <button type="button" title="Aleph" onclick="openMath('\\aleph')">ℵ</button>
+                            <button type="button" title="Beth" onclick="openMath('\\beth')">ℶ</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
                         <div class="toolbar-group-label">Trig</div>
                         <div class="toolbar-group-buttons">
                             <button type="button" title="Sine" onclick="openMath('\\sin\\left(\\right)')">sin</button>
@@ -279,23 +306,23 @@
                             <button type="button" title="Maximum" onclick="openMath('\\max_{ }')">max</button>
                             <button type="button" title="Minimum" onclick="openMath('\\min_{ }')">min</button>
                             <button type="button" title="GCD" onclick="openMath('\\gcd\\left(\\right)')">gcd</button>
-                            <button type="button" title="LCM" onclick="insSym('\\operatorname{lcm}')">lcm</button>
+                            <button type="button" title="LCM" onclick="openMath('\\operatorname{lcm}\\left(\\right)')">lcm</button>
                             <button type="button" title="Determinant" onclick="openMath('\\det\\left(\\right)')">det</button>
-                            <button type="button" title="Trace" onclick="insSym('\\operatorname{tr}')">tr</button>
-                            <button type="button" title="Rank" onclick="insSym('\\operatorname{rank}')">rank</button>
-                            <button type="button" title="Kernel" onclick="insSym('\\ker')">ker</button>
-                            <button type="button" title="Span" onclick="insSym('\\operatorname{span}')">span</button>
-                            <button type="button" title="Argument" onclick="insSym('\\arg')">arg</button>
-                            <button type="button" title="Real part" onclick="insSym('\\operatorname{Re}')">Re</button>
-                            <button type="button" title="Imaginary part" onclick="insSym('\\operatorname{Im}')">Im</button>
-                            <button type="button" title="Residue" onclick="insSym('\\operatorname{Res}')">Res</button>
-                            <button type="button" title="Homomorphisms" onclick="insSym('\\operatorname{Hom}')">Hom</button>
-                            <button type="button" title="Automorphisms" onclick="insSym('\\operatorname{Aut}')">Aut</button>
-                            <button type="button" title="Endomorphisms" onclick="insSym('\\operatorname{End}')">End</button>
-                            <button type="button" title="Galois group" onclick="insSym('\\operatorname{Gal}')">Gal</button>
-                            <button type="button" title="Spectrum" onclick="insSym('\\operatorname{Spec}')">Spec</button>
-                            <button type="button" title="Ext functor" onclick="insSym('\\operatorname{Ext}')">Ext</button>
-                            <button type="button" title="Tor functor" onclick="insSym('\\operatorname{Tor}')">Tor</button>
+                            <button type="button" title="Trace" onclick="openMath('\\operatorname{tr}\\left(\\right)')">tr</button>
+                            <button type="button" title="Rank" onclick="openMath('\\operatorname{rank}\\left(\\right)')">rank</button>
+                            <button type="button" title="Kernel" onclick="openMath('\\ker\\left(\\right)')">ker</button>
+                            <button type="button" title="Span" onclick="openMath('\\operatorname{span}\\left(\\right)')">span</button>
+                            <button type="button" title="Argument" onclick="openMath('\\arg\\left(\\right)')">arg</button>
+                            <button type="button" title="Real part" onclick="openMath('\\operatorname{Re}\\left(\\right)')">Re</button>
+                            <button type="button" title="Imaginary part" onclick="openMath('\\operatorname{Im}\\left(\\right)')">Im</button>
+                            <button type="button" title="Residue" onclick="openMath('\\operatorname{Res}_{  }\\left(\\right)')">Res</button>
+                            <button type="button" title="Homomorphisms" onclick="openMath('\\operatorname{Hom}\\left(,\\right)')">Hom</button>
+                            <button type="button" title="Automorphisms" onclick="openMath('\\operatorname{Aut}\\left(\\right)')">Aut</button>
+                            <button type="button" title="Endomorphisms" onclick="openMath('\\operatorname{End}\\left(\\right)')">End</button>
+                            <button type="button" title="Galois group" onclick="openMath('\\operatorname{Gal}\\left(\\right)')">Gal</button>
+                            <button type="button" title="Spectrum" onclick="openMath('\\operatorname{Spec}\\left(\\right)')">Spec</button>
+                            <button type="button" title="Ext functor" onclick="openMath('\\operatorname{Ext}^{  }\\left(,\\right)')">Ext</button>
+                            <button type="button" title="Tor functor" onclick="openMath('\\operatorname{Tor}_{  }\\left(,\\right)')">Tor</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -475,10 +502,40 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Matrix</div>
                         <div class="toolbar-group-buttons">
-                            <button type="button" title="2×2 matrix" onclick="openMath('\\begin{pmatrix} {} &amp; {} \\\\ {} &amp; {} \\end{pmatrix}')">M₂</button>
-                            <button type="button" title="3×3 matrix" onclick="openMath('\\begin{pmatrix} {} &amp; {} &amp; {} \\\\ {} &amp; {} &amp; {} \\\\ {} &amp; {} &amp; {} \\end{pmatrix}')">M₃</button>
-                            <button type="button" title="2×2 determinant" onclick="openMath('\\begin{vmatrix} {} &amp; {} \\\\ {} &amp; {} \\end{vmatrix}')">|D|</button>
-                            <button type="button" title="Column vector (3)" onclick="openMath('\\begin{pmatrix} {} \\\\ {} \\\\ {} \\end{pmatrix}')">v₃</button>
+                            <button type="button" title="2×2 matrix" onclick="openMatrixModal(2,2,'pmatrix')">M₂</button>
+                            <button type="button" title="3×3 matrix" onclick="openMatrixModal(3,3,'pmatrix')">M₃</button>
+                            <button type="button" title="2×2 determinant" onclick="openMatrixModal(2,2,'vmatrix')">|D|</button>
+                            <button type="button" title="Column vector (3)" onclick="openMatrixModal(3,1,'pmatrix')">v₃</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Geometry</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Angle" onclick="insSym('\\angle')">∠</button>
+                            <button type="button" title="Measured angle" onclick="insSym('\\measuredangle')">∡</button>
+                            <button type="button" title="Spherical angle" onclick="insSym('\\sphericalangle')">∢</button>
+                            <button type="button" title="Triangle" onclick="insSym('\\triangle')">△</button>
+                            <button type="button" title="Diamond" onclick="insSym('\\Diamond')">◇</button>
+                            <button type="button" title="Circle" onclick="insSym('\\bigcirc')">○</button>
+                            <button type="button" title="Arc / frown" onclick="insSym('\\frown')">⌢</button>
+                            <button type="button" title="Smile / arc" onclick="insSym('\\smile')">⌣</button>
+                            <button type="button" title="Congruent" onclick="insSym('\\cong')">≅</button>
+                            <button type="button" title="Similar" onclick="insSym('\\sim')">∼</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <div class="toolbar-group-label">Misc</div>
+                        <div class="toolbar-group-buttons">
+                            <button type="button" title="Horizontal ellipsis" onclick="insSym('\\ldots')">…</button>
+                            <button type="button" title="Centered dots" onclick="insSym('\\cdots')">⋯</button>
+                            <button type="button" title="Vertical dots" onclick="insSym('\\vdots')">⋮</button>
+                            <button type="button" title="Diagonal dots" onclick="insSym('\\ddots')">⋱</button>
+                            <button type="button" title="Degree" onclick="insSym('^\\circ')">°</button>
+                            <button type="button" title="Sharp" onclick="insSym('\\sharp')">♯</button>
+                            <button type="button" title="Flat" onclick="insSym('\\flat')">♭</button>
+                            <button type="button" title="Natural" onclick="insSym('\\natural')">♮</button>
+                            <button type="button" title="Section sign" onclick="insSym('\\S')">§</button>
+                            <button type="button" title="Paragraph sign" onclick="insSym('\\P')">¶</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -545,6 +602,17 @@
         </div>
     </div>
 
+    <div id="matrix-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1100;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.25);min-width:280px;">
+            <h3 id="matrix-modal-title" style="margin:0 0 1rem;font-size:1rem;"></h3>
+            <div id="matrix-grid" style="display:inline-grid;gap:6px;margin-bottom:1.25rem;"></div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button type="button" onclick="closeMatrixModal()" style="padding:0.4rem 1rem;cursor:pointer;">Cancel</button>
+                <button type="button" onclick="doInsertMatrix()" style="padding:0.4rem 1rem;background:#1a3a6e;color:#fff;border:none;border-radius:4px;cursor:pointer;">Insert</button>
+            </div>
+        </div>
+    </div>
+
     <div id="math-modal">
         <div class="math-modal-box">
             <h3>Math Editor</h3>
@@ -553,6 +621,11 @@
                 <label><input type="radio" name="math-mode" value="display"> Display ($$...$$)</label>
             </div>
             <div id="mq-field" class="mq-container"></div>
+            <input type="text" id="modal-sym-search" placeholder="Search symbols… e.g. hbar, partial, arrow" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin:0.6rem 0 0.35rem;padding:5px 8px;border:1px solid #c5cce0;border-radius:4px;font-size:0.83rem;">
+            <div id="modal-sym-panel" style="border:1px solid #dde2f0;border-radius:6px;overflow:hidden;">
+                <div id="modal-cat-tabs" style="display:flex;flex-wrap:wrap;gap:3px;padding:5px 5px 3px;background:#eef0f7;border-bottom:1px solid #dde2f0;"></div>
+                <div id="modal-sym-grid" style="display:flex;flex-wrap:wrap;gap:3px;padding:6px;min-height:44px;max-height:180px;overflow-y:auto;"></div>
+            </div>
             <div id="drafts-bar" style="display:none; margin-top:0.75rem;">
                 <div style="font-size:0.8rem; color:#666; margin-bottom:0.35rem;">Drafts — click to restore:</div>
                 <div id="drafts-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
@@ -662,11 +735,132 @@ a{color:#1a3a6e}
             }
         }
 
+        // ── Live preview — paginated page cards in iframe ─────────────────────
+        let livePreviewUrl = null;
+        let _liveTimer = null;
+
+        function _paginateContent(bodyHtml) {
+            const PAGE_H = 9 * 96; // 864 px (9in content area at 96dpi)
+
+            const m = document.createElement('div');
+            m.style.cssText =
+                'position:fixed;top:-9999px;left:0;width:624px;' +
+                'font-family:Georgia,serif;font-size:12pt;line-height:1.6;' +
+                'overflow-wrap:break-word;word-break:normal;' +
+                'visibility:hidden;pointer-events:none;';
+            m.innerHTML = bodyHtml;
+            document.body.appendChild(m);
+
+            const mTop = m.getBoundingClientRect().top;
+            const totalH = m.scrollHeight;
+
+            // Fast path: everything fits on one page
+            if (totalH <= PAGE_H) {
+                const html = m.innerHTML;
+                document.body.removeChild(m);
+                return [[html]];
+            }
+
+            // Build per-character list of {node, offset} for binary search
+            const positions = [];
+            const walker = document.createTreeWalker(m, NodeFilter.SHOW_TEXT);
+            let tn;
+            while ((tn = walker.nextNode())) {
+                for (let i = 0; i <= tn.length; i++) positions.push({ node: tn, offset: i });
+            }
+
+            if (!positions.length) {
+                document.body.removeChild(m);
+                return [[bodyHtml]];
+            }
+
+            // Bottom Y of the range [start-of-m .. pos], relative to mTop
+            function rangeBottomAt(p) {
+                const r = document.createRange();
+                r.setStart(m, 0);
+                r.setEnd(p.node, p.offset);
+                const rect = r.getBoundingClientRect();
+                if (!rect.height && !rect.width) return 0; // empty range
+                return rect.bottom - mTop;
+            }
+
+            // Binary search: last position whose range-bottom ≤ targetY
+            function findSplit(targetY) {
+                let lo = 0, hi = positions.length - 1, best = -1;
+                while (lo <= hi) {
+                    const mid = (lo + hi) >> 1;
+                    if (rangeBottomAt(positions[mid]) <= targetY) { best = mid; lo = mid + 1; }
+                    else hi = mid - 1;
+                }
+                return best >= 0 ? positions[best] : null;
+            }
+
+            const numPages = Math.ceil(totalH / PAGE_H);
+            const splits = [];
+            for (let p = 1; p < numPages; p++) splits.push(findSplit(p * PAGE_H));
+
+            // Extract one HTML string per page using Range.cloneContents()
+            const anchors = [null, ...splits, null];
+            const pages = [];
+            for (let i = 0; i < numPages; i++) {
+                const rng = document.createRange();
+                const s = anchors[i], e = anchors[i + 1];
+                s ? rng.setStart(s.node, s.offset) : rng.setStart(m, 0);
+                e ? rng.setEnd(e.node,   e.offset) : rng.setEnd(m,   m.childNodes.length);
+                const frag = rng.cloneContents();
+                const div  = document.createElement('div');
+                div.appendChild(frag);
+                const html = div.innerHTML.trim();
+                if (html) pages.push([html]);
+            }
+
+            document.body.removeChild(m);
+            return pages.length ? pages : [[bodyHtml]];
+        }
+
+        function _doLivePreview() {
+            const title = (document.querySelector('input[name="title"]')?.value || '').trim() || 'document';
+            const bodyHtml = renderContent(input.value);
+            const pages = _paginateContent(bodyHtml);
+            const pagesHtml = pages.map(p => `<div class="page">${p.join('')}</div>`).join('\n');
+            const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+<style>
+html{background:#e0e0e0;padding:0.4in 0;margin:0}
+.page{font-family:Georgia,serif;font-size:12pt;line-height:1.6;
+      background:#fff;width:8.5in;min-height:11in;
+      margin:0 auto 0.4in;padding:1in;
+      box-shadow:0 2px 10px rgba(0,0,0,0.35);box-sizing:border-box;
+      overflow-wrap:break-word;word-break:normal}
+.katex-display{margin:0.8em 0;overflow-x:visible}
+pre,code{white-space:pre-wrap;font-size:10pt}
+a{color:#1a3a6e}
+</style>
+</head><body>${pagesHtml}</body></html>`;
+            const blob = new Blob([html], { type: 'text/html' });
+            if (livePreviewUrl) URL.revokeObjectURL(livePreviewUrl);
+            livePreviewUrl = URL.createObjectURL(blob);
+            const iframe = document.getElementById('pdf-preview');
+            iframe.src = livePreviewUrl;
+            iframe.style.display = 'block';
+            const ph = document.getElementById('pdf-placeholder');
+            if (ph) ph.style.display = 'none';
+        }
+
+        function updateLivePreview() {
+            clearTimeout(_liveTimer);
+            _liveTimer = setTimeout(_doLivePreview, 500);
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         function renderContent(raw) {
             const blocks = [];
-            let text = raw
-                .replace(/\$\$([\s\S]*?)\$\$/g, (_, m) => { blocks.push({m, d:true}); return `%%MATH${blocks.length-1}%%`; })
-                .replace(/\$([^$\n]+?)\$/g, (_, m) => { blocks.push({m, d:false}); return `%%MATH${blocks.length-1}%%`; });
+            let text = raw.replace(/\$\$([\s\S]*?)\$\$|\$([^$\n]+?)\$/g, (_, dm, im) => {
+                blocks.push(dm !== undefined ? {m: dm, d: true} : {m: im, d: false});
+                return `%%MATH${blocks.length-1}%%`;
+            });
             text = marked.parse(text, { breaks: true });
             return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
                 const {m, d} = blocks[+i];
@@ -674,6 +868,229 @@ a{color:#1a3a6e}
                 catch(e) { return d ? `$$${m}$$` : `$${m}$`; }
             });
         }
+
+        const MODAL_SYMBOL_CATS = {
+            'Calculus': [
+                {d:'∂',l:'\\partial'},{d:'∇',l:'\\nabla'},
+                {d:'∫',l:'\\int_{ }^{ }'},{d:'∬',l:'\\iint_{ }^{ }'},
+                {d:'∭',l:'\\iiint_{ }^{ }'},{d:'∮',l:'\\oint_{ }^{ }'},
+                {d:'∯',l:'\\oiint'},
+                {d:'Σ',l:'\\sum_{ }^{ }'},{d:'∏',l:'\\prod_{ }^{ }'},
+                {d:'⋃',l:'\\bigcup_{ }^{ }'},{d:'⋂',l:'\\bigcap_{ }^{ }'},
+                {d:'lim',l:'\\lim_{x\\to }'},{d:'limsup',l:'\\limsup_{n\\to\\infty}'},
+                {d:'liminf',l:'\\liminf_{n\\to\\infty}'},{d:'colim',l:'\\varinjlim_{ }'},
+                {d:'lim←',l:'\\varprojlim_{ }'},
+                {d:'d/dx',l:'\\frac{d}{dx}'},{d:'d²/dx²',l:'\\frac{d^2}{dx^2}'},
+                {d:'∂/∂x',l:'\\frac{\\partial}{\\partial x}'},
+                {d:'dⁿ/dxⁿ',l:'\\frac{d^n}{dx^n}'},
+                {d:'□',l:'\\square'},{d:'∞',l:'\\infty'},{d:'ℓ',l:'\\ell'},
+            ],
+            'Greek': [
+                {d:'α',l:'\\alpha'},{d:'β',l:'\\beta'},{d:'γ',l:'\\gamma'},
+                {d:'Γ',l:'\\Gamma'},{d:'δ',l:'\\delta'},{d:'Δ',l:'\\Delta'},
+                {d:'ε',l:'\\varepsilon'},{d:'ϵ',l:'\\epsilon'},
+                {d:'ζ',l:'\\zeta'},{d:'η',l:'\\eta'},
+                {d:'θ',l:'\\theta'},{d:'ϑ',l:'\\vartheta'},{d:'Θ',l:'\\Theta'},
+                {d:'ι',l:'\\iota'},{d:'κ',l:'\\kappa'},{d:'ϰ',l:'\\varkappa'},
+                {d:'λ',l:'\\lambda'},{d:'Λ',l:'\\Lambda'},
+                {d:'μ',l:'\\mu'},{d:'ν',l:'\\nu'},
+                {d:'ξ',l:'\\xi'},{d:'Ξ',l:'\\Xi'},
+                {d:'π',l:'\\pi'},{d:'ϖ',l:'\\varpi'},{d:'Π',l:'\\Pi'},
+                {d:'ρ',l:'\\rho'},{d:'ϱ',l:'\\varrho'},
+                {d:'σ',l:'\\sigma'},{d:'ς',l:'\\varsigma'},{d:'Σ',l:'\\Sigma'},
+                {d:'τ',l:'\\tau'},
+                {d:'υ',l:'\\upsilon'},{d:'Υ',l:'\\Upsilon'},
+                {d:'φ',l:'\\varphi'},{d:'ϕ',l:'\\phi'},{d:'Φ',l:'\\Phi'},
+                {d:'χ',l:'\\chi'},{d:'ψ',l:'\\psi'},{d:'Ψ',l:'\\Psi'},
+                {d:'ω',l:'\\omega'},{d:'Ω',l:'\\Omega'},
+                {d:'ϝ',l:'\\digamma'},{d:'ℓ',l:'\\ell'},{d:'∞',l:'\\infty'},
+            ],
+            'Physics': [
+                {d:'ℏ',l:'\\hbar'},{d:'ℏ',l:'\\hslash'},
+                {d:'∂',l:'\\partial'},{d:'∇',l:'\\nabla'},{d:'□',l:'\\square'},
+                {d:'ℓ',l:'\\ell'},{d:'℘',l:'\\wp'},
+                {d:'⟨·|',l:'\\langle  |'},{d:'|·⟩',l:'|  \\rangle'},
+                {d:'⟨·|·⟩',l:'\\langle  |  \\rangle'},
+                {d:'†',l:'\\dagger'},{d:'‡',l:'\\ddagger'},
+                {d:'⊗',l:'\\otimes'},{d:'⊕',l:'\\oplus'},{d:'⊙',l:'\\odot'},
+                {d:'ℵ',l:'\\aleph'},{d:'ℶ',l:'\\beth'},{d:'ℷ',l:'\\gimel'},{d:'ℸ',l:'\\daleth'},
+                {d:'ℜ',l:'\\Re'},{d:'ℑ',l:'\\Im'},
+                {d:'★',l:'\\star'},{d:'∗',l:'\\ast'},
+            ],
+            'Set Theory': [
+                {d:'∈',l:'\\in'},{d:'∉',l:'\\notin'},
+                {d:'⊂',l:'\\subset'},{d:'⊆',l:'\\subseteq'},
+                {d:'⊄',l:'\\not\\subset'},{d:'⊈',l:'\\nsubseteq'},
+                {d:'⊃',l:'\\supset'},{d:'⊇',l:'\\supseteq'},
+                {d:'⊏',l:'\\sqsubset'},{d:'⊑',l:'\\sqsubseteq'},
+                {d:'⊐',l:'\\sqsupset'},{d:'⊒',l:'\\sqsupseteq'},
+                {d:'∪',l:'\\cup'},{d:'∩',l:'\\cap'},
+                {d:'⊔',l:'\\sqcup'},{d:'⊓',l:'\\sqcap'},
+                {d:'⊎',l:'\\uplus'},
+                {d:'∅',l:'\\varnothing'},
+                {d:'∀',l:'\\forall'},{d:'∃',l:'\\exists'},{d:'∄',l:'\\nexists'},
+                {d:'∖',l:'\\setminus'},{d:'∁',l:'\\complement'},
+                {d:'△',l:'\\vartriangle'},{d:'▽',l:'\\triangledown'},
+                {d:'℘',l:'\\wp'},
+            ],
+            'Num Sets': [
+                {d:'ℕ',l:'\\mathbb{N}'},{d:'ℤ',l:'\\mathbb{Z}'},{d:'ℚ',l:'\\mathbb{Q}'},
+                {d:'ℝ',l:'\\mathbb{R}'},{d:'ℂ',l:'\\mathbb{C}'},{d:'ℙ',l:'\\mathbb{P}'},
+                {d:'ℍ',l:'\\mathbb{H}'},{d:'𝔽',l:'\\mathbb{F}'},{d:'𝔼',l:'\\mathbb{E}'},
+                {d:'𝔸',l:'\\mathbb{A}'},{d:'𝔹',l:'\\mathbb{B}'},{d:'𝕂',l:'\\mathbb{K}'},
+                {d:'𝕊',l:'\\mathbb{S}'},{d:'𝕋',l:'\\mathbb{T}'},
+                {d:'ℵ₀',l:'\\aleph_0'},{d:'ℵ₁',l:'\\aleph_1'},
+                {d:'ℵ',l:'\\aleph'},{d:'ℶ',l:'\\beth'},
+            ],
+            'Logic': [
+                {d:'⇒',l:'\\Rightarrow'},{d:'⇐',l:'\\Leftarrow'},{d:'⇔',l:'\\Leftrightarrow'},
+                {d:'→',l:'\\to'},{d:'←',l:'\\leftarrow'},{d:'↔',l:'\\leftrightarrow'},
+                {d:'⟹',l:'\\Longrightarrow'},{d:'⟸',l:'\\Longleftarrow'},{d:'⟺',l:'\\Longleftrightarrow'},
+                {d:'∧',l:'\\wedge'},{d:'∨',l:'\\vee'},{d:'¬',l:'\\neg'},
+                {d:'⊼',l:'\\barwedge'},{d:'⊻',l:'\\veebar'},
+                {d:'∴',l:'\\therefore'},{d:'∵',l:'\\because'},
+                {d:'⊢',l:'\\vdash'},{d:'⊣',l:'\\dashv'},{d:'⊨',l:'\\models'},
+                {d:'⊩',l:'\\Vdash'},{d:'⊪',l:'\\Vvdash'},
+                {d:'⊤',l:'\\top'},{d:'⊥',l:'\\bot'},
+                {d:'□',l:'\\Box'},{d:'◇',l:'\\Diamond'},
+                {d:'∀',l:'\\forall'},{d:'∃',l:'\\exists'},
+            ],
+            'Relations': [
+                {d:'=',l:'='},{d:'≠',l:'\\neq'},{d:'<',l:'<'},{d:'>',l:'>'},
+                {d:'≤',l:'\\leq'},{d:'≥',l:'\\geq'},
+                {d:'≦',l:'\\leqq'},{d:'≧',l:'\\geqq'},
+                {d:'≲',l:'\\lesssim'},{d:'≳',l:'\\gtrsim'},
+                {d:'≶',l:'\\lessgtr'},{d:'≷',l:'\\gtrless'},
+                {d:'≪',l:'\\ll'},{d:'≫',l:'\\gg'},
+                {d:'≈',l:'\\approx'},{d:'≃',l:'\\simeq'},
+                {d:'≡',l:'\\equiv'},{d:'≅',l:'\\cong'},{d:'∼',l:'\\sim'},
+                {d:'≐',l:'\\doteq'},{d:'≑',l:'\\doteqdot'},
+                {d:'≔',l:'\\coloneqq'},{d:'≕',l:'\\eqqcolon'},
+                {d:'≍',l:'\\asymp'},{d:'∝',l:'\\propto'},
+                {d:'⊥',l:'\\perp'},{d:'∥',l:'\\parallel'},{d:'∦',l:'\\nparallel'},
+                {d:'∣',l:'\\mid'},{d:'∤',l:'\\nmid'},
+                {d:'≺',l:'\\prec'},{d:'≻',l:'\\succ'},
+                {d:'≼',l:'\\preceq'},{d:'≽',l:'\\succeq'},
+                {d:'≾',l:'\\precsim'},{d:'≿',l:'\\succsim'},
+                {d:'⋈',l:'\\bowtie'},
+            ],
+            'Algebra': [
+                {d:'±',l:'\\pm'},{d:'∓',l:'\\mp'},
+                {d:'×',l:'\\times'},{d:'·',l:'\\cdot'},{d:'÷',l:'\\div'},
+                {d:'∘',l:'\\circ'},{d:'∙',l:'\\bullet'},
+                {d:'⊕',l:'\\oplus'},{d:'⊗',l:'\\otimes'},
+                {d:'⊖',l:'\\ominus'},{d:'⊘',l:'\\oslash'},{d:'⊙',l:'\\odot'},
+                {d:'⊞',l:'\\boxplus'},{d:'⊠',l:'\\boxtimes'},
+                {d:'⋊',l:'\\rtimes'},{d:'⋉',l:'\\ltimes'},
+                {d:'⋋',l:'\\leftthreetimes'},{d:'⋌',l:'\\rightthreetimes'},
+                {d:'≀',l:'\\wr'},
+                {d:'⊴',l:'\\trianglelefteq'},{d:'⊲',l:'\\triangleleft'},
+                {d:'⊵',l:'\\trianglerighteq'},{d:'⊳',l:'\\triangleright'},
+                {d:'†',l:'\\dagger'},{d:'‡',l:'\\ddagger'},
+                {d:'∗',l:'\\ast'},{d:'★',l:'\\star'},
+                {d:'∧',l:'\\wedge'},{d:'∨',l:'\\vee'},
+                {d:'⋀',l:'\\bigwedge'},{d:'⋁',l:'\\bigvee'},
+            ],
+            'Arrows': [
+                {d:'→',l:'\\to'},{d:'←',l:'\\leftarrow'},{d:'↔',l:'\\leftrightarrow'},
+                {d:'↦',l:'\\mapsto'},{d:'⟼',l:'\\longmapsto'},
+                {d:'⟶',l:'\\longrightarrow'},{d:'⟵',l:'\\longleftarrow'},
+                {d:'⇒',l:'\\Rightarrow'},{d:'⇐',l:'\\Leftarrow'},{d:'⇔',l:'\\Leftrightarrow'},
+                {d:'⟹',l:'\\Longrightarrow'},{d:'⟸',l:'\\Longleftarrow'},{d:'⟺',l:'\\Longleftrightarrow'},
+                {d:'↑',l:'\\uparrow'},{d:'↓',l:'\\downarrow'},{d:'↕',l:'\\updownarrow'},
+                {d:'⇑',l:'\\Uparrow'},{d:'⇓',l:'\\Downarrow'},{d:'⇕',l:'\\Updownarrow'},
+                {d:'↗',l:'\\nearrow'},{d:'↘',l:'\\searrow'},
+                {d:'↙',l:'\\swarrow'},{d:'↖',l:'\\nwarrow'},
+                {d:'↪',l:'\\hookrightarrow'},{d:'↩',l:'\\hookleftarrow'},
+                {d:'↠',l:'\\twoheadrightarrow'},{d:'↞',l:'\\twoheadleftarrow'},
+                {d:'⇀',l:'\\rightharpoonup'},{d:'⇁',l:'\\rightharpoondown'},
+                {d:'↼',l:'\\leftharpoonup'},{d:'↽',l:'\\leftharpoondown'},
+                {d:'⇌',l:'\\rightleftharpoons'},{d:'⇋',l:'\\leftrightharpoons'},
+                {d:'↾',l:'\\upharpoonright'},{d:'↿',l:'\\upharpoonleft'},
+                {d:'⇝',l:'\\rightsquigarrow'},{d:'↭',l:'\\leftrightsquigarrow'},
+                {d:'↛',l:'\\nrightarrow'},{d:'↚',l:'\\nleftarrow'},
+                {d:'⇏',l:'\\nRightarrow'},{d:'⇍',l:'\\nLeftarrow'},
+                {d:'↶',l:'\\curvearrowleft'},{d:'↷',l:'\\curvearrowright'},
+                {d:'↺',l:'\\circlearrowleft'},{d:'↻',l:'\\circlearrowright'},
+            ],
+            'Structures': [
+                {d:'a/b',l:'\\frac{}{}'},{d:'cfrac',l:'\\cfrac{}{}'},
+                {d:'dfrac',l:'\\dfrac{}{}'},{d:'C(n,k)',l:'\\binom{}{}'},
+                {d:'√',l:'\\sqrt{}'},{d:'ⁿ√',l:'\\sqrt[n]{}'},
+                {d:'xⁿ',l:'x^{}'},{d:'xₙ',l:'x_{}'},
+                {d:'⌊⌋',l:'\\lfloor  \\rfloor'},{d:'⌈⌉',l:'\\lceil  \\rceil'},
+                {d:'|x|',l:'\\left|  \\right|'},{d:'‖x‖',l:'\\lVert  \\rVert'},
+                {d:'⟨,⟩',l:'\\langle  ,  \\rangle'},
+                {d:'M₂',l:'\\begin{pmatrix} {} & {} \\\\ {} & {} \\end{pmatrix}'},
+                {d:'M₃',l:'\\begin{pmatrix} {} & {} & {} \\\\ {} & {} & {} \\\\ {} & {} & {} \\end{pmatrix}'},
+                {d:'|M₂|',l:'\\begin{vmatrix} {} & {} \\\\ {} & {} \\end{vmatrix}'},
+                {d:'cases',l:'\\begin{cases} {} & {} \\\\ {} & {} \\end{cases}'},
+            ],
+            'Accents': [
+                {d:'x̂',l:'\\hat{}'},{d:'x̄',l:'\\overline{}'},{d:'x̃',l:'\\tilde{}'},
+                {d:'x⃗',l:'\\vec{}'},{d:'ẋ',l:'\\dot{}'},{d:'ẍ',l:'\\ddot{}'},
+                {d:'⃛x',l:'\\dddot{}'},{d:'x̌',l:'\\check{}'},
+                {d:'x̆',l:'\\breve{}'},{d:'x̊',l:'\\mathring{}'},
+                {d:'x̲',l:'\\underline{}'},{d:'x̄',l:'\\bar{}'},
+                {d:'⏞',l:'\\overbrace{}^{}'},{d:'⏟',l:'\\underbrace{}_{}'},
+                {d:'→x',l:'\\overrightarrow{}'},{d:'←x',l:'\\overleftarrow{}'},
+                {d:'↔x',l:'\\overleftrightarrow{}'},
+                {d:'′',l:'\\prime'},{d:'″',l:"{}''"},{d:'‴',l:"{}'''"},
+                {d:'𝒜',l:'\\mathcal{}'},{d:'𝔄',l:'\\mathfrak{}'},
+                {d:'𝐀',l:'\\mathbf{}'},{d:'𝙰',l:'\\mathtt{}'},
+                {d:'𝖠',l:'\\mathsf{}'},{d:'𝐴',l:'\\mathit{}'},
+                {d:'𝔸',l:'\\mathbb{}'},
+            ],
+            'Trig': [
+                {d:'sin',l:'\\sin'},{d:'cos',l:'\\cos'},{d:'tan',l:'\\tan'},
+                {d:'arcsin',l:'\\arcsin'},{d:'arccos',l:'\\arccos'},{d:'arctan',l:'\\arctan'},
+                {d:'sec',l:'\\sec'},{d:'csc',l:'\\csc'},{d:'cot',l:'\\cot'},
+                {d:'sinh',l:'\\sinh'},{d:'cosh',l:'\\cosh'},{d:'tanh',l:'\\tanh'},
+                {d:'coth',l:'\\coth'},
+                {d:'arcsinh',l:'\\operatorname{arcsinh}'},{d:'arccosh',l:'\\operatorname{arccosh}'},
+                {d:'arctanh',l:'\\operatorname{arctanh}'},
+            ],
+            'Functions': [
+                {d:'log',l:'\\log'},{d:'logₙ',l:'\\log_{ }'},{d:'ln',l:'\\ln'},
+                {d:'exp',l:'\\exp'},{d:'sup',l:'\\sup_{ }'},{d:'inf',l:'\\inf_{ }'},
+                {d:'max',l:'\\max_{ }'},{d:'min',l:'\\min_{ }'},{d:'gcd',l:'\\gcd'},
+                {d:'lcm',l:'\\operatorname{lcm}'},
+                {d:'det',l:'\\det'},{d:'tr',l:'\\operatorname{tr}'},
+                {d:'rank',l:'\\operatorname{rank}'},{d:'ker',l:'\\ker'},
+                {d:'coker',l:'\\operatorname{coker}'},{d:'im',l:'\\operatorname{im}'},
+                {d:'span',l:'\\operatorname{span}'},{d:'arg',l:'\\arg'},
+                {d:'Re',l:'\\operatorname{Re}'},{d:'Im',l:'\\operatorname{Im}'},
+                {d:'sgn',l:'\\operatorname{sgn}'},{d:'Res',l:'\\operatorname{Res}'},
+                {d:'Hom',l:'\\operatorname{Hom}'},{d:'Aut',l:'\\operatorname{Aut}'},
+                {d:'End',l:'\\operatorname{End}'},{d:'Gal',l:'\\operatorname{Gal}'},
+                {d:'Spec',l:'\\operatorname{Spec}'},{d:'Ext',l:'\\operatorname{Ext}'},
+                {d:'Tor',l:'\\operatorname{Tor}'},{d:'Ann',l:'\\operatorname{Ann}'},
+                {d:'Ob',l:'\\operatorname{Ob}'},{d:'Mor',l:'\\operatorname{Mor}'},
+            ],
+            'Geometry': [
+                {d:'∠',l:'\\angle'},{d:'∡',l:'\\measuredangle'},{d:'∢',l:'\\sphericalangle'},
+                {d:'△',l:'\\triangle'},{d:'▽',l:'\\triangledown'},
+                {d:'□',l:'\\square'},{d:'◇',l:'\\Diamond'},
+                {d:'⊥',l:'\\perp'},{d:'∥',l:'\\parallel'},
+                {d:'∦',l:'\\nparallel'},{d:'∼',l:'\\sim'},
+                {d:'≅',l:'\\cong'},{d:'∝',l:'\\propto'},
+                {d:'⌢',l:'\\frown'},{d:'⌣',l:'\\smile'},
+                {d:'○',l:'\\bigcirc'},{d:'●',l:'\\bullet'},
+                {d:'⊙',l:'\\odot'},
+            ],
+            'Misc': [
+                {d:'…',l:'\\ldots'},{d:'⋯',l:'\\cdots'},
+                {d:'⋮',l:'\\vdots'},{d:'⋱',l:'\\ddots'},
+                {d:'ℵ',l:'\\aleph'},{d:'ℶ',l:'\\beth'},{d:'ℷ',l:'\\gimel'},{d:'ℸ',l:'\\daleth'},
+                {d:'℘',l:'\\wp'},{d:'ℜ',l:'\\Re'},{d:'ℑ',l:'\\Im'},
+                {d:'∅',l:'\\emptyset'},{d:'∞',l:'\\infty'},
+                {d:'♯',l:'\\sharp'},{d:'♭',l:'\\flat'},{d:'♮',l:'\\natural'},
+                {d:'°',l:'^\\circ'},
+                {d:'§',l:'\\S'},{d:'¶',l:'\\P'},
+                {d:'√',l:'\\surd'},
+                {d:'⊟',l:'\\boxminus'},{d:'⊡',l:'\\boxdot'},
+            ],
+        };
 
         let mathField, savedStart, savedEnd, initialTemplate;
 
@@ -699,10 +1116,20 @@ a{color:#1a3a6e}
         let _fmtSel = [0, 0];
         function _saveFmtSel() { _fmtSel = [input.selectionStart, input.selectionEnd]; }
 
+        function toggleFontDropdown() {
+            const d = document.getElementById('font-dropdown');
+            d.style.display = d.style.display === 'none' ? 'block' : 'none';
+        }
+        function closeFontDropdown() {
+            const d = document.getElementById('font-dropdown');
+            if (d) d.style.display = 'none';
+        }
+
         function applyFont(family) {
+            closeFontDropdown();
             if (!family) return;
             const [s, e] = _fmtSel;
-            if (s === e) { input.focus(); return; }
+            if (s === e) return;
             const sel = input.value.slice(s, e);
             input.setRangeText(`<span style="font-family:${family}">${sel}</span>`, s, e, 'end');
             input.dispatchEvent(new Event('input'));
@@ -735,6 +1162,154 @@ a{color:#1a3a6e}
             input.setRangeText(`<span style="background-color:${color}">${sel}</span>`, s, e, 'end');
             input.dispatchEvent(new Event('input'));
             input.focus();
+        }
+
+        // ── Modal symbol picker ──────────────────────────────────────
+        function _renderModalCatTabs() {
+            const tabs = document.getElementById('modal-cat-tabs');
+            const cats = Object.keys(MODAL_SYMBOL_CATS);
+            cats.forEach((cat, ci) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = cat;
+                btn.dataset.cat = cat;
+                btn.tabIndex = -1;
+                btn.style.cssText = 'margin:0;padding:2px 8px;font-size:0.72rem;cursor:pointer;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;white-space:nowrap;';
+                btn.addEventListener('mousedown', e => e.preventDefault());
+                btn.addEventListener('click', () => _selectModalCat(cat));
+                btn.addEventListener('focus', () => { btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
+                btn.addEventListener('blur',  () => { btn.style.outline=''; });
+                btn.addEventListener('keydown', e => {
+                    const catBtns = Array.from(tabs.querySelectorAll('button'));
+                    if (e.key === 'ArrowRight') { e.preventDefault(); const t=catBtns[Math.min(ci+1,catBtns.length-1)]; _selectModalCat(t.dataset.cat); t.focus(); }
+                    else if (e.key === 'ArrowLeft') { e.preventDefault(); const t=catBtns[Math.max(ci-1,0)]; _selectModalCat(t.dataset.cat); t.focus(); }
+                    else if (e.key === 'ArrowDown' || e.key === 'Tab') { e.preventDefault(); const g = document.getElementById('modal-sym-grid'); const s = g.querySelector('button'); if (s) s.focus(); else { const f = document.querySelector('.math-modal-actions button'); if (f) f.focus(); } }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); const ms=document.getElementById('modal-sym-search'); if(ms) ms.focus(); else mathField.focus(); }
+                    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+                    else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); }
+                });
+                tabs.appendChild(btn);
+            });
+            tabs.tabIndex = 0;
+            tabs.onfocus = () => { const active = tabs.querySelector('button[data-active="1"]') || tabs.querySelector('button'); if (active) active.focus(); };
+        }
+
+        function _selectModalCat(cat) {
+            const tabs = document.getElementById('modal-cat-tabs');
+            tabs.querySelectorAll('button').forEach(b => {
+                const active = b.dataset.cat === cat;
+                b.style.background  = active ? '#dde8ff' : '#f7f8fc';
+                b.style.borderColor = active ? '#7799cc' : '#c5cce0';
+                b.style.fontWeight  = active ? '700' : '';
+                b.dataset.active    = active ? '1' : '';
+            });
+            const grid = document.getElementById('modal-sym-grid');
+            grid.innerHTML = '';
+            (MODAL_SYMBOL_CATS[cat] || []).forEach(({d, l}) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = d;
+                btn.title = l;
+                btn.tabIndex = -1;
+                btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
+                btn.addEventListener('mousedown', e => e.preventDefault());
+                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('mouseover', () => { if (document.activeElement !== btn) { btn.style.background='#dde8ff'; btn.style.borderColor='#7799cc'; } });
+                btn.addEventListener('mouseout',  () => { if (document.activeElement !== btn) { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; } });
+                btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
+                btn.addEventListener('blur',  () => { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; btn.style.outline=''; });
+                grid.appendChild(btn);
+            });
+            const btns = Array.from(grid.querySelectorAll('button'));
+            btns.forEach((btn, idx) => {
+                btn.addEventListener('keydown', e => {
+                    const r = btn.getBoundingClientRect();
+                    let ni = idx;
+                    if (e.key === 'ArrowRight') { e.preventDefault(); ni = Math.min(idx + 1, btns.length - 1); }
+                    else if (e.key === 'ArrowLeft') { e.preventDefault(); ni = Math.max(idx - 1, 0); }
+                    else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const below = btns.filter((b, i) => i > idx && b.getBoundingClientRect().top > r.top + 4);
+                        if (below.length) {
+                            const rowTop = below[0].getBoundingClientRect().top;
+                            const row = below.filter(b => b.getBoundingClientRect().top <= rowTop + 4);
+                            ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
+                        } else {
+                            const first = document.querySelector('.math-modal-actions button');
+                            if (first) { first.focus(); return; }
+                        }
+                    }
+                    else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const above = btns.filter((b, i) => i < idx && b.getBoundingClientRect().top < r.top - 4);
+                        if (above.length) {
+                            const rowTop = above[above.length - 1].getBoundingClientRect().top;
+                            const row = above.filter(b => b.getBoundingClientRect().top >= rowTop - 4);
+                            ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
+                        } else {
+                            // Already on first row — move up to category tabs
+                            const active = document.querySelector('#modal-cat-tabs button[data-active="1"]');
+                            if (active) active.focus();
+                            return;
+                        }
+                    }
+                    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); return; }
+                    else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); return; }
+                    else if (e.key === 'Tab') { e.preventDefault(); mathField.focus(); return; }
+                    if (ni !== idx) btns[ni].focus();
+                });
+            });
+            grid.tabIndex = 0;
+            grid.onfocus = () => { if (btns[0]) btns[0].focus(); };
+        }
+
+        // ── Modal symbol search results renderer ─────────────────────
+        function _showModalSearchResults(results) {
+            const grid = document.getElementById('modal-sym-grid');
+            grid.innerHTML = '';
+            if (!results.length) {
+                const msg = document.createElement('div');
+                msg.textContent = 'No results';
+                msg.style.cssText = 'padding:8px;font-size:0.8rem;color:#999;';
+                grid.appendChild(msg);
+                return;
+            }
+            results.forEach(({d, l}) => {
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.textContent = d; btn.title = l; btn.tabIndex = -1;
+                btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
+                btn.addEventListener('mousedown', e => e.preventDefault());
+                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
+                btn.addEventListener('blur',  () => { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; btn.style.outline=''; });
+                grid.appendChild(btn);
+            });
+            const btns = Array.from(grid.querySelectorAll('button'));
+            btns.forEach((btn, idx) => {
+                btn.addEventListener('keydown', e => {
+                    const r = btn.getBoundingClientRect(); let ni = idx;
+                    if (e.key === 'ArrowRight') { e.preventDefault(); ni = Math.min(idx+1, btns.length-1); }
+                    else if (e.key === 'ArrowLeft') { e.preventDefault(); ni = Math.max(idx-1, 0); }
+                    else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const below = btns.filter((b,i) => i>idx && b.getBoundingClientRect().top > r.top+4);
+                        if (below.length) { const rt=below[0].getBoundingClientRect().top; const row=below.filter(b=>b.getBoundingClientRect().top<=rt+4); ni=btns.indexOf(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
+                        else { const f=document.querySelector('.math-modal-actions button'); if(f){f.focus();return;} }
+                    }
+                    else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const above = btns.filter((b,i) => i<idx && b.getBoundingClientRect().top < r.top-4);
+                        if (above.length) { const rt=above[above.length-1].getBoundingClientRect().top; const row=above.filter(b=>b.getBoundingClientRect().top>=rt-4); ni=btns.indexOf(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
+                        else { document.getElementById('modal-sym-search')?.focus(); return; }
+                    }
+                    else if (e.key === 'Enter'||e.key===' ') { e.preventDefault(); btn.click(); return; }
+                    else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); return; }
+                    else if (e.key === 'Tab') { e.preventDefault(); mathField.focus(); return; }
+                    if (ni !== idx) btns[ni].focus();
+                });
+            });
+            grid.tabIndex = 0;
+            grid.onfocus = () => { if (btns[0]) btns[0].focus(); };
         }
 
         // ── Text alignment ───────────────────────────────────────────
@@ -790,6 +1365,70 @@ a{color:#1a3a6e}
             input.dispatchEvent(new Event('input'));
         }
 
+        // ── Matrix modal ─────────────────────────────────────────────
+        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd;
+
+        function openMatrixModal(rows, cols, env) {
+            _mRows = rows; _mCols = cols; _mEnv = env;
+            _mSavedStart = input.selectionStart;
+            _mSavedEnd   = input.selectionEnd;
+            const titles = { pmatrix: cols === 1 ? `Column Vector (${rows})` : `${rows}×${cols} Matrix`, vmatrix: `${rows}×${cols} Determinant` };
+            document.getElementById('matrix-modal-title').textContent = titles[env] || `${rows}×${cols} Matrix`;
+            const grid = document.getElementById('matrix-grid');
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.innerHTML = '';
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const inp = document.createElement('input');
+                    inp.type = 'text';
+                    inp.id = `mcell-${r}-${c}`;
+                    inp.placeholder = cols === 1 ? `row ${r+1}` : `${r+1},${c+1}`;
+                    inp.style.cssText = 'width:64px;padding:5px 6px;border:1px solid #c5cce0;border-radius:3px;font-family:serif;font-size:0.9rem;text-align:center;box-sizing:border-box;';
+                    inp.addEventListener('keydown', e => {
+                        if (e.key === 'ArrowRight') { e.preventDefault(); if (c + 1 < cols) document.getElementById(`mcell-${r}-${c+1}`)?.focus(); }
+                        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (c - 1 >= 0) document.getElementById(`mcell-${r}-${c-1}`)?.focus(); }
+                        else if (e.key === 'ArrowDown') { e.preventDefault(); if (r + 1 < rows) document.getElementById(`mcell-${r+1}-${c}`)?.focus(); }
+                        else if (e.key === 'ArrowUp') { e.preventDefault(); if (r - 1 >= 0) document.getElementById(`mcell-${r-1}-${c}`)?.focus(); }
+                        else if (e.key === 'Enter' || e.key === 'Tab') {
+                            e.preventDefault();
+                            const nr = c < cols - 1 ? r : r + 1;
+                            const nc = c < cols - 1 ? c + 1 : 0;
+                            if (nr < rows) document.getElementById(`mcell-${nr}-${nc}`)?.focus();
+                            else doInsertMatrix();
+                        } else if (e.key === 'Escape') { closeMatrixModal(); }
+                    });
+                    grid.appendChild(inp);
+                }
+            }
+            document.getElementById('matrix-modal').style.display = 'flex';
+            document.getElementById('mcell-0-0').focus();
+        }
+
+        function closeMatrixModal() {
+            document.getElementById('matrix-modal').style.display = 'none';
+            input.focus();
+        }
+
+        function doInsertMatrix() {
+            const rowStrs = [];
+            for (let r = 0; r < _mRows; r++) {
+                const cells = [];
+                for (let c = 0; c < _mCols; c++) {
+                    cells.push(document.getElementById(`mcell-${r}-${c}`).value.trim() || '\\square');
+                }
+                rowStrs.push(cells.join(' & '));
+            }
+            const body   = rowStrs.join(' \\\\ ');
+            const latex  = `\\begin{${_mEnv}} ${body} \\end{${_mEnv}}`;
+            const mode   = document.querySelector('input[name="math-mode"]:checked').value;
+            const prevChar = _mSavedStart > 0 ? input.value[_mSavedStart - 1] : '';
+            const prefix   = (mode === 'inline' && prevChar === '$') ? ' ' : '';
+            const wrapped  = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
+            input.setRangeText(wrapped, _mSavedStart, _mSavedEnd, 'end');
+            closeMatrixModal();
+            input.dispatchEvent(new Event('input'));
+        }
+
         // ── MathQuill visual editor ──────────────────────────────────
         function openMath(latex) {
             savedStart = input.selectionStart;
@@ -804,6 +1443,12 @@ a{color:#1a3a6e}
 
         function closeMathModal() {
             document.getElementById('math-modal').style.display = 'none';
+            const ms = document.getElementById('modal-sym-search');
+            if (ms && ms.value) {
+                ms.value = '';
+                const active = document.querySelector('#modal-cat-tabs button[data-active="1"]');
+                if (active) _selectModalCat(active.dataset.cat);
+            }
             input.focus();
         }
 
@@ -898,6 +1543,19 @@ a{color:#1a3a6e}
                 }
             });
 
+            _renderModalCatTabs();
+            _selectModalCat('Calculus');
+
+            // ArrowDown from MathQuill field → modal search bar (capture so MathQuill never sees it)
+            document.getElementById('mq-field').addEventListener('keydown', e => {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const ms = document.getElementById('modal-sym-search');
+                    if (ms) ms.focus();
+                }
+            }, true);
+
             document.getElementById('math-modal').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeMathModal();
             });
@@ -905,10 +1563,115 @@ a{color:#1a3a6e}
                 if (e.target === e.currentTarget) closeLinkModal();
             });
 
-            // Save textarea selection before format pickers steal focus
-            ['font-picker','size-picker','text-color-picker','highlight-picker'].forEach(id => {
-                document.getElementById(id).addEventListener('mousedown', _saveFmtSel);
+            // Keep textarea focused when clicking toolbar buttons so selection never clears
+            document.querySelectorAll('.math-toolbar button[type="button"]').forEach(btn => {
+                btn.addEventListener('mousedown', e => e.preventDefault());
             });
+            // Save selection on every user interaction so _fmtSel is always current
+            input.addEventListener('mouseup', _saveFmtSel);
+            input.addEventListener('select',  _saveFmtSel);
+            input.addEventListener('keyup',   _saveFmtSel);
+            input.addEventListener('blur',    _saveFmtSel);
+            // Close font dropdown when clicking anywhere outside it
+            document.addEventListener('click', e => {
+                if (!document.getElementById('font-dropdown-btn')?.contains(e.target) &&
+                    !document.getElementById('font-dropdown')?.contains(e.target)) {
+                    closeFontDropdown();
+                }
+            });
+            // ── Toolbar arrow-key navigation ──────────────────────────
+            function _focusNoScroll(el) {
+                const sy = window.scrollY;
+                el.focus({ preventScroll: true });
+                window.scrollTo(0, sy);
+            }
+            function _getToolbarBtns() {
+                const search = document.getElementById('toolbar-sym-search');
+                const buttons = Array.from(document.querySelectorAll('.math-toolbar button[type="button"]'))
+                    .filter(b => b.offsetParent !== null);
+                return (search && search.offsetParent !== null) ? [search, ...buttons] : buttons;
+            }
+            document.querySelectorAll('.math-toolbar button[type="button"]').forEach(btn => {
+                btn.tabIndex = -1;
+                btn.addEventListener('focus', () => { btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
+                btn.addEventListener('blur',  () => { btn.style.outline=''; btn.style.outlineOffset=''; });
+                btn.addEventListener('keydown', e => {
+                    const btns = _getToolbarBtns();
+                    const idx  = btns.indexOf(btn);
+                    if (idx === -1) return;
+                    const r = btn.getBoundingClientRect();
+                    let ni = idx;
+                    if (e.key === 'ArrowRight') { e.preventDefault(); ni = Math.min(idx + 1, btns.length - 1); }
+                    else if (e.key === 'ArrowLeft') { e.preventDefault(); ni = Math.max(idx - 1, 0); }
+                    else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const below = btns.filter((b, i) => i > idx && b.getBoundingClientRect().top > r.top + 4);
+                        if (below.length) {
+                            const rowTop = below[0].getBoundingClientRect().top;
+                            const row = below.filter(b => b.getBoundingClientRect().top <= rowTop + 4);
+                            ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
+                        } else { input.focus(); return; }
+                    }
+                    else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const above = btns.filter((b, i) => i < idx && b.getBoundingClientRect().top < r.top - 4);
+                        if (above.length) {
+                            const rowTop = above[above.length - 1].getBoundingClientRect().top;
+                            const row = above.filter(b => b.getBoundingClientRect().top >= rowTop - 4);
+                            ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
+                        } else { input.focus(); return; }
+                    }
+                    else if (e.key === 'Escape') { e.preventDefault(); input.focus(); return; }
+                    if (ni !== idx) _focusNoScroll(btns[ni]);
+                });
+            });
+            const toolbar = document.querySelector('.math-toolbar');
+            toolbar.tabIndex = 0;
+            toolbar.addEventListener('focus', e => {
+                if (e.target === toolbar) { const f = _getToolbarBtns()[0]; if (f) _focusNoScroll(f); }
+            });
+            // ArrowUp from textarea first line → toolbar bottom row
+            input.addEventListener('keydown', e => {
+                if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
+                        && input.selectionStart === input.selectionEnd
+                        && input.value.lastIndexOf('\n', input.selectionStart - 1) === -1) {
+                    e.preventDefault();
+                    const btns = _getToolbarBtns();
+                    if (btns.length) {
+                        const lastTop = btns[btns.length - 1].getBoundingClientRect().top;
+                        const lastRow = btns.filter(b => b.getBoundingClientRect().top >= lastTop - 4);
+                        _focusNoScroll(lastRow[0]);
+                    }
+                }
+            });
+            // ─────────────────────────────────────────────────────────
+            // ── Modal action button (Cancel/Draft/Insert) navigation ──
+            (function() {
+                const actBtns = Array.from(document.querySelectorAll('.math-modal-actions button'));
+                actBtns.forEach((btn, idx) => {
+                    btn.tabIndex = -1;
+                    btn.addEventListener('focus', () => { btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
+                    btn.addEventListener('blur',  () => { btn.style.outline=''; btn.style.outlineOffset=''; });
+                    btn.addEventListener('keydown', e => {
+                        if (e.key === 'ArrowRight') { e.preventDefault(); actBtns[Math.min(idx+1, actBtns.length-1)].focus(); }
+                        else if (e.key === 'ArrowLeft') { e.preventDefault(); actBtns[Math.max(idx-1, 0)].focus(); }
+                        else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            const gridBtns = Array.from(document.querySelectorAll('#modal-sym-grid button'));
+                            if (gridBtns.length) { gridBtns[gridBtns.length - 1].focus(); }
+                            else {
+                                const active = document.querySelector('#modal-cat-tabs button[data-active="1"]')
+                                            || document.querySelector('#modal-cat-tabs button');
+                                if (active) active.focus();
+                            }
+                        }
+                        else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); }
+                        else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+                    });
+                });
+            })();
+            // ─────────────────────────────────────────────────────────
+
             document.getElementById('size-picker').addEventListener('keydown', e => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -919,6 +1682,96 @@ a{color:#1a3a6e}
             document.getElementById('text-color-picker').addEventListener('change', e => applyTextColor(e.target.value));
             document.getElementById('highlight-picker').addEventListener('change', e => applyHighlight(e.target.value));
 
+            input.addEventListener('input', updateLivePreview);
+            _doLivePreview();
+
+            // ── Modal symbol search ───────────────────────────────────
+            const _modalSearch = document.getElementById('modal-sym-search');
+            _modalSearch.addEventListener('input', function() {
+                const q = this.value.trim().toLowerCase();
+                if (!q) {
+                    const active = document.querySelector('#modal-cat-tabs button[data-active="1"]');
+                    if (active) _selectModalCat(active.dataset.cat);
+                    return;
+                }
+                const seen = new Set(), results = [];
+                Object.values(MODAL_SYMBOL_CATS).forEach(syms => syms.forEach(({d,l}) => {
+                    if (!seen.has(l) && (l.toLowerCase().includes(q) || d.includes(q))) { seen.add(l); results.push({d,l}); }
+                }));
+                _showModalSearchResults(results);
+            });
+            _modalSearch.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { e.preventDefault(); _modalSearch.value = ''; const a=document.querySelector('#modal-cat-tabs button[data-active="1"]'); if(a)_selectModalCat(a.dataset.cat); mathField.focus(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); mathField.focus(); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); const s=document.querySelector('#modal-sym-grid button'); if(s)s.focus(); }
+            });
+
+            // ── Toolbar symbol search ─────────────────────────────────
+            const _tbSearch = document.getElementById('toolbar-sym-search');
+            const _tbResults = document.getElementById('toolbar-search-results');
+            let _tbSavedStart = 0, _tbSavedEnd = 0;
+            _tbSearch.addEventListener('focus', () => { _tbSavedStart = input.selectionStart; _tbSavedEnd = input.selectionEnd; });
+            _tbSearch.addEventListener('input', function() {
+                const q = this.value.trim().toLowerCase();
+                _tbResults.innerHTML = '';
+                if (!q) { _tbResults.style.display = 'none'; return; }
+                const allBtns = Array.from(document.querySelectorAll('.math-toolbar button[type="button"]'))
+                    .filter(b => b.offsetParent !== null && b.id !== 'font-dropdown-btn' && !b.closest('#toolbar-search-results'));
+                const matches = allBtns.filter(b =>
+                    (b.title||'').toLowerCase().includes(q) || (b.textContent||'').trim().toLowerCase().includes(q)
+                ).slice(0, 30);
+                if (!matches.length) { _tbResults.style.display = 'none'; return; }
+                matches.forEach(origBtn => {
+                    const item = document.createElement('button');
+                    item.type = 'button'; item.tabIndex = -1;
+                    item.style.cssText = 'display:flex;align-items:center;gap:8px;width:100%;padding:5px 10px;border:none;border-bottom:1px solid #f0f2f8;background:transparent;text-align:left;cursor:pointer;font-size:0.82rem;box-sizing:border-box;';
+                    item.innerHTML = `<span style="font-family:serif;font-size:1rem;min-width:28px;text-align:center;flex-shrink:0;">${origBtn.textContent.trim()}</span><span style="color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${origBtn.title}</span>`;
+                    item.addEventListener('mousedown', e => e.preventDefault());
+                    item.addEventListener('focus',     () => item.style.background = '#eef2ff');
+                    item.addEventListener('blur',      () => item.style.background = '');
+                    item.addEventListener('mouseover', () => item.style.background = '#eef2ff');
+                    item.addEventListener('mouseout',  () => { if(document.activeElement!==item) item.style.background=''; });
+                    item.addEventListener('click', () => {
+                        input.focus();
+                        input.setSelectionRange(_tbSavedStart, _tbSavedEnd);
+                        origBtn.click();
+                        _tbSearch.value = ''; _tbResults.style.display = 'none'; _tbResults.innerHTML = '';
+                    });
+                    item.addEventListener('keydown', e => {
+                        const items = Array.from(_tbResults.querySelectorAll('button'));
+                        const ci = items.indexOf(item);
+                        if (e.key === 'ArrowDown') { e.preventDefault(); if(ci+1<items.length) _focusNoScroll(items[ci+1]); }
+                        else if (e.key === 'ArrowUp') { e.preventDefault(); if(ci>0) _focusNoScroll(items[ci-1]); else _focusNoScroll(_tbSearch); }
+                        else if (e.key==='Enter'||e.key===' ') { e.preventDefault(); item.click(); }
+                        else if (e.key==='Escape') { e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; input.focus(); }
+                    });
+                    _tbResults.appendChild(item);
+                });
+                _tbResults.style.display = 'block';
+            });
+            _tbSearch.tabIndex = -1;
+            _tbSearch.addEventListener('keydown', e => {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const f = _tbResults.querySelector('button');
+                    if (f) { _focusNoScroll(f); return; }
+                    // No dropdown — navigate to next toolbar row
+                    const btns = _getToolbarBtns();
+                    const idx = btns.indexOf(_tbSearch);
+                    const r = _tbSearch.getBoundingClientRect();
+                    const below = btns.filter((b,i) => i > idx && b.getBoundingClientRect().top > r.top + 4);
+                    if (below.length) { const rt=below[0].getBoundingClientRect().top; const row=below.filter(b=>b.getBoundingClientRect().top<=rt+4); _focusNoScroll(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
+                    else { input.focus(); }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    input.focus();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; input.focus();
+                }
+            });
+            document.addEventListener('click', e => {
+                if (!_tbSearch.contains(e.target) && !_tbResults.contains(e.target)) _tbResults.style.display = 'none';
+            });
         });
     </script>
 
