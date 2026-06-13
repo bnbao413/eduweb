@@ -21,8 +21,11 @@
         }
 
 
-        .editor-pane,
-        .preview-pane {
+        .editor-pane {
+            width: 50%;
+        }
+
+        .pdf-pane {
             width: 50%;
         }
 
@@ -38,14 +41,6 @@
         }
 
 
-        .preview-box {
-            border: 1px solid #ccc;
-            padding: 1rem;
-            height: 600px;
-            background: #fafafa;
-            overflow-wrap: break-word;
-            overflow-y: auto;
-        }
 
 
 
@@ -176,117 +171,6 @@
             padding: 0.5rem 1.2rem;
         }
 
-        .preview-box h1,
-        .preview-box h2,
-        .preview-box h3 {
-            margin-top: 1.25rem;
-        }
-
-
-        .preview-box p {
-            line-height: 1.7;
-        }
-
-
-        .preview-box code {
-            background: #eee;
-            padding: 0.1rem 0.3rem;
-        }
-
-
-        .preview-box pre {
-            background: #eee;
-            padding: 1rem;
-            overflow-x: auto;
-        }
-
-        /* ── Paper / page mode ── */
-        .paper-controls {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            padding: 6px 10px;
-            background: #f0f2f8;
-            border: 1px solid #d0d4e8;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            flex-wrap: wrap;
-        }
-        .paper-controls label { color: #555; font-weight: 600; }
-        .paper-controls select,
-        .paper-controls input[type="number"] {
-            font-size: 0.82rem;
-            padding: 3px 5px;
-            border: 1px solid #c5cce0;
-            border-radius: 3px;
-            background: #fff;
-        }
-        .paper-controls button {
-            margin-top: 0;
-            padding: 3px 10px;
-            font-size: 0.82rem;
-        }
-        #pages-container {
-            background: #808080;
-            padding: 20px 16px;
-            overflow-y: auto;
-            max-height: 900px;
-            display: none;
-        }
-        .page-sheet {
-            background: #fff;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-            margin: 0 auto 24px;
-            position: relative;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .page-sheet textarea {
-            width: 100%;
-            display: block;
-            resize: none;
-            overflow-y: auto;
-            scrollbar-width: none;
-            border: none;
-            outline: none;
-            font-family: monospace;
-            font-size: 1rem;
-            line-height: 1.9;
-            padding: 0;
-            margin: 0;
-            box-sizing: border-box;
-            background: transparent;
-            min-height: unset;
-        }
-        .page-sheet textarea::-webkit-scrollbar { display: none; }
-        .page-num {
-            position: absolute;
-            bottom: 8px;
-            right: 14px;
-            font-size: 0.72rem;
-            color: #ccc;
-            font-family: sans-serif;
-            pointer-events: none;
-            user-select: none;
-        }
-        #editor-area { position: relative; }
-        #editor-blocker {
-            position: absolute;
-            inset: 0;
-            min-height: 200px;
-            background: rgba(235,237,245,0.93);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-            color: #666;
-            z-index: 10;
-            border: 1px dashed #b0b8d0;
-            border-radius: 4px;
-            cursor: default;
-            user-select: none;
-        }
     </style>
 </head>
 <body>
@@ -307,11 +191,8 @@
 
 
         <button type="submit">Save</button>
-        <span style="margin-left:1.25rem; font-size:0.9rem; color:#444;">Download as:</span>
-        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="pdf" checked> PDF</label>
-        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="png"> PNG</label>
-        <label style="margin-left:0.5rem; font-size:0.9rem;"><input type="checkbox" name="dl-format" value="jpg"> JPG</label>
-        <button type="button" onclick="downloadFiles()" style="margin-left:0.5rem; background:#1a73e8; color:#fff; border:none; border-radius:4px; padding:0.75rem 1rem; cursor:pointer;">⬇ Download</button>
+        <button type="button" id="compile-btn" onclick="compilePDF()" style="background:#2d6a2d;color:#fff;border:none;border-radius:4px;padding:0.75rem 1rem;cursor:pointer;margin-left:0.5rem;">Compile</button>
+        <button type="button" id="export-btn" onclick="exportPDF()" style="background:#1a3a6e;color:#fff;border:none;border-radius:4px;padding:0.75rem 1rem;cursor:pointer;margin-left:0.5rem;">Export PDF</button>
 
         <div class="math-toolbar">
                     <div class="toolbar-group">
@@ -628,38 +509,15 @@
         </div>
         <div class="editor-layout">
             <div class="editor-pane">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">
-                    <h2 style="margin:0;">Editor</h2>
-                    <span id="page-count" style="display:none;font-size:0.8rem;color:#888;font-family:sans-serif;"></span>
-                </div>
-                <div class="paper-controls">
-                    <label>Page size:</label>
-                    <select id="paper-size-select" onchange="handlePaperSizeChange()">
-                        <option value="" disabled selected>Select page size…</option>
-                        <option value="none">No limit</option>
-                        <option value="letter">Letter (8.5×11")</option>
-                        <option value="a4">A4 (210×297mm)</option>
-                        <option value="legal">Legal (8.5×14")</option>
-                        <option value="a5">A5 (148×210mm)</option>
-                        <option value="custom">Custom…</option>
-                    </select>
-                    <span id="custom-dim-inputs" style="display:none; align-items:center; gap:4px;">
-                        <input type="number" id="custom-w" value="8.5" min="1" max="40" step="0.1" style="width:55px;"> ×
-                        <input type="number" id="custom-h" value="11" min="1" max="60" step="0.1" style="width:55px;">
-                        <span style="font-size:0.82rem;color:#666;">in</span>
-                        <button type="button" onclick="applyCustomSize()">Apply</button>
-                    </span>
-                </div>
-                <div id="editor-area">
-                    <div id="editor-blocker">Select a page size above to begin editing</div>
-                    <div id="pages-container"></div>
-                    <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
-                </div>
+                <h2 style="margin:0 0 0.5rem;">Editor</h2>
+                <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
             </div>
-
-            <div class="preview-pane">
-                <h2>Live Preview</h2>
-                <div id="preview" class="preview-box"></div>
+            <div class="pdf-pane">
+                <h2 style="margin:0 0 0.5rem;">PDF Preview</h2>
+                <div id="pdf-placeholder" style="height:800px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:4px;color:#aaa;font-size:0.9rem;font-style:italic;">
+                    Click Compile to generate preview
+                </div>
+                <iframe id="pdf-preview" style="display:none;width:100%;height:800px;border:1px solid #ccc;border-radius:4px;"></iframe>
             </div>
         </div>
 
@@ -672,13 +530,11 @@
     </p>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 
     <div id="link-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
         <div style="background:#fff; padding:1.5rem 2rem; border-radius:8px; min-width:380px; box-shadow:0 4px 24px rgba(0,0,0,0.25);">
@@ -724,7 +580,114 @@
 
     <script>
         let input = document.getElementById("content-input");
-        const preview = document.getElementById("preview");
+
+        // KaTeX CSS with inlined woff2 fonts — built once, reused on every compile
+        let _katexCssInlined = null;
+        let currentPdfUrl = null;
+
+        async function _getKatexCss() {
+            if (_katexCssInlined) return _katexCssInlined;
+            const base = 'https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/';
+            const cssResp = await fetch(base + 'katex.min.css');
+            if (!cssResp.ok) throw new Error('Could not fetch KaTeX CSS');
+            let css = await cssResp.text();
+            const paths = [...new Set([...css.matchAll(/url\(['"]?(fonts\/[^'")\s]+\.woff2)['"]?\)/g)].map(m => m[1]))];
+            const fontMap = {};
+            await Promise.all(paths.map(async rel => {
+                const resp = await fetch(base + rel);
+                if (!resp.ok) throw new Error('Font fetch failed: ' + rel);
+                const blob = new Blob([await resp.arrayBuffer()], { type: 'font/woff2' });
+                fontMap[rel] = await new Promise((res, rej) => {
+                    const fr = new FileReader();
+                    fr.onload = () => res(fr.result);
+                    fr.onerror = rej;
+                    fr.readAsDataURL(blob);
+                });
+            }));
+            _katexCssInlined = css.replace(
+                /url\(['"]?(fonts\/[^'")\s]+\.woff2)['"]?\)/g,
+                (_, p) => `url("${fontMap[p] || p}")`
+            );
+            return _katexCssInlined;
+        }
+
+        async function buildPDF(setStatus) {
+            setStatus('Bundling fonts…');
+            const katexCss = await _getKatexCss();
+            setStatus('Rendering PDF…');
+            const title = (document.querySelector('input[name="title"]')?.value || '').trim() || 'document';
+            const bodyHtml = renderContent(input.value);
+            const fullHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</title>
+<style>${katexCss}</style>
+<style>
+@page{size:letter;margin:1in}
+body{font-family:Georgia,serif;font-size:12pt;line-height:1.6;margin:0}
+.katex-display{margin:0.8em 0;overflow-x:visible}
+pre,code{white-space:pre-wrap;font-size:10pt}
+a{color:#1a3a6e}
+</style>
+</head><body>${bodyHtml}</body></html>`;
+            const fd = new FormData();
+            fd.append('rendered_html', fullHtml);
+            fd.append('title', title);
+            fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            const res = await fetch('{% url "export_pdf" %}', { method: 'POST', body: fd });
+            if (!res.ok) throw new Error(await res.text());
+            return { blob: await res.blob(), title };
+        }
+
+        async function compilePDF() {
+            const btn = document.getElementById('compile-btn');
+            btn.disabled = true;
+            try {
+                const { blob } = await buildPDF(t => { btn.textContent = t; });
+                if (currentPdfUrl) URL.revokeObjectURL(currentPdfUrl);
+                currentPdfUrl = URL.createObjectURL(blob);
+                const iframe = document.getElementById('pdf-preview');
+                iframe.src = currentPdfUrl;
+                iframe.style.display = 'block';
+                document.getElementById('pdf-placeholder').style.display = 'none';
+            } catch (err) {
+                alert('Compile failed:\n' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Compile';
+            }
+        }
+
+        async function exportPDF() {
+            const btn = document.getElementById('export-btn');
+            btn.disabled = true;
+            try {
+                const { blob, title } = await buildPDF(t => { btn.textContent = t; });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = title + '.pdf';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            } catch (err) {
+                alert('Export failed:\n' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Export PDF';
+            }
+        }
+
+        function renderContent(raw) {
+            const blocks = [];
+            let text = raw
+                .replace(/\$\$([\s\S]*?)\$\$/g, (_, m) => { blocks.push({m, d:true}); return `%%MATH${blocks.length-1}%%`; })
+                .replace(/\$([^$\n]+?)\$/g, (_, m) => { blocks.push({m, d:false}); return `%%MATH${blocks.length-1}%%`; });
+            text = marked.parse(text, { breaks: true });
+            return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
+                const {m, d} = blocks[+i];
+                try { return katex.renderToString(m, {throwOnError:false, displayMode:d}); }
+                catch(e) { return d ? `$$${m}$$` : `$${m}$`; }
+            });
+        }
+
 
         let mathField, savedStart, savedEnd, initialTemplate;
 
@@ -934,374 +897,6 @@
             });
         }
 
-        // ── Download ─────────────────────────────────────────────────
-        async function downloadFiles() {
-            const formats = [...document.querySelectorAll('input[name="dl-format"]:checked')].map(el => el.value);
-            if (!formats.length) { alert('Select at least one format.'); return; }
-
-            const btn = document.querySelector('button[onclick="downloadFiles()"]');
-            btn.disabled = true;
-            btn.textContent = 'Preparing…';
-
-            try {
-                await document.fonts.ready;
-                await new Promise(r => setTimeout(r, 300));
-
-                const titleEl = document.getElementById('id_title');
-                const title   = (titleEl ? titleEl.value.trim() : '') || 'notes';
-                const canvases = [];
-
-                if (pageMode) {
-                    // Capture each rendered page sheet individually
-                    for (const sheet of [...preview.children]) {
-                        const c = await html2canvas(sheet, {
-                            scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff'
-                        });
-                        canvases.push(c);
-                    }
-                } else {
-                    // Expand preview to full content height before capture
-                    const origHeight = preview.style.height;
-                    const origOverflow = preview.style.overflowY;
-                    preview.style.height = 'auto';
-                    preview.style.overflowY = 'visible';
-                    await new Promise(r => setTimeout(r, 100));
-                    const c = await html2canvas(preview, {
-                        scale: 3, useCORS: true, logging: false, backgroundColor: '#fafafa'
-                    });
-                    preview.style.height = origHeight;
-                    preview.style.overflowY = origOverflow;
-                    canvases.push(c);
-                }
-
-                if (!canvases.length) { alert('Nothing to download.'); return; }
-
-                for (const fmt of formats) {
-                    if (fmt === 'pdf') {
-                        const { jsPDF } = window.jspdf;
-                        let pdf;
-                        if (pageMode) {
-                            const w = pageDims.wIn, h = pageDims.hIn;
-                            pdf = new jsPDF({ orientation: h >= w ? 'p' : 'l', unit: 'in', format: [w, h] });
-                            for (let i = 0; i < canvases.length; i++) {
-                                if (i > 0) pdf.addPage([w, h], h >= w ? 'p' : 'l');
-                                pdf.addImage(canvases[i].toDataURL('image/png'), 'PNG', 0, 0, w, h);
-                            }
-                        } else {
-                            pdf = new jsPDF('p', 'in', 'letter');
-                            const margin = 0.75;
-                            const pageW  = pdf.internal.pageSize.getWidth() - margin * 2;
-                            const imgH   = (canvases[0].height / canvases[0].width) * pageW;
-                            pdf.addImage(canvases[0].toDataURL('image/png'), 'PNG', margin, margin, pageW, imgH);
-                        }
-                        pdf.save(title + '.pdf');
-                    } else {
-                        const mime = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
-                        for (let i = 0; i < canvases.length; i++) {
-                            const link = document.createElement('a');
-                            link.download = title + (canvases.length > 1 ? `_p${i + 1}` : '') + '.' + fmt;
-                            link.href = canvases[i].toDataURL(mime, 0.95);
-                            link.click();
-                            await new Promise(r => setTimeout(r, 150));
-                        }
-                    }
-                    await new Promise(r => setTimeout(r, 150));
-                }
-            } catch (e) {
-                alert('Download failed: ' + e.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '⬇ Download';
-            }
-        }
-
-        // ── Page mode ────────────────────────────────────────────────
-        const PAPER_PRESETS = {
-            letter: { wIn: 8.5,  hIn: 11    },
-            a4:     { wIn: 8.27, hIn: 11.69 },
-            legal:  { wIn: 8.5,  hIn: 14    },
-            a5:     { wIn: 5.83, hIn: 8.27  },
-        };
-        const PAGE_DISPLAY_W = 560;
-        const MARGIN_IN = 1.0;
-
-        let pageMode = false;
-        let pageDims = null;
-        let pageTextareas = [];
-
-        function _calcDims(wIn, hIn) {
-            const scale = PAGE_DISPLAY_W / wIn;
-            const mPx   = Math.round(MARGIN_IN * scale);
-            return { pageW: PAGE_DISPLAY_W, pageH: Math.round(hIn * scale), mPx,
-                     cW: PAGE_DISPLAY_W - 2 * mPx, cH: Math.round(hIn * scale) - 2 * mPx,
-                     wIn, hIn };
-        }
-
-        function handlePaperSizeChange() {
-            const val = document.getElementById('paper-size-select').value;
-            const ci  = document.getElementById('custom-dim-inputs');
-            document.getElementById('editor-blocker').style.display = 'none';
-            ci.style.display = val === 'custom' ? 'inline-flex' : 'none';
-            if (val === 'none')   { exitPageMode(); return; }
-            if (val === 'custom') return;
-            const p = PAPER_PRESETS[val];
-            enterPageMode(p.wIn, p.hIn);
-        }
-
-        function updatePageCount() {
-            const el = document.getElementById('page-count');
-            if (!pageMode) { el.style.display = 'none'; return; }
-            const n = pageTextareas.length;
-            el.textContent = n === 1 ? '1 page' : `${n} pages`;
-            el.style.display = '';
-        }
-
-        function applyCustomSize() {
-            const w = parseFloat(document.getElementById('custom-w').value) || 8.5;
-            const h = parseFloat(document.getElementById('custom-h').value) || 11;
-            enterPageMode(w, h);
-        }
-
-        function enterPageMode(wIn, hIn) {
-            const mainTa = document.getElementById('content-input');
-            // If switching sizes while already in page mode, collect content first
-            const existing = pageMode
-                ? pageTextareas.map(ta => ta.value).join('\n')
-                : mainTa.value;
-
-            pageMode      = true;
-            pageDims      = _calcDims(wIn, hIn);
-            pageTextareas = [];
-
-            mainTa.style.display = 'none';
-            const container = document.getElementById('pages-container');
-            container.style.display = 'block';
-            container.innerHTML = '';
-
-            if (existing.trim()) _reflowIntoPages(existing);
-            else                 _addPage();
-
-            input = pageTextareas[0];
-            input.focus();
-            updatePageCount();
-            updatePreview();
-        }
-
-        function exitPageMode() {
-            if (!pageMode) return;
-            const combined = pageTextareas.map(ta => ta.value).join('\n');
-            const mainTa   = document.getElementById('content-input');
-            mainTa.value   = combined;
-            mainTa.style.display = '';
-            input = mainTa;
-
-            document.getElementById('pages-container').style.display = 'none';
-            document.getElementById('pages-container').innerHTML = '';
-            pageTextareas = [];
-            pageMode = false;
-            pageDims = null;
-            input.focus();
-            updatePageCount();
-            updatePreview();
-        }
-
-        function _addPage() {
-            const container = document.getElementById('pages-container');
-            const sheet = document.createElement('div');
-            sheet.className = 'page-sheet';
-            sheet.style.width  = pageDims.pageW + 'px';
-            sheet.style.height = pageDims.pageH + 'px';
-            sheet.style.padding = pageDims.mPx + 'px';
-
-            const ta = document.createElement('textarea');
-            ta.style.height = pageDims.cH + 'px';
-
-            const pn = document.createElement('div');
-            pn.className = 'page-num';
-            pn.textContent = pageTextareas.length + 1;
-
-            sheet.appendChild(ta);
-            sheet.appendChild(pn);
-            container.appendChild(sheet);
-
-            const idx = pageTextareas.length;
-            pageTextareas.push(ta);
-
-            ta.addEventListener('focus', () => { input = ta; });
-            ta.addEventListener('input', () => {
-                input = ta;
-                _checkOverflow(idx);
-                updatePreview();
-            });
-            ta.addEventListener('keydown', e => {
-                if (e.key === 'Backspace' && ta.value === '' && idx > 0) {
-                    e.preventDefault();
-                    _removePage(idx);
-                }
-            });
-            return ta;
-        }
-
-        function _findSplitChar(text) {
-            const div = document.createElement('div');
-            div.style.cssText =
-                `position:fixed;left:-9999px;top:0;` +
-                `width:${pageDims.cW}px;` +
-                `font-family:monospace;font-size:1rem;line-height:1.9;` +
-                `white-space:pre-wrap;word-break:break-word;box-sizing:border-box;`;
-            document.body.appendChild(div);
-            div.textContent = text;
-            if (div.scrollHeight <= pageDims.cH) {
-                document.body.removeChild(div);
-                return text.length;
-            }
-            let lo = 0, hi = text.length;
-            while (lo < hi - 1) {
-                const mid = (lo + hi) >> 1;
-                div.textContent = text.slice(0, mid);
-                if (div.scrollHeight <= pageDims.cH) lo = mid; else hi = mid;
-            }
-            document.body.removeChild(div);
-            if (lo > 0 && lo < text.length && text[lo] !== '\n') {
-                const boundary = Math.max(text.lastIndexOf(' ', lo), text.lastIndexOf('\n', lo));
-                if (boundary > 0) return boundary + 1;
-            }
-            return lo;
-        }
-
-        function _checkOverflow(idx) {
-            const ta = pageTextareas[idx];
-            const splitAt = _findSplitChar(ta.value);
-            if (splitAt >= ta.value.length) return;
-
-            const keep     = ta.value.slice(0, splitAt);
-            const overflow = ta.value.slice(splitAt);
-            const cursor   = ta.selectionStart;
-
-            ta.value = keep;
-
-            const nextIdx = idx + 1;
-            if (nextIdx >= pageTextareas.length) _addPage();
-            const nextTa = pageTextareas[nextIdx];
-            nextTa.value = overflow + (nextTa.value ? '\n' + nextTa.value : '');
-
-            _checkOverflow(nextIdx);
-            _updatePageNums();
-
-            if (cursor > keep.length) {
-                const pos = cursor - keep.length;
-                nextTa.focus();
-                nextTa.setSelectionRange(pos, pos);
-                input = nextTa;
-                nextTa.closest('.page-sheet').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }
-
-        function _removePage(idx) {
-            const ta      = pageTextareas[idx];
-            const leftover = ta.value;
-            ta.closest('.page-sheet').remove();
-            pageTextareas.splice(idx, 1);
-            const prevTa = pageTextareas[idx - 1];
-            if (leftover) prevTa.value += (prevTa.value ? '\n' : '') + leftover;
-            prevTa.focus();
-            prevTa.setSelectionRange(prevTa.value.length, prevTa.value.length);
-            input = prevTa;
-            _updatePageNums();
-            updatePreview();
-        }
-
-        function _updatePageNums() {
-            pageTextareas.forEach((ta, i) => {
-                const pn = ta.closest('.page-sheet').querySelector('.page-num');
-                if (pn) pn.textContent = i + 1;
-            });
-            updatePageCount();
-        }
-
-        function _reflowIntoPages(text) {
-            let remaining = text;
-            while (remaining.length > 0) {
-                const ta = _addPage();
-                const splitAt = _findSplitChar(remaining);
-                if (splitAt >= remaining.length) {
-                    ta.value = remaining;
-                    break;
-                }
-                ta.value = remaining.slice(0, splitAt);
-                remaining = remaining.slice(splitAt);
-            }
-        }
-
-        // ── Preview rendering ────────────────────────────────────────
-        function simpleMathToLatex(text) {
-            return text
-                .replace(/log_(\d+)\((.*?)\)/g, '\\log_{$1}($2)')
-                .replace(/(\w+)\^(\d+)/g, '$1^{$2}')
-                .replace(/lim\s*x->\s*(\d+)/g, '\\lim_{x \\to $1}')
-                .replace(/sqrt\((.*?)\)/g, '\\sqrt{$1}');
-        }
-
-        function _renderRaw(raw) {
-            raw = simpleMathToLatex(raw);
-            const saved = [];
-            raw = raw.replace(/(^|\n)\$\$([\s\S]*?)\$\$/g, (_, pre, content) => {
-                saved.push('$$' + content + '$$');
-                return pre + `@@MATH${saved.length - 1}@@`;
-            });
-            raw = raw.replace(/\$[^$\n]+?\$/g, m => { saved.push(m); return `@@MATH${saved.length - 1}@@`; });
-            raw = raw.replace(/\n{3,}/g, m => '\n\n' + '<br>\n\n'.repeat(m.length - 2));
-            raw = raw.replace(/ {2,}/g, m => '&nbsp;'.repeat(m.length));
-            let html = marked.parse(raw);
-            html = html.replace(/@@MATH(\d+)@@/g, (_, i) => saved[+i]);
-            return html;
-        }
-
-        const MATH_DELIMITERS = [
-            { left: "$$", right: "$$", display: true  },
-            { left: "\\[", right: "\\]", display: true  },
-            { left: "$",  right: "$",  display: false },
-            { left: "\\(", right: "\\)", display: false }
-        ];
-
-        function updatePreview() {
-            if (pageMode) {
-                preview.style.cssText =
-                    `background:#808080;padding:20px 16px;overflow-y:auto;` +
-                    `min-height:${pageDims.pageH + 40}px;border:none;`;
-                preview.innerHTML = '';
-
-                pageTextareas.forEach((ta, i) => {
-                    const sheet = document.createElement('div');
-                    sheet.style.cssText =
-                        `width:${pageDims.pageW}px;height:${pageDims.pageH}px;` +
-                        `background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.4);` +
-                        `margin:0 auto 24px;padding:${pageDims.mPx}px;` +
-                        `box-sizing:border-box;overflow:hidden;position:relative;`;
-
-                    const inner = document.createElement('div');
-                    inner.style.cssText =
-                        `width:${pageDims.cW}px;height:${pageDims.cH}px;` +
-                        `overflow:hidden;overflow-wrap:break-word;word-break:break-word;`;
-                    inner.innerHTML = _renderRaw(ta.value);
-
-                    const pn = document.createElement('div');
-                    pn.style.cssText =
-                        'position:absolute;bottom:8px;right:14px;font-size:0.72rem;' +
-                        'color:#ccc;font-family:sans-serif;pointer-events:none;';
-                    pn.textContent = i + 1;
-
-                    sheet.appendChild(inner);
-                    sheet.appendChild(pn);
-                    preview.appendChild(sheet);
-                    renderMathInElement(inner, { delimiters: MATH_DELIMITERS, throwOnError: false });
-                });
-            } else {
-                preview.removeAttribute('style');
-                preview.innerHTML = _renderRaw(input.value);
-                renderMathInElement(preview, { delimiters: MATH_DELIMITERS, throwOnError: false });
-            }
-        }
 
         // ── Init after all deferred scripts have loaded ──────────────
         document.addEventListener('DOMContentLoaded', () => {
@@ -1338,17 +933,8 @@
             document.getElementById('text-color-picker').addEventListener('change', e => applyTextColor(e.target.value));
             document.getElementById('highlight-picker').addEventListener('change', e => applyHighlight(e.target.value));
 
-            // Combine pages into the main field before form POST
-            document.querySelector('form[method="post"]').addEventListener('submit', () => {
-                if (pageMode) {
-                    document.getElementById('content-input').value =
-                        pageTextareas.map(ta => ta.value).join('\n');
-                }
-            });
-
-            input.addEventListener("input", updatePreview);
-            updatePreview();
         });
     </script>
+
 </body>
 </html>

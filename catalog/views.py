@@ -1,6 +1,9 @@
 import markdown
+import re
 
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from django.views.decorators.http import require_POST
 
 
 def page_not_found(request, exception):
@@ -176,6 +179,50 @@ def start_final_exam(request, exam_id):
         id=exam_id
     )
     return render(request, 'catalog/start_final_exam.html', {'exam': exam})
+
+# ---------------------------------------------------------------------------
+# PDF export — serialized preview DOM (KaTeX already rendered) → Playwright PDF
+# ---------------------------------------------------------------------------
+
+@staff_member_required
+@require_POST
+def export_pdf(request):
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        return HttpResponse(
+            'playwright not installed.\nRun: pip install playwright && playwright install chromium',
+            status=500, content_type='text/plain',
+        )
+
+    rendered_html = request.POST.get('rendered_html', '')
+    title = request.POST.get('title', 'document').strip() or 'document'
+
+    if not rendered_html:
+        return HttpResponse('rendered_html is required', status=400, content_type='text/plain')
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            pg = browser.new_page()
+            pg.set_content(rendered_html, wait_until='domcontentloaded')
+            pdf_bytes = pg.pdf(
+                format='Letter',
+                margin={'top': '1in', 'right': '1in', 'bottom': '1in', 'left': '1in'},
+                print_background=True,
+            )
+            browser.close()
+    except Exception as e:
+        return HttpResponse(
+            f'Playwright/Chromium error:\n{e}',
+            status=500, content_type='text/plain',
+        )
+
+    fname = re.sub(r'[^\w\s-]', '', title).strip().replace(' ', '_') or 'document'
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{fname}.pdf"'
+    return response
+
 
 @staff_member_required
 def textbook_edit(request, textbook_id):

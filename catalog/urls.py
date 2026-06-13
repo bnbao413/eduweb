@@ -17,6 +17,7 @@ urlpatterns = [
     path('final-exam/<int:exam_id>/', views.final_exam_detail, name='final_exam_detail'),
     path('final-exam/<int:exam_id>/start/', views.start_final_exam, name='start_final_exam'),
     path('course/<int:course_id>/delete/', views.course_delete, name='course_delete'),
+    path('export-pdf/', views.export_pdf, name='export_pdf'),
 
 
     
