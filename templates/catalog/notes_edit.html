@@ -571,10 +571,10 @@
             </div>
             <div class="pdf-pane">
                 <h2 style="margin:0 0 0.5rem;">PDF Preview</h2>
-                <div id="pdf-placeholder" style="height:800px;display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:4px;color:#aaa;font-size:0.9rem;font-style:italic;">
+                <div id="pdf-placeholder" style="height:max(900px,calc(100vh - 160px));display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:4px;color:#aaa;font-size:0.9rem;font-style:italic;">
                     Click Compile to generate preview
                 </div>
-                <iframe id="pdf-preview" style="display:none;width:100%;height:800px;border:1px solid #ccc;border-radius:4px;"></iframe>
+                <iframe id="pdf-preview" style="display:none;width:100%;height:max(900px,calc(100vh - 160px));border:1px solid #ccc;border-radius:4px;overflow-x:hidden;"></iframe>
             </div>
         </div>
 
@@ -841,16 +841,28 @@ a{color:#1a3a6e}
 <title>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
 <style>
-html{background:#e0e0e0;padding:0.4in 0;margin:0}
+html{background:#e0e0e0;padding:0;margin:0;overflow-x:hidden}
+body{margin:0;overflow-x:hidden}
 .page{font-family:Georgia,serif;font-size:12pt;line-height:1.6;
-      background:#fff;width:8.5in;min-height:11in;
-      margin:0 auto 0.4in;padding:1in;
+      background:#fff;width:816px;min-height:1056px;
+      margin:0 auto 38px;padding:96px;
       box-shadow:0 2px 10px rgba(0,0,0,0.35);box-sizing:border-box;
       overflow-wrap:break-word;word-break:normal}
+.page:first-child{margin-top:38px}
 .katex-display{margin:0.8em 0;overflow-x:visible}
 pre,code{white-space:pre-wrap;font-size:10pt}
 a{color:#1a3a6e}
 </style>
+<script>
+(function(){
+  function fit(){
+    var s=Math.min(1,document.documentElement.clientWidth/816);
+    document.body.style.zoom=s;
+  }
+  fit();
+  window.addEventListener('resize',fit);
+})();
+<\/script>
 </head><body>${pagesHtml}</body></html>`;
             const blob = new Blob([html], { type: 'text/html' });
             if (livePreviewUrl) URL.revokeObjectURL(livePreviewUrl);
