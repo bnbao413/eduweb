@@ -1388,7 +1388,7 @@ a{color:#1a3a6e}
         }
 
         // ── Matrix modal ─────────────────────────────────────────────
-        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd;
+        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd, _mFields;
 
         function openMatrixModal(rows, cols, env) {
             _mRows = rows; _mCols = cols; _mEnv = env;
@@ -1397,33 +1397,37 @@ a{color:#1a3a6e}
             const titles = { pmatrix: cols === 1 ? `Column Vector (${rows})` : `${rows}×${cols} Matrix`, vmatrix: `${rows}×${cols} Determinant` };
             document.getElementById('matrix-modal-title').textContent = titles[env] || `${rows}×${cols} Matrix`;
             const grid = document.getElementById('matrix-grid');
-            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateColumns = `repeat(${cols}, minmax(64px, auto))`;
             grid.innerHTML = '';
+            _mFields = [];
+            const MQ = MathQuill.getInterface(2);
             for (let r = 0; r < rows; r++) {
+                _mFields[r] = [];
                 for (let c = 0; c < cols; c++) {
-                    const inp = document.createElement('input');
-                    inp.type = 'text';
-                    inp.id = `mcell-${r}-${c}`;
-                    inp.placeholder = cols === 1 ? `row ${r+1}` : `${r+1},${c+1}`;
-                    inp.style.cssText = 'width:64px;padding:5px 6px;border:1px solid #c5cce0;border-radius:3px;font-family:serif;font-size:0.9rem;text-align:center;box-sizing:border-box;';
-                    inp.addEventListener('keydown', e => {
-                        if (e.key === 'ArrowRight') { e.preventDefault(); if (c + 1 < cols) document.getElementById(`mcell-${r}-${c+1}`)?.focus(); }
-                        else if (e.key === 'ArrowLeft') { e.preventDefault(); if (c - 1 >= 0) document.getElementById(`mcell-${r}-${c-1}`)?.focus(); }
-                        else if (e.key === 'ArrowDown') { e.preventDefault(); if (r + 1 < rows) document.getElementById(`mcell-${r+1}-${c}`)?.focus(); }
-                        else if (e.key === 'ArrowUp') { e.preventDefault(); if (r - 1 >= 0) document.getElementById(`mcell-${r-1}-${c}`)?.focus(); }
-                        else if (e.key === 'Enter' || e.key === 'Tab') {
-                            e.preventDefault();
-                            const nr = c < cols - 1 ? r : r + 1;
-                            const nc = c < cols - 1 ? c + 1 : 0;
-                            if (nr < rows) document.getElementById(`mcell-${nr}-${nc}`)?.focus();
-                            else doInsertMatrix();
-                        } else if (e.key === 'Escape') { closeMatrixModal(); }
+                    const wrap = document.createElement('div');
+                    wrap.style.cssText = 'min-width:64px;border:1px solid #c5cce0;border-radius:3px;background:#fff;padding:3px 6px;box-sizing:border-box;';
+                    grid.appendChild(wrap);
+                    const mf = MQ.MathField(wrap, {
+                        handlers: {
+                            moveOutOf: function(dir) {
+                                if (dir === MQ.R && c + 1 < cols) _mFields[r][c+1].focus();
+                                else if (dir === MQ.L && c - 1 >= 0) _mFields[r][c-1].focus();
+                            },
+                            upOutOf:   function() { if (r - 1 >= 0) _mFields[r-1][c].focus(); },
+                            downOutOf: function() { if (r + 1 < rows) _mFields[r+1][c].focus(); else doInsertMatrix(); },
+                            enter:     function() {
+                                const nr = c + 1 < cols ? r : r + 1;
+                                const nc = c + 1 < cols ? c + 1 : 0;
+                                if (nr < rows) _mFields[nr][nc].focus(); else doInsertMatrix();
+                            }
+                        }
                     });
-                    grid.appendChild(inp);
+                    wrap.addEventListener('keydown', e => { if (e.key === 'Escape') closeMatrixModal(); }, true);
+                    _mFields[r][c] = mf;
                 }
             }
             document.getElementById('matrix-modal').style.display = 'flex';
-            document.getElementById('mcell-0-0').focus();
+            _mFields[0][0].focus();
         }
 
         function closeMatrixModal() {
@@ -1436,7 +1440,7 @@ a{color:#1a3a6e}
             for (let r = 0; r < _mRows; r++) {
                 const cells = [];
                 for (let c = 0; c < _mCols; c++) {
-                    cells.push(document.getElementById(`mcell-${r}-${c}`).value.trim() || '\\square');
+                    cells.push(_mFields[r][c].latex().trim() || '\\square');
                 }
                 rowStrs.push(cells.join(' & '));
             }
