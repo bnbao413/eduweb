@@ -1209,10 +1209,21 @@ a{color:#1a3a6e}
                 btn.addEventListener('blur',  () => { btn.style.outline=''; });
                 btn.addEventListener('keydown', e => {
                     const catBtns = Array.from(tabs.querySelectorAll('button'));
+                    const r = btn.getBoundingClientRect();
                     if (e.key === 'ArrowRight') { e.preventDefault(); const t=catBtns[Math.min(ci+1,catBtns.length-1)]; _selectModalCat(t.dataset.cat); t.focus(); }
                     else if (e.key === 'ArrowLeft') { e.preventDefault(); const t=catBtns[Math.max(ci-1,0)]; _selectModalCat(t.dataset.cat); t.focus(); }
-                    else if (e.key === 'ArrowDown' || e.key === 'Tab') { e.preventDefault(); const g = document.getElementById('modal-sym-grid'); const s = g.querySelector('button'); if (s) s.focus(); else { const f = document.querySelector('.math-modal-actions button'); if (f) f.focus(); } }
-                    else if (e.key === 'ArrowUp') { e.preventDefault(); const ms=document.getElementById('modal-sym-search'); if(ms) ms.focus(); else mathField.focus(); }
+                    else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const below = catBtns.filter((b,i) => i>ci && b.getBoundingClientRect().top > r.top+4);
+                        if (below.length) { const rt=below[0].getBoundingClientRect().top; const row=below.filter(b=>b.getBoundingClientRect().top<=rt+4); const t=row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a); _selectModalCat(t.dataset.cat); t.focus(); }
+                        else { const s=document.getElementById('modal-sym-grid').querySelector('button'); if(s)s.focus(); }
+                    }
+                    else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const above = catBtns.filter((b,i) => i<ci && b.getBoundingClientRect().top < r.top-4);
+                        if (above.length) { const rt=above[above.length-1].getBoundingClientRect().top; const row=above.filter(b=>b.getBoundingClientRect().top>=rt-4); const t=row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a); _selectModalCat(t.dataset.cat); t.focus(); }
+                        else { const ms=document.getElementById('modal-sym-search'); if(ms) ms.focus(); else mathField.focus(); }
+                    }
                     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
                     else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); }
                 });
@@ -1466,10 +1477,21 @@ a{color:#1a3a6e}
                 btn.addEventListener('click', () => _mSelectCat(cat));
                 btn.addEventListener('keydown', e => {
                     const catBtns = Array.from(document.querySelectorAll('#matrix-cat-tabs button'));
+                    const r = btn.getBoundingClientRect();
                     if (e.key === 'ArrowRight') { e.preventDefault(); const t=catBtns[Math.min(ci+1,catBtns.length-1)]; _mSelectCat(t.dataset.cat); t.focus(); }
                     else if (e.key === 'ArrowLeft') { e.preventDefault(); const t=catBtns[Math.max(ci-1,0)]; _mSelectCat(t.dataset.cat); t.focus(); }
-                    else if (e.key === 'ArrowUp') { e.preventDefault(); document.getElementById('matrix-sym-search').focus(); }
-                    else if (e.key === 'ArrowDown') { e.preventDefault(); const s=_mSymGrid().querySelector('button'); if(s)s.focus(); }
+                    else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const below = catBtns.filter((b,i) => i>ci && b.getBoundingClientRect().top > r.top+4);
+                        if (below.length) { const rt=below[0].getBoundingClientRect().top; const row=below.filter(b=>b.getBoundingClientRect().top<=rt+4); const t=row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a); _mSelectCat(t.dataset.cat); t.focus(); }
+                        else { const s=_mSymGrid().querySelector('button'); if(s)s.focus(); }
+                    }
+                    else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const above = catBtns.filter((b,i) => i<ci && b.getBoundingClientRect().top < r.top-4);
+                        if (above.length) { const rt=above[above.length-1].getBoundingClientRect().top; const row=above.filter(b=>b.getBoundingClientRect().top>=rt-4); const t=row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a); _mSelectCat(t.dataset.cat); t.focus(); }
+                        else { document.getElementById('matrix-sym-search').focus(); }
+                    }
                     else if (e.key === 'Escape') { closeMatrixModal(); }
                 });
                 tabs.appendChild(btn);
