@@ -1460,7 +1460,7 @@ a{color:#1a3a6e}
             renderDrafts();
             const modal = document.getElementById('math-modal');
             modal.style.display = 'flex';
-            setTimeout(() => mathField.focus(), 50);
+            setTimeout(() => { mathField.focus(); mathField.keystroke('Home'); }, 50);
         }
 
         function closeMathModal() {
