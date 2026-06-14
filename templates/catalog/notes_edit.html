@@ -236,18 +236,18 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Structures</div>
                         <div class="toolbar-group-buttons">
-                    <button type="button" title="Fraction" onclick="openMath('\\frac{}{}')">a/b</button>
-                    <button type="button" title="Binomial coefficient" onclick="openMath('\\binom{}{}')">C(n,k)</button>
+                    <button type="button" title="Fraction" onclick="openStructModal('frac')">a/b</button>
+                    <button type="button" title="Binomial coefficient" onclick="openStructModal('binom')">C(n,k)</button>
                     <button type="button" title="Square root" onclick="openMath('\\sqrt{}')">√</button>
-                    <button type="button" title="nth root" onclick="openMath('\\sqrt[n]{}')">ⁿ√</button>
+                    <button type="button" title="nth root" onclick="openStructModal('nroot')">ⁿ√</button>
                     <button type="button" title="Superscript" onclick="openMath('x^{}')">xⁿ</button>
                     <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
-                    <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
-                    <button type="button" title="Contour integral" onclick="openMath('\\oint_{ }^{ }')">∮</button>
-                    <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
-                    <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
-                    <button type="button" title="Big union" onclick="openMath('\\bigcup_{ }^{ }')">⋃</button>
-                    <button type="button" title="Big intersection" onclick="openMath('\\bigcap_{ }^{ }')">⋂</button>
+                    <button type="button" title="Integral" onclick="openStructModal('int')">∫</button>
+                    <button type="button" title="Contour integral" onclick="openStructModal('oint')">∮</button>
+                    <button type="button" title="Sum" onclick="openStructModal('sum')">Σ</button>
+                    <button type="button" title="Product" onclick="openStructModal('prod')">∏</button>
+                    <button type="button" title="Big union" onclick="openStructModal('bigcup')">⋃</button>
+                    <button type="button" title="Big intersection" onclick="openStructModal('bigcap')">⋂</button>
                     <button type="button" title="Big wedge (exterior)" onclick="openMath('\\bigwedge_{ }')">⋀</button>
                     <button type="button" title="Big vee" onclick="openMath('\\bigvee_{ }')">⋁</button>
                     <button type="button" title="Limit" onclick="openMath('\\lim_{x\\to }')">lim</button>
@@ -305,7 +305,7 @@
                         <div class="toolbar-group-label">Functions</div>
                         <div class="toolbar-group-buttons">
                             <button type="button" title="Logarithm" onclick="openMath('\\log\\left(\\right)')">log</button>
-                            <button type="button" title="Log base n" onclick="openMath('\\log_{ }\\left(\\right)')">logₙ</button>
+                            <button type="button" title="Log base n" onclick="openStructModal('logn')">logₙ</button>
                             <button type="button" title="Natural log" onclick="openMath('\\ln\\left(\\right)')">ln</button>
                             <button type="button" title="Exponential" onclick="openMath('\\exp\\left(\\right)')">exp</button>
                             <button type="button" title="Supremum" onclick="openMath('\\sup_{ }')">sup</button>
@@ -322,14 +322,14 @@
                             <button type="button" title="Argument" onclick="openMath('\\arg\\left(\\right)')">arg</button>
                             <button type="button" title="Real part" onclick="openMath('\\operatorname{Re}\\left(\\right)')">Re</button>
                             <button type="button" title="Imaginary part" onclick="openMath('\\operatorname{Im}\\left(\\right)')">Im</button>
-                            <button type="button" title="Residue" onclick="openMath('\\operatorname{Res}_{  }\\left(\\right)')">Res</button>
-                            <button type="button" title="Homomorphisms" onclick="openMath('\\operatorname{Hom}\\left(,\\right)')">Hom</button>
+                            <button type="button" title="Residue" onclick="openStructModal('res')">Res</button>
+                            <button type="button" title="Homomorphisms" onclick="openStructModal('hom')">Hom</button>
                             <button type="button" title="Automorphisms" onclick="openMath('\\operatorname{Aut}\\left(\\right)')">Aut</button>
                             <button type="button" title="Endomorphisms" onclick="openMath('\\operatorname{End}\\left(\\right)')">End</button>
                             <button type="button" title="Galois group" onclick="openMath('\\operatorname{Gal}\\left(\\right)')">Gal</button>
                             <button type="button" title="Spectrum" onclick="openMath('\\operatorname{Spec}\\left(\\right)')">Spec</button>
-                            <button type="button" title="Ext functor" onclick="openMath('\\operatorname{Ext}^{  }\\left(,\\right)')">Ext</button>
-                            <button type="button" title="Tor functor" onclick="openMath('\\operatorname{Tor}_{  }\\left(,\\right)')">Tor</button>
+                            <button type="button" title="Ext functor" onclick="openStructModal('ext')">Ext</button>
+                            <button type="button" title="Tor functor" onclick="openStructModal('tor')">Tor</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -484,8 +484,8 @@
                             <button type="button" title="Double dot" onclick="openMath('\\ddot{}')">ẍ</button>
                             <button type="button" title="Check" onclick="openMath('\\check{}')">x̌</button>
                             <button type="button" title="Underline" onclick="openMath('\\underline{}')">x̲</button>
-                            <button type="button" title="Overbrace" onclick="openMath('\\overbrace{}^{}')">⏞</button>
-                            <button type="button" title="Underbrace" onclick="openMath('\\underbrace{}_{}')">⏟</button>
+                            <button type="button" title="Overbrace" onclick="openStructModal('overbr')">⏞</button>
+                            <button type="button" title="Underbrace" onclick="openStructModal('underbr')">⏟</button>
                             <button type="button" title="Prime" onclick="insSym('\\prime')">′</button>
                             <button type="button" title="Calligraphic" onclick="openMath('\\mathcal{}')">𝒜</button>
                             <button type="button" title="Fraktur" onclick="openMath('\\mathfrak{}')">𝔄</button>
@@ -609,6 +609,17 @@
         <div style="display:flex; gap:0.5rem; justify-content:center;">
             <button type="button" onclick="confirmDeleteDraft()" style="padding:0.4rem 1rem; background:#e53e3e; color:#fff; border:none; border-radius:4px; cursor:pointer;">Remove draft</button>
             <button type="button" onclick="cancelDeleteDraft()" style="padding:0.4rem 1rem; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="struct-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1100;align-items:center;justify-content:center;">
+        <div style="background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.25);min-width:340px;">
+            <h3 id="struct-modal-title" style="margin:0 0 1rem;font-size:1rem;"></h3>
+            <div id="struct-modal-fields" style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem;"></div>
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+                <button type="button" onclick="closeStructModal()" style="padding:0.4rem 1rem;cursor:pointer;">Cancel</button>
+                <button type="button" onclick="doInsertStruct()" style="padding:0.4rem 1rem;background:#1a3a6e;color:#fff;border:none;border-radius:4px;cursor:pointer;">Insert</button>
+            </div>
         </div>
     </div>
 
@@ -1448,6 +1459,79 @@ a{color:#1a3a6e}
             const wrapped  = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
             input.setRangeText(wrapped, _mSavedStart, _mSavedEnd, 'end');
             closeMatrixModal();
+            input.dispatchEvent(new Event('input'));
+        }
+
+        // ── Generic structured input modal ───────────────────────────
+        const _STRUCT = {
+            frac:    {title:'Fraction',          fields:[['Numerator',''],['Denominator','']],          build:v=>`\\frac{${v[0]}}{${v[1]}}`},
+            binom:   {title:'Binomial C(n,k)',   fields:[['n',''],['k','']],                            build:v=>`\\binom{${v[0]}}{${v[1]}}`},
+            nroot:   {title:'Nth Root',          fields:[['Index','n'],['Expression','']],              build:v=>`\\sqrt[${v[0]}]{${v[1]}}`},
+            int:     {title:'Integral',          fields:[['Lower','a'],['Upper','b']],                  build:v=>`\\int_{${v[0]}}^{${v[1]}}`},
+            oint:    {title:'Contour Integral',  fields:[['Lower',''],['Upper','']],                    build:v=>`\\oint_{${v[0]}}^{${v[1]}}`},
+            sum:     {title:'Sum',               fields:[['Lower','i=0'],['Upper','n']],                build:v=>`\\sum_{${v[0]}}^{${v[1]}}`},
+            prod:    {title:'Product',           fields:[['Lower','i=0'],['Upper','n']],                build:v=>`\\prod_{${v[0]}}^{${v[1]}}`},
+            bigcup:  {title:'Big Union',         fields:[['Lower','i=0'],['Upper','n']],                build:v=>`\\bigcup_{${v[0]}}^{${v[1]}}`},
+            bigcap:  {title:'Big Intersection',  fields:[['Lower','i=0'],['Upper','n']],                build:v=>`\\bigcap_{${v[0]}}^{${v[1]}}`},
+            overbr:  {title:'Overbrace',         fields:[['Expression',''],['Label above','']],         build:v=>`\\overbrace{${v[0]}}^{${v[1]}}`},
+            underbr: {title:'Underbrace',        fields:[['Expression',''],['Label below','']],         build:v=>`\\underbrace{${v[0]}}_{${v[1]}}`},
+            logn:    {title:'Log Base n',        fields:[['Base','n'],['Argument','']],                 build:v=>`\\log_{${v[0]}}\\left(${v[1]}\\right)`},
+            res:     {title:'Residue',           fields:[['Subscript',''],['Argument','']],             build:v=>`\\operatorname{Res}_{${v[0]}}\\left(${v[1]}\\right)`},
+            ext:     {title:'Ext Functor',       fields:[['Superscript',''],['Arguments','A,B']],       build:v=>`\\operatorname{Ext}^{${v[0]}}\\left(${v[1]}\\right)`},
+            tor:     {title:'Tor Functor',       fields:[['Subscript',''],['Arguments','A,B']],         build:v=>`\\operatorname{Tor}_{${v[0]}}\\left(${v[1]}\\right)`},
+            hom:     {title:'Hom',               fields:[['First','A'],['Second','B']],                 build:v=>`\\operatorname{Hom}\\left(${v[0]},${v[1]}\\right)`},
+        };
+        let _structBuild, _structN, _structSaved0, _structSaved1;
+
+        function openStructModal(key) {
+            const cfg = _STRUCT[key];
+            _structBuild = cfg.build;
+            _structN = cfg.fields.length;
+            _structSaved0 = input.selectionStart;
+            _structSaved1 = input.selectionEnd;
+            document.getElementById('struct-modal-title').textContent = cfg.title;
+            const box = document.getElementById('struct-modal-fields');
+            box.innerHTML = '';
+            cfg.fields.forEach(([label, ph], i) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;';
+                const lbl = document.createElement('label');
+                lbl.textContent = label + ':';
+                lbl.htmlFor = `sf-${i}`;
+                lbl.style.cssText = 'font-size:0.8rem;font-weight:600;color:#4a5980;min-width:100px;text-align:right;flex-shrink:0;';
+                const inp = document.createElement('input');
+                inp.type = 'text'; inp.id = `sf-${i}`; inp.placeholder = ph;
+                inp.style.cssText = 'flex:1;padding:5px 7px;border:1px solid #c5cce0;border-radius:3px;font-family:serif;font-size:0.9rem;';
+                inp.addEventListener('keydown', e => {
+                    if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey) || e.key === 'Enter') {
+                        e.preventDefault();
+                        const n = document.getElementById(`sf-${i+1}`);
+                        if (n) n.focus(); else doInsertStruct();
+                    } else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+                        e.preventDefault();
+                        document.getElementById(`sf-${i-1}`)?.focus();
+                    } else if (e.key === 'Escape') { closeStructModal(); }
+                });
+                row.appendChild(lbl); row.appendChild(inp); box.appendChild(row);
+            });
+            document.getElementById('struct-modal').style.display = 'flex';
+            document.getElementById('sf-0').focus();
+        }
+
+        function closeStructModal() {
+            document.getElementById('struct-modal').style.display = 'none';
+            input.focus();
+        }
+
+        function doInsertStruct() {
+            const vals = Array.from({length:_structN}, (_,i) => document.getElementById(`sf-${i}`).value.trim());
+            const latex = _structBuild(vals);
+            const mode = document.querySelector('input[name="math-mode"]:checked').value;
+            const prevChar = _structSaved0 > 0 ? input.value[_structSaved0 - 1] : '';
+            const prefix = (mode === 'inline' && prevChar === '$') ? ' ' : '';
+            const wrapped = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
+            input.setRangeText(wrapped, _structSaved0, _structSaved1, 'end');
+            closeStructModal();
             input.dispatchEvent(new Event('input'));
         }
 
