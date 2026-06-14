@@ -1570,12 +1570,17 @@ a{color:#1a3a6e}
             });
 
             let _symBtnToRefocus = null;
-            document.getElementById('mq-field').addEventListener('focusin', () => {
-                if (_symBtnToRefocus) {
-                    const b = _symBtnToRefocus;
+            document.addEventListener('focusin', function(e) {
+                if (!_symBtnToRefocus || e.target === _symBtnToRefocus) return;
+                const mqField = document.getElementById('mq-field');
+                if (mqField && (mqField === e.target || mqField.contains(e.target))) {
+                    _symBtnToRefocus.focus();
+                } else {
                     _symBtnToRefocus = null;
-                    b.focus();
                 }
+            }, true);
+            document.getElementById('mq-field').addEventListener('mousedown', () => {
+                _symBtnToRefocus = null;
             });
 
             _renderModalCatTabs();

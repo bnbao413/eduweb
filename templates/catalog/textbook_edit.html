@@ -1556,15 +1556,21 @@ a{color:#1a3a6e}
                 }
             });
 
-            // When a symbol button is clicked, keep focus on it even if MathQuill
-            // tries to steal it back asynchronously.
             let _symBtnToRefocus = null;
-            document.getElementById('mq-field').addEventListener('focusin', () => {
-                if (_symBtnToRefocus) {
-                    const b = _symBtnToRefocus;
-                    _symBtnToRefocus = null;
-                    b.focus();
+            // Capture phase on document catches MathQuill's textarea focus
+            // regardless of where it sits in the DOM or how it's deferred.
+            document.addEventListener('focusin', function(e) {
+                if (!_symBtnToRefocus || e.target === _symBtnToRefocus) return;
+                const mqField = document.getElementById('mq-field');
+                if (mqField && (mqField === e.target || mqField.contains(e.target))) {
+                    _symBtnToRefocus.focus(); // redirect — don't clear so repeated steals are caught
+                } else {
+                    _symBtnToRefocus = null; // user moved somewhere else intentionally
                 }
+            }, true);
+            // Only surrender focus to MathQuill when user explicitly clicks it
+            document.getElementById('mq-field').addEventListener('mousedown', () => {
+                _symBtnToRefocus = null;
             });
 
             _renderModalCatTabs();
