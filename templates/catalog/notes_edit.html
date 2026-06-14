@@ -1777,6 +1777,11 @@ a{color:#1a3a6e}
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
                     input.focus();
+                } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
+                    e.preventDefault();
+                    const btns = _getToolbarBtns();
+                    const idx = btns.indexOf(_tbSearch);
+                    if (idx + 1 < btns.length) _focusNoScroll(btns[idx + 1]);
                 } else if (e.key === 'Escape') {
                     e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; input.focus();
                 }
