@@ -846,7 +846,7 @@ a{color:#1a3a6e}
     var s=Math.min(1,document.documentElement.clientWidth/816);
     document.body.style.zoom=s;
   }
-  fit();
+  document.addEventListener('DOMContentLoaded',fit);
   window.addEventListener('resize',fit);
 })();
 <\/script>
