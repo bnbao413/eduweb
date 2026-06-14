@@ -1447,7 +1447,7 @@ a{color:#1a3a6e}
             renderDrafts();
             const modal = document.getElementById('math-modal');
             modal.style.display = 'flex';
-            setTimeout(() => { mathField.focus(); mathField.keystroke('Home'); }, 50);
+            setTimeout(() => mathField.focus(), 50);
         }
 
         function closeMathModal() {
@@ -1548,6 +1548,10 @@ a{color:#1a3a6e}
                         if (mathField.latex().trim() === '' && initialTemplate) {
                             mathField.latex(initialTemplate);
                         }
+                    },
+                    downOutOf: function() {
+                        var ms = document.getElementById('modal-sym-search');
+                        if (ms) ms.focus();
                     }
                 }
             });
@@ -1555,21 +1559,7 @@ a{color:#1a3a6e}
             _renderModalCatTabs();
             _selectModalCat('Calculus');
 
-            // ArrowDown from MathQuill: let MathQuill move cursor first, then jump to search
-            // only if the cursor didn't actually move down (i.e. already at bottom of structure)
-            document.getElementById('mq-field').addEventListener('keydown', function(e) {
-                if (e.key !== 'ArrowDown') return;
-                var cursor = document.querySelector('#mq-field .mq-cursor');
-                var topBefore = cursor ? cursor.getBoundingClientRect().top : null;
-                setTimeout(function() {
-                    if (topBefore === null) return;
-                    var c = document.querySelector('#mq-field .mq-cursor');
-                    if (!c || c.getBoundingClientRect().top <= topBefore + 2) {
-                        var ms = document.getElementById('modal-sym-search');
-                        if (ms) ms.focus();
-                    }
-                }, 0);
-            });
+
 
             document.getElementById('math-modal').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeMathModal();
