@@ -1236,7 +1236,7 @@ a{color:#1a3a6e}
                 btn.tabIndex = -1;
                 btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
                 btn.addEventListener('mousedown', e => e.preventDefault());
-                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('click', () => { mathField.write(l); btn.focus(); });
                 btn.addEventListener('mouseover', () => { if (document.activeElement !== btn) { btn.style.background='#dde8ff'; btn.style.borderColor='#7799cc'; } });
                 btn.addEventListener('mouseout',  () => { if (document.activeElement !== btn) { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; } });
                 btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
@@ -1301,7 +1301,7 @@ a{color:#1a3a6e}
                 btn.type = 'button'; btn.textContent = d; btn.title = l; btn.tabIndex = -1;
                 btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
                 btn.addEventListener('mousedown', e => e.preventDefault());
-                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('click', () => { mathField.write(l); btn.focus(); });
                 btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
                 btn.addEventListener('blur',  () => { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; btn.style.outline=''; });
                 grid.appendChild(btn);
