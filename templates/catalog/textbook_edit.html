@@ -1558,7 +1558,22 @@ a{color:#1a3a6e}
             _renderModalCatTabs();
             _selectModalCat('Calculus');
 
-            // ArrowDown from MathQuill field → modal search bar (capture so MathQuill never sees it)
+            // ArrowDown from MathQuill: let MathQuill move cursor first, then jump to search
+            // only if the cursor didn't actually move down (i.e. already at bottom of structure)
+            document.getElementById('mq-field').addEventListener('keydown', function(e) {
+                if (e.key !== 'ArrowDown') return;
+                var cursor = document.querySelector('#mq-field .mq-cursor');
+                var topBefore = cursor ? cursor.getBoundingClientRect().top : null;
+                setTimeout(function() {
+                    if (topBefore === null) return;
+                    var c = document.querySelector('#mq-field .mq-cursor');
+                    if (!c || c.getBoundingClientRect().top <= topBefore + 2) {
+                        var ms = document.getElementById('modal-sym-search');
+                        if (ms) ms.focus();
+                    }
+                }, 0);
+            });
+
             document.getElementById('math-modal').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeMathModal();
             });
