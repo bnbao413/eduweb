@@ -71,7 +71,6 @@ def course_detail(request, course_id):
 
 def textbook_detail(request, textbook_id):
     page = get_object_or_404(TextbookPage, id=textbook_id)
-    html_content = markdown.markdown(page.content)
 
     previous_page = TextbookPage.objects.filter(
         unit=page.unit,
@@ -89,7 +88,7 @@ def textbook_detail(request, textbook_id):
 
     return render(request, 'catalog/textbook_detail.html', {
         'page': page,
-        'html_content': html_content,
+        'raw_content': page.content,
         'previous_page': previous_page,
         'next_page': next_page,
         'all_pages': all_pages,
@@ -99,7 +98,6 @@ def textbook_detail(request, textbook_id):
 
 def notes_detail(request, notes_id):
     page = get_object_or_404(NotesPage, id=notes_id)
-    html_content = markdown.markdown(page.content)
 
     unit_pages = list(page.unit.notes_pages.all())
 
@@ -110,7 +108,7 @@ def notes_detail(request, notes_id):
 
     return render(request, 'catalog/notes_detail.html', {
         'page': page,
-        'html_content': html_content,
+        'raw_content': page.content,
         'prev_page': prev_page,
         'next_page': next_page,
     })

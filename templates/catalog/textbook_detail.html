@@ -22,9 +22,28 @@
     </div>
 </div>
 
-<div id="content" class="content-area">
-    {{ html_content|safe }}
-</div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+<div id="content" class="content-area"></div>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script>
+    (function () {
+        function renderContent(raw) {
+            const blocks = [];
+            let text = raw.replace(/\$\$([\s\S]*?)\$\$|\$([^$\n]+?)\$/g, (_, dm, im) => {
+                blocks.push(dm !== undefined ? {m: dm, d: true} : {m: im, d: false});
+                return `%%MATH${blocks.length - 1}%%`;
+            });
+            text = marked.parse(text, {breaks: true});
+            return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
+                const {m, d} = blocks[+i];
+                try { return katex.renderToString(m, {throwOnError: false, displayMode: d}); }
+                catch (e) { return d ? `$$${m}$$` : `$${m}$`; }
+            });
+        }
+        document.getElementById('content').innerHTML = renderContent("{{ raw_content|escapejs }}");
+    })();
+</script>
 
 <div class="nav-links">
     <div>
