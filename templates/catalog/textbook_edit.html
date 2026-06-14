@@ -1314,7 +1314,7 @@ a{color:#1a3a6e}
                         e.preventDefault();
                         const above = btns.filter((b,i) => i<idx && b.getBoundingClientRect().top < r.top-4);
                         if (above.length) { const rt=above[above.length-1].getBoundingClientRect().top; const row=above.filter(b=>b.getBoundingClientRect().top>=rt-4); ni=btns.indexOf(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
-                        else { document.getElementById('modal-sym-search')?.focus(); return; }
+                        else { const t=document.querySelector('#modal-cat-tabs button[data-active="1"]')||document.querySelector('#modal-cat-tabs button'); if(t)t.focus(); return; }
                     }
                     else if (e.key === 'Enter'||e.key===' ') { e.preventDefault(); btn.click(); return; }
                     else if (e.key === 'Escape') { e.preventDefault(); closeMathModal(); return; }
@@ -1434,7 +1434,7 @@ a{color:#1a3a6e}
                         e.preventDefault();
                         const above = btns.filter((b,i) => i<idx && b.getBoundingClientRect().top < r.top-4);
                         if (above.length) { const rt=above[above.length-1].getBoundingClientRect().top; const row=above.filter(b=>b.getBoundingClientRect().top>=rt-4); ni=btns.indexOf(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
-                        else { e.preventDefault(); document.getElementById('matrix-sym-search').focus(); return; }
+                        else { const t=document.querySelector('#matrix-cat-tabs button[data-active="1"]')||document.querySelector('#matrix-cat-tabs button'); if(t)t.focus(); return; }
                     }
                     else if (e.key === 'Escape') { closeMatrixModal(); return; }
                     if (ni !== idx) btns[ni].focus();
