@@ -600,9 +600,14 @@
     </div>
 
     <div id="matrix-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1100;align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.25);min-width:280px;">
+        <div style="background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.25);min-width:340px;max-width:680px;width:95vw;">
             <h3 id="matrix-modal-title" style="margin:0 0 1rem;font-size:1rem;"></h3>
             <div id="matrix-grid" style="display:inline-grid;gap:6px;margin-bottom:1.25rem;"></div>
+            <input type="text" id="matrix-sym-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin-bottom:0.35rem;padding:5px 8px;border:1px solid #c5cce0;border-radius:4px;font-size:0.83rem;">
+            <div style="border:1px solid #dde2f0;border-radius:6px;overflow:hidden;margin-bottom:1.25rem;">
+                <div id="matrix-cat-tabs" style="display:flex;flex-wrap:wrap;gap:3px;padding:5px 5px 3px;background:#eef0f7;border-bottom:1px solid #dde2f0;"></div>
+                <div id="matrix-sym-grid" style="display:flex;flex-wrap:wrap;gap:3px;padding:6px;min-height:44px;max-height:160px;overflow-y:auto;"></div>
+            </div>
             <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
                 <button type="button" onclick="closeMatrixModal()" style="padding:0.4rem 1rem;cursor:pointer;">Cancel</button>
                 <button type="button" onclick="doInsertMatrix()" style="padding:0.4rem 1rem;background:#1a3a6e;color:#fff;border:none;border-radius:4px;cursor:pointer;">Insert</button>
@@ -1375,7 +1380,51 @@ a{color:#1a3a6e}
         }
 
         // ── Matrix modal ─────────────────────────────────────────────
-        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd, _mFields;
+        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd, _mFields, _mActiveCell;
+
+        function _mSelectCat(cat) {
+            document.querySelectorAll('#matrix-cat-tabs button').forEach(b => {
+                b.dataset.active = b.dataset.cat === cat ? '1' : '0';
+                b.style.background = b.dataset.cat === cat ? '#1a3a6e' : '#f0f4ff';
+                b.style.color      = b.dataset.cat === cat ? '#fff'    : '#1a3a6e';
+            });
+            const grid = document.getElementById('matrix-sym-grid');
+            grid.innerHTML = '';
+            (MODAL_SYMBOL_CATS[cat] || []).forEach(({d, l}) => _mMakeSymBtn(grid, d, l));
+        }
+
+        function _mMakeSymBtn(grid, d, l) {
+            const btn = document.createElement('button');
+            btn.type = 'button'; btn.textContent = d; btn.title = l; btn.tabIndex = -1;
+            btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
+            btn.addEventListener('mousedown', e => e.preventDefault());
+            btn.addEventListener('click', () => {
+                if (_mActiveCell) { _mActiveCell.write(l); _mActiveCell.focus(); }
+            });
+            grid.appendChild(btn);
+        }
+
+        function _mRenderCatTabs() {
+            const tabs = document.getElementById('matrix-cat-tabs');
+            tabs.innerHTML = '';
+            Object.keys(MODAL_SYMBOL_CATS).forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.textContent = cat; btn.dataset.cat = cat; btn.tabIndex = -1;
+                btn.style.cssText = 'padding:2px 7px;font-size:0.75rem;border:1px solid #aac;border-radius:3px;cursor:pointer;background:#f0f4ff;color:#1a3a6e;';
+                btn.addEventListener('click', () => _mSelectCat(cat));
+                tabs.appendChild(btn);
+            });
+        }
+
+        function _mSearch(q) {
+            const grid = document.getElementById('matrix-sym-grid');
+            grid.innerHTML = '';
+            if (!q) { const a = document.querySelector('#matrix-cat-tabs button[data-active="1"]'); if (a) _mSelectCat(a.dataset.cat); return; }
+            const seen = new Set();
+            Object.values(MODAL_SYMBOL_CATS).forEach(syms => syms.forEach(({d,l}) => {
+                if (!seen.has(l) && (l.toLowerCase().includes(q) || d.includes(q))) { seen.add(l); _mMakeSymBtn(grid, d, l); }
+            }));
+        }
 
         function openMatrixModal(rows, cols, env) {
             _mRows = rows; _mCols = cols; _mEnv = env;
@@ -1386,7 +1435,7 @@ a{color:#1a3a6e}
             const grid = document.getElementById('matrix-grid');
             grid.style.gridTemplateColumns = `repeat(${cols}, minmax(64px, auto))`;
             grid.innerHTML = '';
-            _mFields = [];
+            _mFields = []; _mActiveCell = null;
             const MQ = MathQuill.getInterface(2);
             for (let r = 0; r < rows; r++) {
                 _mFields[r] = [];
@@ -1406,14 +1455,21 @@ a{color:#1a3a6e}
                                 const nr = c + 1 < cols ? r : r + 1;
                                 const nc = c + 1 < cols ? c + 1 : 0;
                                 if (nr < rows) _mFields[nr][nc].focus(); else doInsertMatrix();
-                            }
+                            },
+                            edit: function() { _mActiveCell = mf; }
                         }
                     });
+                    wrap.addEventListener('focusin', () => { _mActiveCell = mf; }, true);
                     wrap.addEventListener('keydown', e => { if (e.key === 'Escape') closeMatrixModal(); }, true);
                     _mFields[r][c] = mf;
                 }
             }
+            _mRenderCatTabs();
+            _mSelectCat('Calculus');
+            document.getElementById('matrix-sym-search').value = '';
+            document.getElementById('matrix-sym-search').oninput = function() { _mSearch(this.value.trim().toLowerCase()); };
             document.getElementById('matrix-modal').style.display = 'flex';
+            _mActiveCell = _mFields[0][0];
             _mFields[0][0].focus();
         }
 
