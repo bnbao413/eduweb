@@ -1559,15 +1559,6 @@ a{color:#1a3a6e}
             _selectModalCat('Calculus');
 
             // ArrowDown from MathQuill field → modal search bar (capture so MathQuill never sees it)
-            document.getElementById('mq-field').addEventListener('keydown', e => {
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const ms = document.getElementById('modal-sym-search');
-                    if (ms) ms.focus();
-                }
-            }, true);
-
             document.getElementById('math-modal').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeMathModal();
             });
