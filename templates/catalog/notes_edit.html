@@ -1523,7 +1523,7 @@ a{color:#1a3a6e}
             msearch.value = '';
             msearch.oninput = function() { _mRunSearch(this.value.trim().toLowerCase()); };
             msearch.onkeydown = function(e) {
-                if (e.key === 'ArrowDown') { e.preventDefault(); const s=_mSymGrid().querySelector('button'); if(s)s.focus(); }
+                if (e.key === 'ArrowDown') { e.preventDefault(); const t=document.querySelector('#matrix-cat-tabs button'); if(t)t.focus(); }
                 else if (e.key === 'ArrowUp') { e.preventDefault(); if(_mActiveCell)_mActiveCell.focus(); else _mFields[_mRows-1][0].focus(); }
                 else if (e.key === 'Escape') { e.preventDefault(); msearch.value=''; _mRunSearch(''); if(_mActiveCell)_mActiveCell.focus(); }
             };
@@ -1828,7 +1828,7 @@ a{color:#1a3a6e}
             _modalSearch.addEventListener('keydown', e => {
                 if (e.key === 'Escape') { e.preventDefault(); _modalSearch.value = ''; const a=document.querySelector('#modal-cat-tabs button[data-active="1"]'); if(a)_selectModalCat(a.dataset.cat); mathField.focus(); }
                 else if (e.key === 'ArrowUp') { e.preventDefault(); mathField.focus(); }
-                else if (e.key === 'ArrowDown') { e.preventDefault(); const s=document.querySelector('#modal-sym-grid button'); if(s)s.focus(); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); const t=document.querySelector('#modal-cat-tabs button'); if(t)t.focus(); }
             });
 
             // ── Toolbar symbol search ─────────────────────────────────
