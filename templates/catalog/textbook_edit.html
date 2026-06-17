@@ -135,7 +135,7 @@
             border-radius: 5px;
             padding: 0 5px;
             cursor: pointer;
-            user-select: none;
+            user-select: text;
             vertical-align: middle;
             line-height: 1.5;
             white-space: nowrap;
@@ -828,6 +828,8 @@
         </div>
     </div>
 
+    {% include "catalog/_shorthand.html" %}
+
     <script>
         let input = document.getElementById("content-input");
         const wysiwyg = document.getElementById("wysiwyg");
@@ -850,9 +852,9 @@
                     const d = span.dataset.display === 'true';
                     document.querySelector(`input[name="math-mode"][value="${d ? 'display' : 'inline'}"]`).checked = true;
                     const lat = span.dataset.latex;
-                    if (lat.includes('\\iiiint')) {
-                        _mathSymSub = { from: '\\int', to: '\\iiiint' };
-                        openMath(lat.replace(/\\iiiint/g, '\\int'));
+                    if (lat.includes('\\int\\!\\!\\!\\int\\!\\!\\!\\int\\!\\!\\!\\int')) {
+                        _mathSymSub = { from: '\\int', to: '\\int\\!\\!\\!\\int\\!\\!\\!\\int\\!\\!\\!\\int' };
+                        openMath(lat.replace(/\\int\\!\\!\\!\\int\\!\\!\\!\\int\\!\\!\\!\\int/g, '\\int'));
                         setTimeout(() => _startMqSymWatch('⨌', '∫'), 80);
                     } else if (lat.includes('\\iiint')) {
                         _mathSymSub = { from: '\\int', to: '\\iiint' };
@@ -920,7 +922,9 @@
             return false;
         }
 
-        function loadWysiwyg(raw) {
+        // Parse source text ($...$, \(...\), $$...$$, \[...\]) into a DOM fragment
+        // of text + chips. Used to load the document AND to paste copied content.
+        function sourceToFragment(raw) {
             const re = /\\\[([\s\S]*?)\\\]|\$\$([\s\S]*?)\$\$|\\\(([\s\S]*?)\\\)|\$((?:[^$\n\\]|\\.)+?)\$/g;
             const frag = document.createDocumentFragment();
             let last = 0, m;
@@ -948,8 +952,52 @@
                     if (i < lines.length - 1) frag.appendChild(document.createElement('br'));
                 });
             }
+            return frag;
+        }
+
+        function loadWysiwyg(raw) {
             wysiwyg.innerHTML = '';
-            wysiwyg.appendChild(frag);
+            wysiwyg.appendChild(sourceToFragment(raw));
+        }
+
+        // ── Clipboard: copy/cut chips as their LaTeX source; paste source → chips ──
+        // Copy serialises the selection the same way the document is saved, so chips
+        // travel as \(latex\) / \[latex\] and render perfectly wherever they land
+        // (a LaTeX/Markdown doc, or another EduWeb editor where paste rebuilds chips).
+        function _clipboardCopy(e, isCut) {
+            const sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) return;
+            const range = sel.getRangeAt(0);
+            if (!wysiwyg.contains(range.commonAncestorContainer)) return;
+            const holder = document.createElement('div');
+            holder.appendChild(range.cloneContents());
+            (e.clipboardData || window.clipboardData).setData('text/plain', serializeNode(holder));
+            e.preventDefault();
+            if (isCut) {
+                range.deleteContents();
+                sel.removeAllRanges(); sel.addRange(range);
+                syncToTextarea();
+            }
+        }
+        function _clipboardPaste(e) {
+            const data = e.clipboardData || window.clipboardData;
+            if (!data) return;
+            const text = data.getData('text/plain');
+            if (!text) return;                       // images/other → leave default
+            e.preventDefault();
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const frag = sourceToFragment(text);
+            const lastNode = frag.lastChild;
+            range.insertNode(frag);
+            if (lastNode) {
+                const r = document.createRange();
+                r.setStartAfter(lastNode); r.collapse(true);
+                sel.removeAllRanges(); sel.addRange(r);
+            }
+            syncToTextarea();
         }
 
         function _zwsNode() { return document.createTextNode(ZWS); }
@@ -1057,256 +1105,9 @@
             return true;
         }
 
-        // ── Plain-language shorthands: type "(name)" to insert a notation ──
-        // Constructs that need content open the math editor pre-filled; pure
-        // symbols are dropped straight in.  e.g. (frac) → fraction, (alpha) → α.
-        const SHORTHAND = {
-            frac:{l:'\\frac{}{}', modal:true, cat:'Structures'},
-            binom:{l:'\\binom{}{}', modal:true, cat:'Structures'},
-            sqrt:{l:'\\sqrt{}', modal:true, cat:'Structures'},
-            nthroot:{l:'\\sqrt[n]{}', modal:true, cat:'Structures'},
-            pow:{l:'x^{}', modal:true, cat:'Structures'},
-            sub:{l:'x_{}', modal:true, cat:'Structures'},
-            int:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
-            oint:{l:'\\oint_{ }^{ }', modal:true, cat:'Structures'},
-            oiint:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'\\oiint',disp:'∯',src:'∮'}, cat:'Structures'},
-            oiiint:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'∰',disp:'∰',src:'∮'}, cat:'Structures'},
-            sum:{l:'\\sum_{ }^{ }', modal:true, cat:'Structures'},
-            prod:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
-            bigcup:{l:'\\bigcup_{ }^{ }', modal:true, cat:'Structures'},
-            bigcap:{l:'\\bigcap_{ }^{ }', modal:true, cat:'Structures'},
-            bigwedge:{l:'\\bigwedge_{ }', modal:true, cat:'Structures'},
-            bigvee:{l:'\\bigvee_{ }', modal:true, cat:'Structures'},
-            lim:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
-            limsup:{l:'\\limsup_{n\\to\\infty}', modal:true, cat:'Structures'},
-            liminf:{l:'\\liminf_{n\\to\\infty}', modal:true, cat:'Structures'},
-            varinjlim:{l:'\\varinjlim_{ }', modal:true, cat:'Structures'},
-            varprojlim:{l:'\\varprojlim_{ }', modal:true, cat:'Structures'},
-            partial:{l:'\\partial', cat:'Calculus'},
-            nabla:{l:'\\nabla', cat:'Calculus'},
-            ddx:{l:'\\frac{d}{dx}', modal:true, cat:'Calculus'},
-            pdx:{l:'\\frac{\\partial}{\\partial x}', modal:true, cat:'Calculus'},
-            square:{l:'\\square', cat:'Calculus'},
-            hbar:{l:'\\hbar', cat:'Physics'},
-            hslash:{l:'\\hslash', cat:'Physics'},
-            bra:{l:'\\langle  |', cat:'Physics'},
-            ket:{l:'|  \\rangle', cat:'Physics'},
-            braket:{l:'\\langle  |  \\rangle', cat:'Physics'},
-            dagger:{l:'\\dagger', cat:'Physics'},
-            ddagger:{l:'\\ddagger', cat:'Physics'},
-            Re:{l:'\\Re', cat:'Physics'},
-            Im:{l:'\\Im', cat:'Physics'},
-            wp:{l:'\\wp', cat:'Physics'},
-            aleph:{l:'\\aleph', cat:'Physics'},
-            beth:{l:'\\beth', cat:'Physics'},
-            sin:{l:'\\sin\\left(\\right)', modal:true, cat:'Trig'},
-            cos:{l:'\\cos\\left(\\right)', modal:true, cat:'Trig'},
-            tan:{l:'\\tan\\left(\\right)', modal:true, cat:'Trig'},
-            arcsin:{l:'\\arcsin\\left(\\right)', modal:true, cat:'Trig'},
-            arccos:{l:'\\arccos\\left(\\right)', modal:true, cat:'Trig'},
-            arctan:{l:'\\arctan\\left(\\right)', modal:true, cat:'Trig'},
-            sec:{l:'\\sec\\left(\\right)', modal:true, cat:'Trig'},
-            csc:{l:'\\csc\\left(\\right)', modal:true, cat:'Trig'},
-            cot:{l:'\\cot\\left(\\right)', modal:true, cat:'Trig'},
-            sinh:{l:'\\sinh\\left(\\right)', modal:true, cat:'Trig'},
-            cosh:{l:'\\cosh\\left(\\right)', modal:true, cat:'Trig'},
-            tanh:{l:'\\tanh\\left(\\right)', modal:true, cat:'Trig'},
-            log:{l:'\\log\\left(\\right)', modal:true, cat:'Functions'},
-            log2:{l:'\\log_{ }\\left(\\right)', modal:true, cat:'Functions'},
-            ln:{l:'\\ln\\left(\\right)', modal:true, cat:'Functions'},
-            exp:{l:'\\exp\\left(\\right)', modal:true, cat:'Functions'},
-            sup:{l:'\\sup_{ }', modal:true, cat:'Functions'},
-            inf:{l:'\\inf_{ }', modal:true, cat:'Functions'},
-            max:{l:'\\max_{ }', modal:true, cat:'Functions'},
-            min:{l:'\\min_{ }', modal:true, cat:'Functions'},
-            gcd:{l:'\\gcd\\left(\\right)', modal:true, cat:'Functions'},
-            lcm:{l:'\\operatorname{lcm}\\left(\\right)', modal:true, cat:'Functions'},
-            det:{l:'\\det\\left(\\right)', modal:true, cat:'Functions'},
-            tr:{l:'\\operatorname{tr}\\left(\\right)', modal:true, cat:'Functions'},
-            rank:{l:'\\operatorname{rank}\\left(\\right)', modal:true, cat:'Functions'},
-            ker:{l:'\\ker\\left(\\right)', modal:true, cat:'Functions'},
-            span:{l:'\\operatorname{span}\\left(\\right)', modal:true, cat:'Functions'},
-            arg:{l:'\\arg\\left(\\right)', modal:true, cat:'Functions'},
-            re:{l:'\\operatorname{Re}\\left(\\right)', modal:true, cat:'Functions'},
-            im:{l:'\\operatorname{Im}\\left(\\right)', modal:true, cat:'Functions'},
-            res:{l:'\\operatorname{Res}_{  }\\left(\\right)', modal:true, cat:'Functions'},
-            hom:{l:'\\operatorname{Hom}\\left(,\\right)', modal:true, cat:'Functions'},
-            aut:{l:'\\operatorname{Aut}\\left(\\right)', modal:true, cat:'Functions'},
-            end:{l:'\\operatorname{End}\\left(\\right)', modal:true, cat:'Functions'},
-            gal:{l:'\\operatorname{Gal}\\left(\\right)', modal:true, cat:'Functions'},
-            spec:{l:'\\operatorname{Spec}\\left(\\right)', modal:true, cat:'Functions'},
-            ext:{l:'\\operatorname{Ext}^{  }\\left(,\\right)', modal:true, cat:'Functions'},
-            tor:{l:'\\operatorname{Tor}_{  }\\left(,\\right)', modal:true, cat:'Functions'},
-            alpha:{l:'\\alpha', cat:'Greek'},
-            beta:{l:'\\beta', cat:'Greek'},
-            gamma:{l:'\\gamma', cat:'Greek'},
-            Gamma:{l:'\\Gamma', cat:'Greek'},
-            delta:{l:'\\delta', cat:'Greek'},
-            Delta:{l:'\\Delta', cat:'Greek'},
-            epsilon:{l:'\\varepsilon', cat:'Greek'},
-            zeta:{l:'\\zeta', cat:'Greek'},
-            eta:{l:'\\eta', cat:'Greek'},
-            theta:{l:'\\theta', cat:'Greek'},
-            Theta:{l:'\\Theta', cat:'Greek'},
-            iota:{l:'\\iota', cat:'Greek'},
-            kappa:{l:'\\kappa', cat:'Greek'},
-            lambda:{l:'\\lambda', cat:'Greek'},
-            Lambda:{l:'\\Lambda', cat:'Greek'},
-            mu:{l:'\\mu', cat:'Greek'},
-            nu:{l:'\\nu', cat:'Greek'},
-            xi:{l:'\\xi', cat:'Greek'},
-            Xi:{l:'\\Xi', cat:'Greek'},
-            pi:{l:'\\pi', cat:'Greek'},
-            Pi:{l:'\\Pi', cat:'Greek'},
-            rho:{l:'\\rho', cat:'Greek'},
-            sigma:{l:'\\sigma', cat:'Greek'},
-            Sigma:{l:'\\Sigma', cat:'Greek'},
-            tau:{l:'\\tau', cat:'Greek'},
-            upsilon:{l:'\\upsilon', cat:'Greek'},
-            Upsilon:{l:'\\Upsilon', cat:'Greek'},
-            phi:{l:'\\varphi', cat:'Greek'},
-            Phi:{l:'\\Phi', cat:'Greek'},
-            chi:{l:'\\chi', cat:'Greek'},
-            psi:{l:'\\psi', cat:'Greek'},
-            Psi:{l:'\\Psi', cat:'Greek'},
-            omega:{l:'\\omega', cat:'Greek'},
-            Omega:{l:'\\Omega', cat:'Greek'},
-            infty:{l:'\\infty', cat:'Greek'},
-            ell:{l:'\\ell', cat:'Greek'},
-            in:{l:'\\in', cat:'Set Theory'},
-            notin:{l:'\\notin', cat:'Set Theory'},
-            subset:{l:'\\subset', cat:'Set Theory'},
-            subseteq:{l:'\\subseteq', cat:'Set Theory'},
-            supset:{l:'\\supset', cat:'Set Theory'},
-            supseteq:{l:'\\supseteq', cat:'Set Theory'},
-            cup:{l:'\\cup', cat:'Set Theory'},
-            cap:{l:'\\cap', cat:'Set Theory'},
-            emptyset:{l:'\\varnothing', cat:'Set Theory'},
-            forall:{l:'\\forall', cat:'Set Theory'},
-            exists:{l:'\\exists', cat:'Set Theory'},
-            nexists:{l:'\\nexists', cat:'Set Theory'},
-            setminus:{l:'\\setminus', cat:'Set Theory'},
-            N:{l:'\\mathbb{N}', cat:'Num Sets'},
-            Z:{l:'\\mathbb{Z}', cat:'Num Sets'},
-            Q:{l:'\\mathbb{Q}', cat:'Num Sets'},
-            R:{l:'\\mathbb{R}', cat:'Num Sets'},
-            C:{l:'\\mathbb{C}', cat:'Num Sets'},
-            P:{l:'\\mathbb{P}', cat:'Num Sets'},
-            H:{l:'\\mathbb{H}', cat:'Num Sets'},
-            F:{l:'\\mathbb{F}', cat:'Num Sets'},
-            E:{l:'\\mathbb{E}', cat:'Num Sets'},
-            implies:{l:'\\Rightarrow', cat:'Logic'},
-            iff:{l:'\\Leftrightarrow', cat:'Logic'},
-            wedge:{l:'\\wedge', cat:'Logic'},
-            vee:{l:'\\vee', cat:'Logic'},
-            neg:{l:'\\neg', cat:'Logic'},
-            therefore:{l:'\\therefore', cat:'Logic'},
-            because:{l:'\\because', cat:'Logic'},
-            vdash:{l:'\\vdash', cat:'Logic'},
-            models:{l:'\\models', cat:'Logic'},
-            top:{l:'\\top', cat:'Logic'},
-            bot:{l:'\\bot', cat:'Logic'},
-            leq:{l:'\\leq', cat:'Relations'},
-            geq:{l:'\\geq', cat:'Relations'},
-            neq:{l:'\\neq', cat:'Relations'},
-            approx:{l:'\\approx', cat:'Relations'},
-            equiv:{l:'\\equiv', cat:'Relations'},
-            cong:{l:'\\cong', cat:'Relations'},
-            sim:{l:'\\sim', cat:'Relations'},
-            propto:{l:'\\propto', cat:'Relations'},
-            perp:{l:'\\perp', cat:'Relations'},
-            parallel:{l:'\\parallel', cat:'Relations'},
-            ll:{l:'\\ll', cat:'Relations'},
-            gg:{l:'\\gg', cat:'Relations'},
-            mid:{l:'\\mid', cat:'Relations'},
-            nmid:{l:'\\nmid', cat:'Relations'},
-            prec:{l:'\\prec', cat:'Relations'},
-            succ:{l:'\\succ', cat:'Relations'},
-            preceq:{l:'\\preceq', cat:'Relations'},
-            succeq:{l:'\\succeq', cat:'Relations'},
-            pm:{l:'\\pm', cat:'Algebra'},
-            times:{l:'\\times', cat:'Algebra'},
-            cdot:{l:'\\cdot', cat:'Algebra'},
-            div:{l:'\\div', cat:'Algebra'},
-            circ:{l:'\\circ', cat:'Algebra'},
-            oplus:{l:'\\oplus', cat:'Algebra'},
-            otimes:{l:'\\otimes', cat:'Algebra'},
-            rtimes:{l:'\\rtimes', cat:'Algebra'},
-            ltimes:{l:'\\ltimes', cat:'Algebra'},
-            trianglelefteq:{l:'\\trianglelefteq', cat:'Algebra'},
-            triangleleft:{l:'\\triangleleft', cat:'Algebra'},
-            ast:{l:'\\ast', cat:'Algebra'},
-            floor:{l:'\\lfloor  \\rfloor', modal:true, cat:'Brackets'},
-            ceil:{l:'\\lceil  \\rceil', modal:true, cat:'Brackets'},
-            abs:{l:'\\left|  \\right|', modal:true, cat:'Brackets'},
-            norm:{l:'\\lVert  \\rVert', modal:true, cat:'Brackets'},
-            inner:{l:'\\langle  ,  \\rangle', modal:true, cat:'Brackets'},
-            hat:{l:'\\hat{}', modal:true, cat:'Accents'},
-            bar:{l:'\\overline{}', modal:true, cat:'Accents'},
-            tilde:{l:'\\tilde{}', modal:true, cat:'Accents'},
-            vec:{l:'\\vec{}', modal:true, cat:'Accents'},
-            dot:{l:'\\dot{}', modal:true, cat:'Accents'},
-            ddot:{l:'\\ddot{}', modal:true, cat:'Accents'},
-            check:{l:'\\check{}', modal:true, cat:'Accents'},
-            underline:{l:'\\underline{}', modal:true, cat:'Accents'},
-            overbrace:{l:'\\overbrace{}^{}', modal:true, cat:'Accents'},
-            underbrace:{l:'\\underbrace{}_{}', modal:true, cat:'Accents'},
-            prime:{l:'\\prime', cat:'Accents'},
-            cal:{l:'\\mathcal{}', modal:true, cat:'Accents'},
-            frak:{l:'\\mathfrak{}', modal:true, cat:'Accents'},
-            bf:{l:'\\mathbf{}', modal:true, cat:'Accents'},
-            to:{l:'\\to', cat:'Arrows'},
-            leftarrow:{l:'\\leftarrow', cat:'Arrows'},
-            leftrightarrow:{l:'\\leftrightarrow', cat:'Arrows'},
-            mapsto:{l:'\\mapsto', cat:'Arrows'},
-            longrightarrow:{l:'\\longrightarrow', cat:'Arrows'},
-            hookrightarrow:{l:'\\hookrightarrow', cat:'Arrows'},
-            twoheadrightarrow:{l:'\\twoheadrightarrow', cat:'Arrows'},
-            uparrow:{l:'\\uparrow', cat:'Arrows'},
-            downarrow:{l:'\\downarrow', cat:'Arrows'},
-            matrix:{mat:{r:2,c:2,env:'pmatrix'}, cat:'Matrix'},
-            matrix3:{mat:{r:3,c:3,env:'pmatrix'}, cat:'Matrix'},
-            vmatrix:{mat:{r:2,c:2,env:'vmatrix'}, cat:'Matrix'},
-            colvec:{mat:{r:3,c:1,env:'pmatrix'}, cat:'Matrix'},
-            angle:{l:'\\angle', cat:'Geometry'},
-            measuredangle:{l:'\\measuredangle', cat:'Geometry'},
-            sphericalangle:{l:'\\sphericalangle', cat:'Geometry'},
-            triangle:{l:'\\triangle', cat:'Geometry'},
-            Diamond:{l:'\\Diamond', cat:'Geometry'},
-            bigcirc:{l:'\\bigcirc', cat:'Geometry'},
-            frown:{l:'\\frown', cat:'Geometry'},
-            smile:{l:'\\smile', cat:'Geometry'},
-            ldots:{l:'\\ldots', cat:'Misc'},
-            cdots:{l:'\\cdots', cat:'Misc'},
-            vdots:{l:'\\vdots', cat:'Misc'},
-            ddots:{l:'\\ddots', cat:'Misc'},
-            deg:{l:'^\\circ', cat:'Misc'},
-            sharp:{l:'\\sharp', cat:'Misc'},
-            flat:{l:'\\flat', cat:'Misc'},
-            natural:{l:'\\natural', cat:'Misc'},
-            S:{l:'\\S', cat:'Misc'},
-            P2:{l:'\\P', cat:'Misc'},
-            '2int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iint',disp:'∬',src:'∫'}, cat:'Calculus'},
-            '3int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iiint',disp:'∭',src:'∫'}, cat:'Calculus'},
-            '4int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iiiint',disp:'⨌',src:'∫'}, cat:'Calculus'},
-            fraction:{l:'\\frac{}{}', modal:true, cat:'Structures'},
-            integral:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
-            product:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
-            limit:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
-            choose:{l:'\\binom{}{}', modal:true, cat:'Structures'},
-            infinity:{l:'\\infty', cat:'Greek'},
-            le:{l:'\\leq', cat:'Relations'},
-            ge:{l:'\\geq', cat:'Relations'},
-            ne:{l:'\\neq', cat:'Relations'},
-            union:{l:'\\cup', cat:'Set Theory'},
-            power:{l:'x^{}', modal:true, cat:'Structures'},
-            naturals:{l:'\\mathbb{N}', cat:'Num Sets'},
-            reals:{l:'\\mathbb{R}', cat:'Num Sets'},
-            integers:{l:'\\mathbb{Z}', cat:'Num Sets'},
-            grad:{l:'\\nabla', cat:'Calculus'},
-            degree:{l:'^\\circ', cat:'Misc'},
-            infin:{l:'\\infty', cat:'Greek'},
-        };
+        // SHORTHAND map lives in the shared partial templates/catalog/_shorthand.html
+        // (included inline just above this script). Edit it there; both editors +
+        // the library stay in sync automatically.
 
         function _tryShorthand() {
             if (_autoChipBusy) return false;
@@ -1352,9 +1153,14 @@
             const sel = window.getSelection();
             _shSavedRange = (sel.rangeCount && wysiwyg.contains(sel.getRangeAt(0).startContainer))
                 ? sel.getRangeAt(0).cloneRange() : null;
-            _renderShorthandLib('');
             document.getElementById('shorthand-lib').style.display = 'flex';
             const s = document.getElementById('sh-lib-search'); s.value = '';
+            try {
+                _renderShorthandLib('');
+            } catch (err) {
+                document.getElementById('sh-lib-body').innerHTML =
+                    '<div style="padding:1rem;color:#dc2626;">Could not load shorthands: ' + err.message + '</div>';
+            }
             setTimeout(() => s.focus(), 50);
         }
         function closeShorthandLib() { document.getElementById('shorthand-lib').style.display = 'none'; }
@@ -2793,6 +2599,9 @@ a{color:#1a3a6e}
                 if (!(e && e.isComposing)) { if (!_tryAutoChip()) _tryShorthand(); }
                 syncToTextarea();
             });
+            wysiwyg.addEventListener('copy',  e => _clipboardCopy(e, false));
+            wysiwyg.addEventListener('cut',   e => _clipboardCopy(e, true));
+            wysiwyg.addEventListener('paste', e => _clipboardPaste(e));
             _doLivePreview();
 
             // ── Modal symbol search ───────────────────────────────────
