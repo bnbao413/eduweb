@@ -1,14 +1,27 @@
 {% extends "base.html" %}
 
+{% block title %}Log in — EduWeb{% endblock %}
+
 {% block content %}
-<h1>Log In</h1>
+<div class="narrow">
+    <div class="page-header" style="text-align:center;">
+        <h1>Welcome back</h1>
+        <p class="page-subtitle">Log in to your EduWeb account.</p>
+    </div>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Log In</button>
-</form>
+    <div class="auth-card form-card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary btn-block">Log in</button>
+        </form>
+    </div>
 
-<p><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
-<p>Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
+    <p style="text-align:center;margin-top:1.25rem;">
+        <a href="{% url 'password_reset' %}">Forgot your password?</a>
+    </p>
+    <p style="text-align:center;color:var(--text-muted);">
+        Don't have an account? <a href="{% url 'register' %}">Create one</a>
+    </p>
+</div>
 {% endblock %}

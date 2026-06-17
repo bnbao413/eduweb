@@ -1,94 +1,96 @@
 {% extends "base.html" %}
 
+{% block title %}{{ course.title }} — EduWeb{% endblock %}
+
 {% block content %}
-<h1>{{ course.title }}</h1>
+<a href="{% url 'home' %}" class="backlink">&lsaquo; Back</a>
 
-<p>{{ course.description }}</p>
+<div class="page-header">
+    <h1>{{ course.title }}</h1>
+    {% if course.description %}
+        <p class="page-subtitle">{{ course.description }}</p>
+    {% endif %}
+</div>
 
-<details>
-<summary style="font-size:1.5rem; font-weight:bold; cursor:pointer; margin-bottom:0.5rem;">Units</summary>
+<h2 style="font-size:1.1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.9rem;">Units</h2>
 
 {% if course.units.all %}
-    {% for unit in course.units.all %}
-        <details style="margin-left:1rem; margin-bottom:0.5rem;">
-            <summary style="cursor:pointer;"><strong>{{ unit.title }}</strong></summary>
+    <div class="accordion">
+        {% for unit in course.units.all %}
+            <details {% if forloop.first %}open{% endif %}>
+                <summary>{{ unit.title }}</summary>
+                <div class="acc-body">
+                    {% if unit.description %}
+                        <p class="muted" style="margin-top:0;">{{ unit.description }}</p>
+                    {% endif %}
 
-            {% if unit.description %}
-                <p>{{ unit.description }}</p>
-            {% endif %}
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;margin-top:0.5rem;">
+                        <section>
+                            <div class="badge badge-accent" style="margin-bottom:0.5rem;">Textbook</div>
+                            {% if unit.textbook_pages.all %}
+                                <ul class="link-list">
+                                    {% for page in unit.textbook_pages.all %}
+                                        <li><a href="{% url 'textbook_detail' page.id %}">{{ page.title }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="link-list"><span class="none">No textbook pages yet.</span></div>
+                            {% endif %}
+                        </section>
 
-            <details style="margin-left:1rem; margin-top:0.5rem;">
-                <summary style="cursor:pointer;">Textbook Pages</summary>
-                {% if unit.textbook_pages.all %}
-                    <ul>
-                    {% for page in unit.textbook_pages.all %}
-                        <li><a href="{% url 'textbook_detail' page.id %}">{{ page.title }}</a></li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No textbook pages yet.</p>
-                {% endif %}
+                        <section>
+                            <div class="badge badge-accent" style="margin-bottom:0.5rem;">Notes</div>
+                            {% if unit.notes_pages.all %}
+                                <ul class="link-list">
+                                    {% for page in unit.notes_pages.all %}
+                                        <li><a href="{% url 'notes_detail' page.id %}">{{ page.title }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="link-list"><span class="none">No notes yet.</span></div>
+                            {% endif %}
+                        </section>
+
+                        <section>
+                            <div class="badge badge-accent" style="margin-bottom:0.5rem;">Practice</div>
+                            {% if unit.practice_sets.all %}
+                                <ul class="link-list">
+                                    {% for practice in unit.practice_sets.all %}
+                                        <li><a href="{% url 'start_practice' practice.id %}">{{ practice.title }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <div class="link-list"><span class="none">No practice sets yet.</span></div>
+                            {% endif %}
+                        </section>
+
+                        <section>
+                            <div class="badge badge-accent" style="margin-bottom:0.5rem;">Unit Test</div>
+                            {% if unit.unit_test %}
+                                <ul class="link-list">
+                                    <li><a href="{% url 'start_unit_test' unit.unit_test.id %}">{{ unit.unit_test.title }}</a></li>
+                                </ul>
+                            {% else %}
+                                <div class="link-list"><span class="none">No unit test yet.</span></div>
+                            {% endif %}
+                        </section>
+                    </div>
+                </div>
             </details>
-
-            <details style="margin-left:1rem; margin-top:0.5rem;">
-                <summary style="cursor:pointer;">Notes</summary>
-                {% if unit.notes_pages.all %}
-                    <ul>
-                    {% for page in unit.notes_pages.all %}
-                        <li><a href="{% url 'notes_detail' page.id %}">{{ page.title }}</a></li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No notes yet.</p>
-                {% endif %}
-            </details>
-
-            <details style="margin-left:1rem; margin-top:0.5rem;">
-                <summary style="cursor:pointer;">Practice Sets</summary>
-                {% if unit.practice_sets.all %}
-                    <ul>
-                    {% for practice in unit.practice_sets.all %}
-                        <li><a href="{% url 'start_practice' practice.id %}">{{ practice.title }}</a></li>
-                    {% endfor %}
-                    </ul>
-                {% else %}
-                    <p>No practice sets yet.</p>
-                {% endif %}
-            </details>
-
-            <details style="margin-left:1rem; margin-top:0.5rem;">
-                <summary style="cursor:pointer;">Unit Test</summary>
-                {% if unit.unit_test %}
-                    <p><a href="{% url 'start_unit_test' unit.unit_test.id %}">{{ unit.unit_test.title }}</a></p>
-                {% else %}
-                    <p>No unit test yet.</p>
-                {% endif %}
-            </details>
-
-        </details>
-    {% endfor %}
+        {% endfor %}
+    </div>
 {% else %}
-    <p>No units yet.</p>
+    <div class="empty">No units yet.</div>
 {% endif %}
 
-</details>
+<h2 style="font-size:1.1rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin:2rem 0 0.9rem;">Final Exam</h2>
 
-<details style="margin-top:1rem;">
-<summary style="font-size:1.5rem; font-weight:bold; cursor:pointer; margin-bottom:0.5rem;">Final Exam</summary>
-
-    <div style="margin-left:1rem;">
-        {% if course.final_exam %}
-            <p>
-                <a href="{% url 'start_final_exam' course.final_exam.id %}">
-                    {{ course.final_exam.title }}
-                </a>
-            </p>
-        {% else %}
-            <p>No final exam yet.</p>
-        {% endif %}
-    </div>
-
-</details>
-
-<a href="/">← Back</a>
+{% if course.final_exam %}
+    <a href="{% url 'start_final_exam' course.final_exam.id %}" class="list-card">
+        <p class="lc-title">{{ course.final_exam.title }}</p>
+        <span class="lc-arrow" aria-hidden="true">&rsaquo;</span>
+    </a>
+{% else %}
+    <div class="empty">No final exam yet.</div>
+{% endif %}
 {% endblock %}

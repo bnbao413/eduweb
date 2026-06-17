@@ -1,14 +1,17 @@
 {% extends "base.html" %}
 
+{% block title %}{{ practice.title }} — EduWeb{% endblock %}
+
 {% block content %}
-<h1>{{ practice.title }}</h1>
+<a href="{% url 'course_detail' practice.unit.course.id %}" class="backlink">&lsaquo; Back to course</a>
 
-<p><strong>Course:</strong> {{ practice.unit.course.title }}</p>
-<p><strong>Unit:</strong> {{ practice.unit.title }}</p>
+<div class="page-header">
+    <span class="badge badge-accent" style="margin-bottom:0.6rem;">Practice</span>
+    <h1 style="margin-top:0.4rem;">{{ practice.title }}</h1>
+    <p class="meta" style="margin-bottom:0;">{{ practice.unit.course.title }} &middot; {{ practice.unit.title }}</p>
+</div>
 
-<p>{{ practice.instructions }}</p>
-
-<p>
-    <a href="{% url 'course_detail' practice.unit.course.id %}">← Back to course</a>
-</p>
+{% if practice.instructions %}
+    <div class="card content-area" style="padding:1.5rem;margin-top:0;">{{ practice.instructions }}</div>
+{% endif %}
 {% endblock %}

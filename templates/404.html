@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 
+{% block title %}Page not found — EduWeb{% endblock %}
+
 {% block content %}
-<h1>Page Not Found</h1>
-<p>The page you're looking for doesn't exist or may have moved.</p>
-<p><a href="/">← Back to home</a></p>
+<div class="narrow" style="text-align:center;padding-top:3rem;">
+    <div style="font-size:3.5rem;font-weight:800;color:var(--accent);letter-spacing:-0.03em;">404</div>
+    <h1 style="margin-top:0.5rem;">Page not found</h1>
+    <p class="page-subtitle">The page you're looking for doesn't exist or may have moved.</p>
+    <a href="{% url 'home' %}" class="btn btn-primary" style="margin-top:0.5rem;">Back to home</a>
+</div>
 {% endblock %}

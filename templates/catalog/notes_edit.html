@@ -1,93 +1,188 @@
-<!DOCTYPE html>
-<html>
+{% load static %}<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Notes Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Notes Page — EduWeb</title>
+    <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
 
 
     <style>
+        /* Local design tokens — keeps this standalone editor self-contained
+           even if the shared app.css is cached/blocked/late. Mirrors app.css. */
+        :root {
+            --bg:#f7f8fa; --surface:#ffffff; --surface-2:#f9fafb;
+            --border:#e5e7eb; --border-strong:#d1d5db;
+            --text:#111827; --text-muted:#6b7280; --text-subtle:#9ca3af;
+            --accent:#4f46e5; --accent-hover:#4338ca; --accent-active:#3730a3;
+            --accent-light:#eef2ff; --accent-border:#c7d2fe; --on-accent:#ffffff;
+            --danger:#dc2626; --danger-hover:#b91c1c; --danger-light:#fef2f2; --success:#059669;
+            --radius:10px; --radius-sm:7px; --radius-lg:14px;
+            --shadow-sm:0 1px 2px rgba(17,24,39,0.05);
+            --shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.04);
+            --shadow-md:0 4px 12px rgba(17,24,39,0.08);
+            --shadow-lg:0 12px 32px rgba(17,24,39,0.14);
+            --ring:0 0 0 3px rgba(79,70,229,0.25);
+            --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+            --font-serif:Georgia,"Times New Roman",serif;
+            --font-mono:"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",Menlo,monospace;
+        }
         body {
-            font-family: Arial, sans-serif;
-            margin: 2rem;
+            font-family: var(--font-ui);
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
         }
 
+        /* ── editor top bar ───────────────────────────────────────────── */
+        .editor-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+        .editor-topbar-inner {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            padding: 0.7rem 1.5rem;
+        }
+        .et-back {
+            display: inline-grid;
+            place-items: center;
+            width: 34px; height: 34px;
+            flex-shrink: 0;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-strong);
+            background: var(--surface);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            line-height: 1;
+            text-decoration: none;
+            transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+        }
+        .et-back:hover { background: var(--surface-2); color: var(--accent); border-color: var(--accent-border); text-decoration: none; }
+        .et-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            flex-shrink: 0;
+        }
+        .et-title-field { flex: 1; min-width: 120px; }
+        .et-title-field input[type="text"] {
+            width: 100%;
+            font-size: 1.05rem;
+            font-weight: 600;
+            padding: 0.5rem 0.7rem;
+            margin: 0;
+            border: 1px solid transparent;
+            background: transparent;
+            border-radius: var(--radius-sm);
+        }
+        .et-title-field input[type="text"]:hover { background: var(--surface-2); }
+        .et-title-field input[type="text"]:focus { background: var(--surface); border-color: var(--accent); box-shadow: var(--ring); }
+        .et-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
+        /* ── editor body / layout ─────────────────────────────────────── */
+        .editor-body { padding: 1rem 1.5rem 1.5rem; }
 
         .editor-layout {
             display: flex;
-            gap: 2rem;
+            gap: 1.25rem;
             align-items: flex-start;
         }
-
-
-        .editor-pane {
-            width: 50%;
+        .editor-pane { width: 50%; min-width: 0; }
+        .pdf-pane { width: 50%; min-width: 0; }
+        .pane-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-subtle);
+            margin-bottom: 0.4rem;
         }
 
-        .pdf-pane {
-            width: 50%;
-        }
-
-
-        textarea {
+        #wysiwyg {
             width: 100%;
-            min-height: 600px;
-            font-family: monospace;
-            font-size: 1rem;
+            height: max(600px, calc(100vh - 230px));
+            font-family: var(--font-mono);
+            font-size: 0.98rem;
             line-height: 1.9;
-            padding: 1rem;
+            padding: 1.1rem 1.25rem;
             box-sizing: border-box;
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
+            outline: none;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            overflow-y: auto;
+            cursor: text;
+            background: var(--surface);
+            box-shadow: var(--shadow-sm);
         }
+        #wysiwyg:focus { border-color: var(--accent); box-shadow: var(--ring); }
 
-
-
-
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.75rem;
-            margin-bottom: 1rem;
-            box-sizing: border-box;
-        }
-
-
-        button {
-            margin-top: 1rem;
-            padding: 0.75rem 1rem;
+        .math-chip {
+            display: inline-block;
+            background: var(--accent-light);
+            border: 1px solid var(--accent-border);
+            border-radius: 5px;
+            padding: 0 5px;
             cursor: pointer;
+            user-select: none;
+            vertical-align: middle;
+            line-height: 1.5;
+            white-space: nowrap;
+            transition: background 0.1s ease, border-color 0.1s ease;
+        }
+        .math-chip:hover { background: #e0e7ff; border-color: var(--accent); }
+        .math-chip.math-chip-static { cursor: default; }
+        .math-chip.math-chip-static:hover { background: var(--accent-light); border-color: var(--accent-border); }
+        .math-chip.display-chip {
+            display: block;
+            text-align: center;
+            margin: 0.3em 0;
+            padding: 2px 10px;
         }
 
+        /* ── toolbar ──────────────────────────────────────────────────── */
         .math-toolbar {
             display: flex;
             flex-wrap: wrap;
             gap: 6px;
-            margin-bottom: 6px;
+            margin-bottom: 1rem;
             padding: 8px;
-            background: #eef0f7;
-            border: 1px solid #c8cfe0;
-            border-radius: 6px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
         }
 
         .toolbar-group {
-            border: 1px solid #c5cce0;
-            border-radius: 5px;
-            background: #fff;
-            padding: 4px 6px 5px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            padding: 5px 7px 6px;
             display: inline-flex;
             flex-direction: column;
             align-self: flex-start;
+            box-shadow: var(--shadow-sm);
         }
 
         .toolbar-group-label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 700;
-            color: #4a5980;
+            color: var(--text-subtle);
             text-align: center;
-            padding-bottom: 3px;
-            margin-bottom: 3px;
-            border-bottom: 1px solid #dde2f0;
-            letter-spacing: 0.05em;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.06em;
             text-transform: uppercase;
             white-space: nowrap;
         }
@@ -95,106 +190,175 @@
         .toolbar-group-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 2px;
+            gap: 3px;
             align-items: center;
         }
 
         .math-toolbar button {
             margin: 0;
-            padding: 2px 5px;
+            padding: 3px 7px;
             font-size: 0.82rem;
             cursor: pointer;
-            background: #f7f8fc;
-            border: 1px solid #c5cce0;
-            border-radius: 3px;
-            font-family: serif;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 5px;
+            font-family: var(--font-serif);
             line-height: 1.4;
             white-space: nowrap;
+            transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
         }
-
         .math-toolbar button:hover {
-            background: #dde8ff;
-            border-color: #7799cc;
+            background: var(--accent-light);
+            border-color: var(--accent-border);
+            color: var(--accent-active);
         }
 
+        /* ── modals ───────────────────────────────────────────────────── */
         #math-modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.45);
+            background: rgba(17,24,39,0.5);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
 
         .math-modal-box {
-            background: #fff;
-            padding: 1.5rem 2rem;
-            border-radius: 8px;
+            background: var(--surface);
+            padding: 1.5rem 1.75rem;
+            border-radius: var(--radius-lg);
             min-width: 540px;
             max-width: 90vw;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+            box-shadow: var(--shadow-lg);
         }
 
         .math-modal-box h3 {
-            margin: 0 0 0.75rem;
+            margin: 0 0 0.9rem;
+            font-size: 1.1rem;
         }
 
         .mq-container {
-            border: 2px solid #4a90d9;
-            border-radius: 4px;
+            border: 1px solid var(--accent);
+            border-radius: var(--radius-sm);
             padding: 0.75rem 1rem;
             font-size: 1.6rem;
             min-height: 3.5rem;
             cursor: text;
+            background: var(--surface);
+            box-shadow: var(--ring);
         }
 
         .math-modal-modes {
             font-size: 0.9rem;
             margin-bottom: 0.75rem;
+            color: var(--text-muted);
         }
 
         .math-modal-modes label {
             margin-right: 1rem;
             cursor: pointer;
+            font-weight: 500;
         }
 
         .math-modal-actions {
-            margin-top: 1rem;
+            margin-top: 1.1rem;
             display: flex;
             gap: 0.5rem;
             justify-content: flex-end;
         }
 
-        .math-modal-actions button {
-            margin-top: 0;
-            padding: 0.5rem 1.2rem;
+        /* buttons (mirrors app.css so the editor is self-contained) */
+        .btn { display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+            font-family:inherit; font-size:0.92rem; font-weight:600; line-height:1.2;
+            padding:0.6rem 1.1rem; border-radius:var(--radius-sm); border:1px solid transparent;
+            cursor:pointer; text-decoration:none; white-space:nowrap;
+            transition:background 0.12s ease,border-color 0.12s ease,box-shadow 0.12s ease,color 0.12s ease; }
+        .btn:active { transform:translateY(1px); }
+        .btn:disabled, .btn[disabled] { opacity:0.45; cursor:not-allowed; }
+        .btn-primary { background:var(--accent); color:var(--on-accent); }
+        .btn-primary:hover { background:var(--accent-hover); color:#fff; }
+        .btn-secondary { background:var(--surface); color:var(--text); border-color:var(--border-strong); }
+        .btn-secondary:hover { background:var(--surface-2); border-color:var(--text-subtle); }
+        .btn-danger { background:var(--danger); color:#fff; }
+        .btn-danger:hover { background:var(--danger-hover); color:#fff; }
+        .btn-sm { padding:0.4rem 0.75rem; font-size:0.85rem; }
+
+        /* modal text inputs (self-contained base) */
+        #math-modal input[type="text"],
+        #link-modal input[type="text"],
+        #matrix-modal input[type="text"] {
+            box-sizing:border-box; font-family:inherit; color:var(--text);
+            background:var(--surface); padding:0.55rem 0.7rem;
+            border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+        }
+        #math-modal input[type="text"]:focus,
+        #link-modal input[type="text"]:focus,
+        #matrix-modal input[type="text"]:focus {
+            outline:none; border-color:var(--accent); box-shadow:var(--ring);
         }
 
+        /* category tabs inside symbol pickers */
+        #modal-cat-tabs button, #matrix-cat-tabs button {
+            font-size: 0.72rem !important;
+            padding: 3px 8px !important;
+            border-radius: 999px !important;
+        }
+
+        /* shorthand library */
+        #shorthand-lib {
+            display: none; position: fixed; inset: 0; z-index: 1300;
+            background: rgba(17,24,39,0.5); align-items: center; justify-content: center;
+        }
+        .sh-box {
+            background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+            width: min(760px, 94vw); max-height: 86vh; display: flex; flex-direction: column;
+        }
+        .sh-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+        .sh-head h3 { margin: 0; font-size: 1.1rem; flex-shrink: 0; }
+        .sh-head input { flex: 1; }
+        .sh-body { padding: 0.25rem 1.25rem 1.25rem; overflow-y: auto; }
+        .sh-cat {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+            color: var(--text-subtle); margin: 1rem 0 0.4rem; position: sticky; top: 0;
+            background: var(--surface); padding: 0.5rem 0 0.3rem;
+        }
+        .sh-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px; }
+        .sh-row {
+            display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.5rem;
+            border-radius: var(--radius-sm); cursor: pointer;
+        }
+        .sh-row:hover { background: var(--accent-light); }
+        .sh-sym { min-width: 2.4rem; text-align: center; font-size: 1.05rem; flex-shrink: 0; }
+        .sh-names { color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        @media (max-width: 900px) {
+            .editor-layout { flex-direction: column; }
+            .editor-pane, .pdf-pane { width: 100%; }
+            .math-modal-box { min-width: 0; width: 94vw; padding: 1.25rem; }
+        }
     </style>
 </head>
 <body>
-    <h1>Edit Notes Page</h1>
-
-
-    <p><strong>Current page:</strong> {{ page.title }}</p>
-
-
     <form method="post">
         {% csrf_token %}
 
+        <div class="editor-topbar">
+            <div class="editor-topbar-inner">
+                <a href="{% url 'notes_detail' page.id %}" class="et-back" title="Back to notes page">&lsaquo;</a>
+                <span class="et-label">Edit notes</span>
+                <div class="et-title-field">{{ form.title }}</div>
+                <div class="et-actions">
+                    <button type="button" onclick="openShorthandLib()" class="btn btn-secondary btn-sm">Shorthands</button>
+                    <button type="button" id="export-btn" onclick="exportPDF()" class="btn btn-secondary btn-sm">Export PDF</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                </div>
+            </div>
+        </div>
 
-        <p>
-            <label for="{{ form.title.id_for_label }}">Title</label><br>
-            {{ form.title }}
-        </p>
-
-
-        <button type="submit">Save</button>
-        <button type="button" id="compile-btn" onclick="compilePDF()" style="background:#2d6a2d;color:#fff;border:none;border-radius:4px;padding:0.75rem 1rem;cursor:pointer;margin-left:0.5rem;">Compile</button>
-        <button type="button" id="export-btn" onclick="exportPDF()" style="background:#1a3a6e;color:#fff;border:none;border-radius:4px;padding:0.75rem 1rem;cursor:pointer;margin-left:0.5rem;">Export PDF</button>
-
+        <div class="editor-body">
         <div class="math-toolbar">
                     <div class="toolbar-group" style="position:relative;">
                         <div class="toolbar-group-label">Search</div>
@@ -244,6 +408,8 @@
                     <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
                     <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
                     <button type="button" title="Contour integral" onclick="openMath('\\oint_{ }^{ }')">∮</button>
+                    <button type="button" title="Double closed surface integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','\\oiint','∯')">∯</button>
+                    <button type="button" title="Triple closed volume integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','∰','∰')">∰</button>
                     <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
                     <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
                     <button type="button" title="Big union" onclick="openMath('\\bigcup_{ }^{ }')">⋃</button>
@@ -270,18 +436,18 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Physics</div>
                         <div class="toolbar-group-buttons">
-                            <button type="button" title="hbar (reduced Planck)" onclick="openMath('\\hbar')">ℏ</button>
-                            <button type="button" title="hslash" onclick="openMath('\\hslash')">ℏ̸</button>
-                            <button type="button" title="Bra ⟨·|" onclick="openMath('\\langle  |')">⟨·|</button>
-                            <button type="button" title="Ket |·⟩" onclick="openMath('|  \\rangle')">|·⟩</button>
-                            <button type="button" title="Braket ⟨·|·⟩" onclick="openMath('\\langle  |  \\rangle')">⟨·|·⟩</button>
-                            <button type="button" title="Dagger / Hermitian conjugate" onclick="openMath('\\dagger')">†</button>
-                            <button type="button" title="Double dagger" onclick="openMath('\\ddagger')">‡</button>
-                            <button type="button" title="Real part" onclick="openMath('\\Re')">ℜ</button>
-                            <button type="button" title="Imaginary part" onclick="openMath('\\Im')">ℑ</button>
-                            <button type="button" title="Weierstrass p" onclick="openMath('\\wp')">℘</button>
-                            <button type="button" title="Aleph" onclick="openMath('\\aleph')">ℵ</button>
-                            <button type="button" title="Beth" onclick="openMath('\\beth')">ℶ</button>
+                            <button type="button" title="hbar (reduced Planck)" onclick="insSym('\\hbar')">ℏ</button>
+                            <button type="button" title="hslash" onclick="insSym('\\hslash')">ℏ̸</button>
+                            <button type="button" title="Bra ⟨·|" onclick="insSym('\\langle  |')">⟨·|</button>
+                            <button type="button" title="Ket |·⟩" onclick="insSym('|  \\rangle')">|·⟩</button>
+                            <button type="button" title="Braket ⟨·|·⟩" onclick="insSym('\\langle  |  \\rangle')">⟨·|·⟩</button>
+                            <button type="button" title="Dagger / Hermitian conjugate" onclick="insSym('\\dagger')">†</button>
+                            <button type="button" title="Double dagger" onclick="insSym('\\ddagger')">‡</button>
+                            <button type="button" title="Real part" onclick="insSym('\\Re')">ℜ</button>
+                            <button type="button" title="Imaginary part" onclick="insSym('\\Im')">ℑ</button>
+                            <button type="button" title="Weierstrass p" onclick="insSym('\\wp')">℘</button>
+                            <button type="button" title="Aleph" onclick="insSym('\\aleph')">ℵ</button>
+                            <button type="button" title="Beth" onclick="insSym('\\beth')">ℶ</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -548,7 +714,7 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Insert</div>
                         <div class="toolbar-group-buttons">
-                            <button type="button" title="Insert link" onclick="openLinkModal()">🔗 Link</button>
+                            <button type="button" title="Insert link" onclick="openLinkModal()">Link</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -563,25 +729,25 @@
         </div>
         <div class="editor-layout">
             <div class="editor-pane">
-                <h2 style="margin:0 0 0.5rem;">Editor</h2>
-                <textarea id="content-input" name="content">{{ form.instance.content }}</textarea>
+                <div class="pane-label">Editor</div>
+                <textarea id="content-input" name="content" style="display:none;">{{ form.instance.content }}</textarea>
+                <div id="wysiwyg" contenteditable="true" spellcheck="false"></div>
             </div>
             <div class="pdf-pane">
-                <h2 style="margin:0 0 0.5rem;">PDF Preview</h2>
-                <div id="pdf-placeholder" style="height:max(900px,calc(100vh - 160px));display:flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:4px;color:#aaa;font-size:0.9rem;font-style:italic;">
-                    Click Compile to generate preview
+                <div class="pane-label">Live preview</div>
+                <div id="pdf-placeholder" style="height:max(600px,calc(100vh - 230px));display:flex;align-items:center;justify-content:center;border:1px solid var(--border-strong);border-radius:var(--radius);color:var(--text-subtle);font-size:0.9rem;background:var(--surface);box-shadow:var(--shadow-sm);">
+                    Preview appears here as you type…
                 </div>
-                <iframe id="pdf-preview" style="display:none;width:100%;height:max(900px,calc(100vh - 160px));border:1px solid #ccc;border-radius:4px;overflow-x:hidden;"></iframe>
+                <iframe id="pdf-preview" style="display:none;width:100%;height:max(600px,calc(100vh - 230px));border:1px solid var(--border-strong);border-radius:var(--radius);overflow-x:hidden;background:#fff;box-shadow:var(--shadow-sm);"></iframe>
             </div>
+        </div>
         </div>
 
 
     </form>
 
 
-    <p>
-        <a href="{% url 'notes_detail' page.id %}">← Back to notes page</a>
-    </p>
+
 
 
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
@@ -589,72 +755,673 @@
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/contrib/auto-render.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-    <div id="link-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;">
-        <div style="background:#fff; padding:1.5rem 2rem; border-radius:8px; min-width:380px; box-shadow:0 4px 24px rgba(0,0,0,0.25);">
-            <h3 style="margin:0 0 1rem;">Insert Link</h3>
-            <label style="display:block; margin-bottom:0.25rem; font-size:0.9rem;">Display text</label>
-            <input type="text" id="link-text" placeholder="e.g. Khan Academy" style="width:100%; padding:0.5rem; margin-bottom:0.75rem; box-sizing:border-box;">
-            <label style="display:block; margin-bottom:0.25rem; font-size:0.9rem;">URL</label>
-            <input type="text" id="link-url" placeholder="https://..." style="width:100%; padding:0.5rem; margin-bottom:1rem; box-sizing:border-box;">
+    <div id="link-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(17,24,39,0.5); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:var(--surface); padding:1.5rem 1.75rem; border-radius:var(--radius-lg); min-width:380px; box-shadow:var(--shadow-lg);">
+            <h3 style="margin:0 0 1rem;">Insert link</h3>
+            <label style="display:block; margin-bottom:0.3rem;">Display text</label>
+            <input type="text" id="link-text" placeholder="e.g. Khan Academy" style="margin-bottom:0.85rem;">
+            <label style="display:block; margin-bottom:0.3rem;">URL</label>
+            <input type="text" id="link-url" placeholder="https://..." style="margin-bottom:1.1rem;">
             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-                <button type="button" onclick="closeLinkModal()">Cancel</button>
-                <button type="button" onclick="insertLink()">Insert</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeLinkModal()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="insertLink()">Insert</button>
             </div>
         </div>
     </div>
 
-    <div id="draft-confirm" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:1.25rem 1.75rem; border-radius:8px; box-shadow:0 4px 24px rgba(0,0,0,0.3); z-index:1200; text-align:center; min-width:220px;">
-        <p style="margin:0 0 1rem; font-size:0.95rem;">Remove this draft?</p>
+    <div id="draft-confirm" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--surface); padding:1.5rem 1.75rem; border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:1200; text-align:center; min-width:240px;">
+        <p style="margin:0 0 1.1rem; font-size:0.95rem;">Remove this draft?</p>
         <div style="display:flex; gap:0.5rem; justify-content:center;">
-            <button type="button" onclick="confirmDeleteDraft()" style="padding:0.4rem 1rem; background:#e53e3e; color:#fff; border:none; border-radius:4px; cursor:pointer;">Remove draft</button>
-            <button type="button" onclick="cancelDeleteDraft()" style="padding:0.4rem 1rem; cursor:pointer;">Cancel</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteDraft()">Remove draft</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="cancelDeleteDraft()">Cancel</button>
         </div>
     </div>
 
-    <div id="matrix-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:1100;align-items:center;justify-content:center;">
-        <div style="background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,0.25);min-width:340px;max-width:680px;width:95vw;">
-            <h3 id="matrix-modal-title" style="margin:0 0 1rem;font-size:1rem;"></h3>
+    <div id="matrix-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(17,24,39,0.5);z-index:1100;align-items:center;justify-content:center;">
+        <div style="background:var(--surface);padding:1.5rem 1.75rem;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);min-width:340px;max-width:680px;width:95vw;">
+            <h3 id="matrix-modal-title" style="margin:0 0 1rem;font-size:1.05rem;"></h3>
             <div id="matrix-grid" style="display:inline-grid;gap:6px;margin-bottom:1.25rem;"></div>
-            <input type="text" id="matrix-sym-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin-bottom:0.35rem;padding:5px 8px;border:1px solid #c5cce0;border-radius:4px;font-size:0.83rem;">
-            <div style="border:1px solid #dde2f0;border-radius:6px;overflow:hidden;margin-bottom:1.25rem;">
-                <div id="matrix-cat-tabs" style="display:flex;flex-wrap:wrap;gap:3px;padding:5px 5px 3px;background:#eef0f7;border-bottom:1px solid #dde2f0;"></div>
+            <input type="text" id="matrix-sym-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin-bottom:0.5rem;font-size:0.88rem;">
+            <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:1.25rem;">
+                <div id="matrix-cat-tabs" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 6px 3px;background:var(--surface-2);border-bottom:1px solid var(--border);"></div>
                 <div id="matrix-sym-grid" style="display:flex;flex-wrap:wrap;gap:3px;padding:6px;min-height:44px;max-height:160px;overflow-y:auto;"></div>
             </div>
             <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
-                <button type="button" onclick="closeMatrixModal()" style="padding:0.4rem 1rem;cursor:pointer;">Cancel</button>
-                <button type="button" onclick="doInsertMatrix()" style="padding:0.4rem 1rem;background:#1a3a6e;color:#fff;border:none;border-radius:4px;cursor:pointer;">Insert</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeMatrixModal()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="doInsertMatrix()">Insert</button>
             </div>
         </div>
     </div>
 
     <div id="math-modal">
         <div class="math-modal-box">
-            <h3>Math Editor</h3>
+            <h3>Math editor</h3>
             <div class="math-modal-modes">
                 <label><input type="radio" name="math-mode" value="inline" checked> Inline ($...$)</label>
                 <label><input type="radio" name="math-mode" value="display"> Display ($$...$$)</label>
             </div>
             <div id="mq-field" class="mq-container"></div>
-            <input type="text" id="modal-sym-search" placeholder="Search symbols… e.g. hbar, partial, arrow" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin:0.6rem 0 0.35rem;padding:5px 8px;border:1px solid #c5cce0;border-radius:4px;font-size:0.83rem;">
-            <div id="modal-sym-panel" style="border:1px solid #dde2f0;border-radius:6px;overflow:hidden;">
-                <div id="modal-cat-tabs" style="display:flex;flex-wrap:wrap;gap:3px;padding:5px 5px 3px;background:#eef0f7;border-bottom:1px solid #dde2f0;"></div>
+            <input type="text" id="modal-sym-search" placeholder="Search symbols… e.g. hbar, partial, arrow" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin:0.7rem 0 0.5rem;font-size:0.88rem;">
+            <div id="modal-sym-panel" style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                <div id="modal-cat-tabs" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 6px 3px;background:var(--surface-2);border-bottom:1px solid var(--border);"></div>
                 <div id="modal-sym-grid" style="display:flex;flex-wrap:wrap;gap:3px;padding:6px;min-height:44px;max-height:180px;overflow-y:auto;"></div>
             </div>
-            <div id="drafts-bar" style="display:none; margin-top:0.75rem;">
-                <div style="font-size:0.8rem; color:#666; margin-bottom:0.35rem;">Drafts — click to restore:</div>
+            <div id="drafts-bar" style="display:none; margin-top:0.85rem;">
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem;">Drafts — click to restore:</div>
                 <div id="drafts-list" style="display:flex; flex-wrap:wrap; gap:0.4rem;"></div>
             </div>
             <div class="math-modal-actions">
-                <button type="button" onclick="closeMathModal()">Cancel</button>
-                <button type="button" onclick="saveDraft()" style="background:#f5f0d8; border:1px solid #c9b96a; border-radius:4px; padding:0.5rem 1.2rem; cursor:pointer; margin-top:0;">Draft</button>
-                <button type="button" onclick="insertMath()">Insert</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeMathModal()">Cancel</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="saveDraft()">Draft</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="insertMath()">Insert</button>
             </div>
+        </div>
+    </div>
+
+    <div id="shorthand-lib">
+        <div class="sh-box">
+            <div class="sh-head">
+                <h3>Shorthand library</h3>
+                <input type="text" id="sh-lib-search" placeholder="Filter… e.g. frac, alpha, sum" autocomplete="off" spellcheck="false" oninput="_renderShorthandLib(this.value)">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeShorthandLib()">Close</button>
+            </div>
+            <div class="sh-body" id="sh-lib-body"></div>
         </div>
     </div>
 
     <script>
         let input = document.getElementById("content-input");
+        const wysiwyg = document.getElementById("wysiwyg");
+        const ZWS = '​'; // zero-width space — cursor anchor beside chips
+
+        // ── WYSIWYG helpers ──────────────────────────────────────────
+
+        function makeMathChip(latex, display, clickable = true) {
+            const span = document.createElement('span');
+            span.className = 'math-chip' + (display ? ' display-chip' : '') + (clickable ? '' : ' math-chip-static');
+            span.contentEditable = 'false';
+            span.dataset.latex = latex;
+            span.dataset.display = display ? 'true' : 'false';
+            try { span.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: display }); }
+            catch(e) { span.textContent = display ? `\\[${latex}\\]` : `\\(${latex}\\)`; }
+            if (clickable) {
+                span.addEventListener('click', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    _editingChip = span;
+                    const d = span.dataset.display === 'true';
+                    document.querySelector(`input[name="math-mode"][value="${d ? 'display' : 'inline'}"]`).checked = true;
+                    const lat = span.dataset.latex;
+                    if (lat.includes('\\iiiint')) {
+                        _mathSymSub = { from: '\\int', to: '\\iiiint' };
+                        openMath(lat.replace(/\\iiiint/g, '\\int'));
+                        setTimeout(() => _startMqSymWatch('⨌', '∫'), 80);
+                    } else if (lat.includes('\\iiint')) {
+                        _mathSymSub = { from: '\\int', to: '\\iiint' };
+                        openMath(lat.replace(/\\iiint/g, '\\int'));
+                        setTimeout(() => _startMqSymWatch('∭', '∫'), 80);
+                    } else if (lat.includes('\\iint')) {
+                        _mathSymSub = { from: '\\int', to: '\\iint' };
+                        openMath(lat.replace(/\\iint/g, '\\int'));
+                        setTimeout(() => _startMqSymWatch('∬', '∫'), 80);
+                    } else if (lat.includes('\\oiint')) {
+                        _mathSymSub = { from: '\\oint', to: '\\oiint' };
+                        openMath(lat.replace(/\\oiint/g, '\\oint'));
+                        setTimeout(() => _startMqSymWatch('∯'), 80);
+                    } else if (lat.includes('∰')) {
+                        _mathSymSub = { from: '\\oint', to: '∰' };
+                        openMath(lat.replace(/∰/g, '\\oint'));
+                        setTimeout(() => _startMqSymWatch('∰'), 80);
+                    } else {
+                        openMath(lat);
+                    }
+                });
+            }
+            return span;
+        }
+
+        function serializeNode(node) {
+            let out = '';
+            for (const child of node.childNodes) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    out += child.textContent.replace(new RegExp(ZWS, 'g'), '');
+                } else if (child.nodeName === 'BR') {
+                    out += '\n';
+                } else if (child.classList && child.classList.contains('math-chip')) {
+                    const d = child.dataset.display === 'true';
+                    out += d ? `\\[${child.dataset.latex}\\]` : `\\(${child.dataset.latex}\\)`;
+                } else {
+                    out += serializeNode(child);
+                }
+            }
+            return out;
+        }
+
+        function serializeWysiwyg() { return serializeNode(wysiwyg); }
+
+        function syncToTextarea() {
+            input.value = serializeWysiwyg();
+            updateLivePreview();
+        }
+
+        function _isComplexLatex(latex) {
+            // Pure palette symbols that happen to contain braces/superscripts but are
+            // NOT meant to be re-edited — keep them as static (non-clickable) chips so
+            // they behave identically when freshly inserted and when reloaded.
+            if (latex === '^\\circ') return false;                   // degree °
+            if (/^\\mathbb\{[A-Za-z]\}$/.test(latex)) return false;  // set symbols ℕ ℝ ℤ ℚ ℂ …
+            // Editable (clickable) when it has an input slot: braces, brackets,
+            // parens, sub/superscript, a sizing/paired delimiter, a structural
+            // command, or a named function (e.g. \sin(x) — MathQuill stores the
+            // trig/function templates with plain parens, not \left( \right)).
+            // The (?![A-Za-z]) guard stops \leftarrow etc. matching \left.
+            if (/[(){}\[\]_^]/.test(latex)) return true;
+            if (/\\(left|right|lfloor|rfloor|lceil|rceil|lVert|rVert|lvert|rvert|langle|rangle|lgroup|rgroup|lbrace|rbrace)(?![A-Za-z])/.test(latex)) return true;
+            if (/\\(frac|sqrt|begin|end|over|binom|underset|overset|stackrel)(?![A-Za-z])/.test(latex)) return true;
+            if (/\\(sin|cos|tan|cot|sec|csc|sinh|cosh|tanh|coth|arcsin|arccos|arctan|arcsec|arccsc|arccot|log|ln|lg|exp|det|dim|ker|hom|arg|deg|gcd|min|max|sup|inf|lim|limsup|liminf|operatorname)(?![A-Za-z])/.test(latex)) return true;
+            return false;
+        }
+
+        function loadWysiwyg(raw) {
+            const re = /\\\[([\s\S]*?)\\\]|\$\$([\s\S]*?)\$\$|\\\(([\s\S]*?)\\\)|\$((?:[^$\n\\]|\\.)+?)\$/g;
+            const frag = document.createDocumentFragment();
+            let last = 0, m;
+            while ((m = re.exec(raw)) !== null) {
+                const textPart = raw.slice(last, m.index);
+                if (textPart) {
+                    const lines = textPart.split('\n');
+                    lines.forEach((line, i) => {
+                        if (line) frag.appendChild(document.createTextNode(line));
+                        if (i < lines.length - 1) frag.appendChild(document.createElement('br'));
+                    });
+                }
+                const latex = (m[1] ?? m[2] ?? m[3] ?? m[4]).trim();
+                const display = m[1] !== undefined || m[2] !== undefined;
+                frag.appendChild(document.createTextNode(ZWS));
+                frag.appendChild(makeMathChip(latex, display, _isComplexLatex(latex)));
+                frag.appendChild(document.createTextNode(ZWS));
+                last = m.index + m[0].length;
+            }
+            const tail = raw.slice(last);
+            if (tail) {
+                const lines = tail.split('\n');
+                lines.forEach((line, i) => {
+                    if (line) frag.appendChild(document.createTextNode(line));
+                    if (i < lines.length - 1) frag.appendChild(document.createElement('br'));
+                });
+            }
+            wysiwyg.innerHTML = '';
+            wysiwyg.appendChild(frag);
+        }
+
+        function _zwsNode() { return document.createTextNode(ZWS); }
+
+        function insertChipAtCursor(chip) {
+            wysiwyg.focus({ preventScroll: true });
+            const before = _zwsNode(), after = _zwsNode();
+            const sel = window.getSelection();
+            if (sel.rangeCount) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(after);
+                range.insertNode(chip);
+                range.insertNode(before);
+                const r2 = document.createRange();
+                r2.setStart(after, 1); r2.collapse(true);
+                sel.removeAllRanges(); sel.addRange(r2);
+            } else {
+                wysiwyg.appendChild(before);
+                wysiwyg.appendChild(chip);
+                wysiwyg.appendChild(after);
+            }
+        }
+
+        function _ensureChipSpacers(chip) {
+            if (!chip.previousSibling || chip.previousSibling.textContent !== ZWS)
+                chip.before(_zwsNode());
+            if (!chip.nextSibling || chip.nextSibling.textContent !== ZWS)
+                chip.after(_zwsNode());
+        }
+
+        // ── Auto-convert typed LaTeX into a chip once a delimiter is closed ──
+        // Recognises $...$, $$...$$, \(...\) and \[...\] ending at the caret.
+        function _matchMathEndingAt(text, caret) {
+            const c1 = text[caret - 1], c2 = text[caret - 2];
+            // \( ... \)
+            if (c1 === ')' && c2 === '\\') {
+                const open = text.slice(0, caret - 2).lastIndexOf('\\(');
+                if (open >= 0) {
+                    const latex = text.slice(open + 2, caret - 2);
+                    if (latex.trim() && !latex.includes('\\(') && !latex.includes('\\)'))
+                        return { open, close: caret, latex: latex.trim(), display: false };
+                }
+                return null;
+            }
+            // \[ ... \]
+            if (c1 === ']' && c2 === '\\') {
+                const open = text.slice(0, caret - 2).lastIndexOf('\\[');
+                if (open >= 0) {
+                    const latex = text.slice(open + 2, caret - 2);
+                    if (latex.trim() && !latex.includes('\\[') && !latex.includes('\\]'))
+                        return { open, close: caret, latex: latex.trim(), display: true };
+                }
+                return null;
+            }
+            if (c1 === '$') {
+                // $$ ... $$  (display)
+                if (c2 === '$') {
+                    const open = text.slice(0, caret - 2).lastIndexOf('$$');
+                    if (open >= 0) {
+                        const latex = text.slice(open + 2, caret - 2);
+                        if (latex.trim() && !latex.includes('$'))
+                            return { open, close: caret, latex: latex.trim(), display: true };
+                    }
+                    return null;
+                }
+                // $ ... $  (inline) — guard against matching the inner $ of $$
+                const open = text.slice(0, caret - 1).lastIndexOf('$');
+                if (open >= 0 && text[open - 1] !== '$') {
+                    const latex = text.slice(open + 1, caret - 1);
+                    if (latex.trim() && !latex.includes('$'))
+                        return { open, close: caret, latex: latex.trim(), display: false };
+                }
+                return null;
+            }
+            return null;
+        }
+
+        let _autoChipBusy = false;
+        function _tryAutoChip() {
+            if (_autoChipBusy || typeof katex === 'undefined') return false;
+            const sel = window.getSelection();
+            if (!sel.rangeCount || !sel.isCollapsed) return false;
+            const range = sel.getRangeAt(0);
+            const node = range.startContainer;
+            if (node.nodeType !== Node.TEXT_NODE) return false;
+            if (!node.parentNode || (node.parentNode.closest && node.parentNode.closest('.math-chip'))) return false;
+            const caret = range.startOffset;
+            const m = _matchMathEndingAt(node.textContent, caret);
+            if (!m) return false;
+            // only convert if it is genuinely valid LaTeX
+            try { katex.renderToString(m.latex, { throwOnError: true, displayMode: m.display }); }
+            catch (e) { return false; }
+
+            _autoChipBusy = true;
+            const del = document.createRange();
+            del.setStart(node, m.open);
+            del.setEnd(node, m.close);
+            del.deleteContents();
+            const cr = document.createRange();
+            cr.setStart(node, m.open); cr.collapse(true);
+            sel.removeAllRanges(); sel.addRange(cr);
+            insertChipAtCursor(makeMathChip(m.latex, m.display, _isComplexLatex(m.latex)));
+            _autoChipBusy = false;
+            return true;
+        }
+
+        // ── Plain-language shorthands: type "(name)" to insert a notation ──
+        // Constructs that need content open the math editor pre-filled; pure
+        // symbols are dropped straight in.  e.g. (frac) → fraction, (alpha) → α.
+        const SHORTHAND = {
+            frac:{l:'\\frac{}{}', modal:true, cat:'Structures'},
+            binom:{l:'\\binom{}{}', modal:true, cat:'Structures'},
+            sqrt:{l:'\\sqrt{}', modal:true, cat:'Structures'},
+            nthroot:{l:'\\sqrt[n]{}', modal:true, cat:'Structures'},
+            pow:{l:'x^{}', modal:true, cat:'Structures'},
+            sub:{l:'x_{}', modal:true, cat:'Structures'},
+            int:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
+            oint:{l:'\\oint_{ }^{ }', modal:true, cat:'Structures'},
+            oiint:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'\\oiint',disp:'∯',src:'∮'}, cat:'Structures'},
+            oiiint:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'∰',disp:'∰',src:'∮'}, cat:'Structures'},
+            sum:{l:'\\sum_{ }^{ }', modal:true, cat:'Structures'},
+            prod:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
+            bigcup:{l:'\\bigcup_{ }^{ }', modal:true, cat:'Structures'},
+            bigcap:{l:'\\bigcap_{ }^{ }', modal:true, cat:'Structures'},
+            bigwedge:{l:'\\bigwedge_{ }', modal:true, cat:'Structures'},
+            bigvee:{l:'\\bigvee_{ }', modal:true, cat:'Structures'},
+            lim:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
+            limsup:{l:'\\limsup_{n\\to\\infty}', modal:true, cat:'Structures'},
+            liminf:{l:'\\liminf_{n\\to\\infty}', modal:true, cat:'Structures'},
+            varinjlim:{l:'\\varinjlim_{ }', modal:true, cat:'Structures'},
+            varprojlim:{l:'\\varprojlim_{ }', modal:true, cat:'Structures'},
+            partial:{l:'\\partial', cat:'Calculus'},
+            nabla:{l:'\\nabla', cat:'Calculus'},
+            ddx:{l:'\\frac{d}{dx}', modal:true, cat:'Calculus'},
+            pdx:{l:'\\frac{\\partial}{\\partial x}', modal:true, cat:'Calculus'},
+            square:{l:'\\square', cat:'Calculus'},
+            hbar:{l:'\\hbar', cat:'Physics'},
+            hslash:{l:'\\hslash', cat:'Physics'},
+            bra:{l:'\\langle  |', cat:'Physics'},
+            ket:{l:'|  \\rangle', cat:'Physics'},
+            braket:{l:'\\langle  |  \\rangle', cat:'Physics'},
+            dagger:{l:'\\dagger', cat:'Physics'},
+            ddagger:{l:'\\ddagger', cat:'Physics'},
+            Re:{l:'\\Re', cat:'Physics'},
+            Im:{l:'\\Im', cat:'Physics'},
+            wp:{l:'\\wp', cat:'Physics'},
+            aleph:{l:'\\aleph', cat:'Physics'},
+            beth:{l:'\\beth', cat:'Physics'},
+            sin:{l:'\\sin\\left(\\right)', modal:true, cat:'Trig'},
+            cos:{l:'\\cos\\left(\\right)', modal:true, cat:'Trig'},
+            tan:{l:'\\tan\\left(\\right)', modal:true, cat:'Trig'},
+            arcsin:{l:'\\arcsin\\left(\\right)', modal:true, cat:'Trig'},
+            arccos:{l:'\\arccos\\left(\\right)', modal:true, cat:'Trig'},
+            arctan:{l:'\\arctan\\left(\\right)', modal:true, cat:'Trig'},
+            sec:{l:'\\sec\\left(\\right)', modal:true, cat:'Trig'},
+            csc:{l:'\\csc\\left(\\right)', modal:true, cat:'Trig'},
+            cot:{l:'\\cot\\left(\\right)', modal:true, cat:'Trig'},
+            sinh:{l:'\\sinh\\left(\\right)', modal:true, cat:'Trig'},
+            cosh:{l:'\\cosh\\left(\\right)', modal:true, cat:'Trig'},
+            tanh:{l:'\\tanh\\left(\\right)', modal:true, cat:'Trig'},
+            log:{l:'\\log\\left(\\right)', modal:true, cat:'Functions'},
+            log2:{l:'\\log_{ }\\left(\\right)', modal:true, cat:'Functions'},
+            ln:{l:'\\ln\\left(\\right)', modal:true, cat:'Functions'},
+            exp:{l:'\\exp\\left(\\right)', modal:true, cat:'Functions'},
+            sup:{l:'\\sup_{ }', modal:true, cat:'Functions'},
+            inf:{l:'\\inf_{ }', modal:true, cat:'Functions'},
+            max:{l:'\\max_{ }', modal:true, cat:'Functions'},
+            min:{l:'\\min_{ }', modal:true, cat:'Functions'},
+            gcd:{l:'\\gcd\\left(\\right)', modal:true, cat:'Functions'},
+            lcm:{l:'\\operatorname{lcm}\\left(\\right)', modal:true, cat:'Functions'},
+            det:{l:'\\det\\left(\\right)', modal:true, cat:'Functions'},
+            tr:{l:'\\operatorname{tr}\\left(\\right)', modal:true, cat:'Functions'},
+            rank:{l:'\\operatorname{rank}\\left(\\right)', modal:true, cat:'Functions'},
+            ker:{l:'\\ker\\left(\\right)', modal:true, cat:'Functions'},
+            span:{l:'\\operatorname{span}\\left(\\right)', modal:true, cat:'Functions'},
+            arg:{l:'\\arg\\left(\\right)', modal:true, cat:'Functions'},
+            re:{l:'\\operatorname{Re}\\left(\\right)', modal:true, cat:'Functions'},
+            im:{l:'\\operatorname{Im}\\left(\\right)', modal:true, cat:'Functions'},
+            res:{l:'\\operatorname{Res}_{  }\\left(\\right)', modal:true, cat:'Functions'},
+            hom:{l:'\\operatorname{Hom}\\left(,\\right)', modal:true, cat:'Functions'},
+            aut:{l:'\\operatorname{Aut}\\left(\\right)', modal:true, cat:'Functions'},
+            end:{l:'\\operatorname{End}\\left(\\right)', modal:true, cat:'Functions'},
+            gal:{l:'\\operatorname{Gal}\\left(\\right)', modal:true, cat:'Functions'},
+            spec:{l:'\\operatorname{Spec}\\left(\\right)', modal:true, cat:'Functions'},
+            ext:{l:'\\operatorname{Ext}^{  }\\left(,\\right)', modal:true, cat:'Functions'},
+            tor:{l:'\\operatorname{Tor}_{  }\\left(,\\right)', modal:true, cat:'Functions'},
+            alpha:{l:'\\alpha', cat:'Greek'},
+            beta:{l:'\\beta', cat:'Greek'},
+            gamma:{l:'\\gamma', cat:'Greek'},
+            Gamma:{l:'\\Gamma', cat:'Greek'},
+            delta:{l:'\\delta', cat:'Greek'},
+            Delta:{l:'\\Delta', cat:'Greek'},
+            epsilon:{l:'\\varepsilon', cat:'Greek'},
+            zeta:{l:'\\zeta', cat:'Greek'},
+            eta:{l:'\\eta', cat:'Greek'},
+            theta:{l:'\\theta', cat:'Greek'},
+            Theta:{l:'\\Theta', cat:'Greek'},
+            iota:{l:'\\iota', cat:'Greek'},
+            kappa:{l:'\\kappa', cat:'Greek'},
+            lambda:{l:'\\lambda', cat:'Greek'},
+            Lambda:{l:'\\Lambda', cat:'Greek'},
+            mu:{l:'\\mu', cat:'Greek'},
+            nu:{l:'\\nu', cat:'Greek'},
+            xi:{l:'\\xi', cat:'Greek'},
+            Xi:{l:'\\Xi', cat:'Greek'},
+            pi:{l:'\\pi', cat:'Greek'},
+            Pi:{l:'\\Pi', cat:'Greek'},
+            rho:{l:'\\rho', cat:'Greek'},
+            sigma:{l:'\\sigma', cat:'Greek'},
+            Sigma:{l:'\\Sigma', cat:'Greek'},
+            tau:{l:'\\tau', cat:'Greek'},
+            upsilon:{l:'\\upsilon', cat:'Greek'},
+            Upsilon:{l:'\\Upsilon', cat:'Greek'},
+            phi:{l:'\\varphi', cat:'Greek'},
+            Phi:{l:'\\Phi', cat:'Greek'},
+            chi:{l:'\\chi', cat:'Greek'},
+            psi:{l:'\\psi', cat:'Greek'},
+            Psi:{l:'\\Psi', cat:'Greek'},
+            omega:{l:'\\omega', cat:'Greek'},
+            Omega:{l:'\\Omega', cat:'Greek'},
+            infty:{l:'\\infty', cat:'Greek'},
+            ell:{l:'\\ell', cat:'Greek'},
+            in:{l:'\\in', cat:'Set Theory'},
+            notin:{l:'\\notin', cat:'Set Theory'},
+            subset:{l:'\\subset', cat:'Set Theory'},
+            subseteq:{l:'\\subseteq', cat:'Set Theory'},
+            supset:{l:'\\supset', cat:'Set Theory'},
+            supseteq:{l:'\\supseteq', cat:'Set Theory'},
+            cup:{l:'\\cup', cat:'Set Theory'},
+            cap:{l:'\\cap', cat:'Set Theory'},
+            emptyset:{l:'\\varnothing', cat:'Set Theory'},
+            forall:{l:'\\forall', cat:'Set Theory'},
+            exists:{l:'\\exists', cat:'Set Theory'},
+            nexists:{l:'\\nexists', cat:'Set Theory'},
+            setminus:{l:'\\setminus', cat:'Set Theory'},
+            N:{l:'\\mathbb{N}', cat:'Num Sets'},
+            Z:{l:'\\mathbb{Z}', cat:'Num Sets'},
+            Q:{l:'\\mathbb{Q}', cat:'Num Sets'},
+            R:{l:'\\mathbb{R}', cat:'Num Sets'},
+            C:{l:'\\mathbb{C}', cat:'Num Sets'},
+            P:{l:'\\mathbb{P}', cat:'Num Sets'},
+            H:{l:'\\mathbb{H}', cat:'Num Sets'},
+            F:{l:'\\mathbb{F}', cat:'Num Sets'},
+            E:{l:'\\mathbb{E}', cat:'Num Sets'},
+            implies:{l:'\\Rightarrow', cat:'Logic'},
+            iff:{l:'\\Leftrightarrow', cat:'Logic'},
+            wedge:{l:'\\wedge', cat:'Logic'},
+            vee:{l:'\\vee', cat:'Logic'},
+            neg:{l:'\\neg', cat:'Logic'},
+            therefore:{l:'\\therefore', cat:'Logic'},
+            because:{l:'\\because', cat:'Logic'},
+            vdash:{l:'\\vdash', cat:'Logic'},
+            models:{l:'\\models', cat:'Logic'},
+            top:{l:'\\top', cat:'Logic'},
+            bot:{l:'\\bot', cat:'Logic'},
+            leq:{l:'\\leq', cat:'Relations'},
+            geq:{l:'\\geq', cat:'Relations'},
+            neq:{l:'\\neq', cat:'Relations'},
+            approx:{l:'\\approx', cat:'Relations'},
+            equiv:{l:'\\equiv', cat:'Relations'},
+            cong:{l:'\\cong', cat:'Relations'},
+            sim:{l:'\\sim', cat:'Relations'},
+            propto:{l:'\\propto', cat:'Relations'},
+            perp:{l:'\\perp', cat:'Relations'},
+            parallel:{l:'\\parallel', cat:'Relations'},
+            ll:{l:'\\ll', cat:'Relations'},
+            gg:{l:'\\gg', cat:'Relations'},
+            mid:{l:'\\mid', cat:'Relations'},
+            nmid:{l:'\\nmid', cat:'Relations'},
+            prec:{l:'\\prec', cat:'Relations'},
+            succ:{l:'\\succ', cat:'Relations'},
+            preceq:{l:'\\preceq', cat:'Relations'},
+            succeq:{l:'\\succeq', cat:'Relations'},
+            pm:{l:'\\pm', cat:'Algebra'},
+            times:{l:'\\times', cat:'Algebra'},
+            cdot:{l:'\\cdot', cat:'Algebra'},
+            div:{l:'\\div', cat:'Algebra'},
+            circ:{l:'\\circ', cat:'Algebra'},
+            oplus:{l:'\\oplus', cat:'Algebra'},
+            otimes:{l:'\\otimes', cat:'Algebra'},
+            rtimes:{l:'\\rtimes', cat:'Algebra'},
+            ltimes:{l:'\\ltimes', cat:'Algebra'},
+            trianglelefteq:{l:'\\trianglelefteq', cat:'Algebra'},
+            triangleleft:{l:'\\triangleleft', cat:'Algebra'},
+            ast:{l:'\\ast', cat:'Algebra'},
+            floor:{l:'\\lfloor  \\rfloor', modal:true, cat:'Brackets'},
+            ceil:{l:'\\lceil  \\rceil', modal:true, cat:'Brackets'},
+            abs:{l:'\\left|  \\right|', modal:true, cat:'Brackets'},
+            norm:{l:'\\lVert  \\rVert', modal:true, cat:'Brackets'},
+            inner:{l:'\\langle  ,  \\rangle', modal:true, cat:'Brackets'},
+            hat:{l:'\\hat{}', modal:true, cat:'Accents'},
+            bar:{l:'\\overline{}', modal:true, cat:'Accents'},
+            tilde:{l:'\\tilde{}', modal:true, cat:'Accents'},
+            vec:{l:'\\vec{}', modal:true, cat:'Accents'},
+            dot:{l:'\\dot{}', modal:true, cat:'Accents'},
+            ddot:{l:'\\ddot{}', modal:true, cat:'Accents'},
+            check:{l:'\\check{}', modal:true, cat:'Accents'},
+            underline:{l:'\\underline{}', modal:true, cat:'Accents'},
+            overbrace:{l:'\\overbrace{}^{}', modal:true, cat:'Accents'},
+            underbrace:{l:'\\underbrace{}_{}', modal:true, cat:'Accents'},
+            prime:{l:'\\prime', cat:'Accents'},
+            cal:{l:'\\mathcal{}', modal:true, cat:'Accents'},
+            frak:{l:'\\mathfrak{}', modal:true, cat:'Accents'},
+            bf:{l:'\\mathbf{}', modal:true, cat:'Accents'},
+            to:{l:'\\to', cat:'Arrows'},
+            leftarrow:{l:'\\leftarrow', cat:'Arrows'},
+            leftrightarrow:{l:'\\leftrightarrow', cat:'Arrows'},
+            mapsto:{l:'\\mapsto', cat:'Arrows'},
+            longrightarrow:{l:'\\longrightarrow', cat:'Arrows'},
+            hookrightarrow:{l:'\\hookrightarrow', cat:'Arrows'},
+            twoheadrightarrow:{l:'\\twoheadrightarrow', cat:'Arrows'},
+            uparrow:{l:'\\uparrow', cat:'Arrows'},
+            downarrow:{l:'\\downarrow', cat:'Arrows'},
+            matrix:{mat:{r:2,c:2,env:'pmatrix'}, cat:'Matrix'},
+            matrix3:{mat:{r:3,c:3,env:'pmatrix'}, cat:'Matrix'},
+            vmatrix:{mat:{r:2,c:2,env:'vmatrix'}, cat:'Matrix'},
+            colvec:{mat:{r:3,c:1,env:'pmatrix'}, cat:'Matrix'},
+            angle:{l:'\\angle', cat:'Geometry'},
+            measuredangle:{l:'\\measuredangle', cat:'Geometry'},
+            sphericalangle:{l:'\\sphericalangle', cat:'Geometry'},
+            triangle:{l:'\\triangle', cat:'Geometry'},
+            Diamond:{l:'\\Diamond', cat:'Geometry'},
+            bigcirc:{l:'\\bigcirc', cat:'Geometry'},
+            frown:{l:'\\frown', cat:'Geometry'},
+            smile:{l:'\\smile', cat:'Geometry'},
+            ldots:{l:'\\ldots', cat:'Misc'},
+            cdots:{l:'\\cdots', cat:'Misc'},
+            vdots:{l:'\\vdots', cat:'Misc'},
+            ddots:{l:'\\ddots', cat:'Misc'},
+            deg:{l:'^\\circ', cat:'Misc'},
+            sharp:{l:'\\sharp', cat:'Misc'},
+            flat:{l:'\\flat', cat:'Misc'},
+            natural:{l:'\\natural', cat:'Misc'},
+            S:{l:'\\S', cat:'Misc'},
+            P2:{l:'\\P', cat:'Misc'},
+            '2int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iint',disp:'∬',src:'∫'}, cat:'Calculus'},
+            '3int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iiint',disp:'∭',src:'∫'}, cat:'Calculus'},
+            '4int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iiiint',disp:'⨌',src:'∫'}, cat:'Calculus'},
+            fraction:{l:'\\frac{}{}', modal:true, cat:'Structures'},
+            integral:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
+            product:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
+            limit:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
+            choose:{l:'\\binom{}{}', modal:true, cat:'Structures'},
+            infinity:{l:'\\infty', cat:'Greek'},
+            le:{l:'\\leq', cat:'Relations'},
+            ge:{l:'\\geq', cat:'Relations'},
+            ne:{l:'\\neq', cat:'Relations'},
+            union:{l:'\\cup', cat:'Set Theory'},
+            power:{l:'x^{}', modal:true, cat:'Structures'},
+            naturals:{l:'\\mathbb{N}', cat:'Num Sets'},
+            reals:{l:'\\mathbb{R}', cat:'Num Sets'},
+            integers:{l:'\\mathbb{Z}', cat:'Num Sets'},
+            grad:{l:'\\nabla', cat:'Calculus'},
+            degree:{l:'^\\circ', cat:'Misc'},
+            infin:{l:'\\infty', cat:'Greek'},
+        };
+
+        function _tryShorthand() {
+            if (_autoChipBusy) return false;
+            const sel = window.getSelection();
+            if (!sel.rangeCount || !sel.isCollapsed) return false;
+            const range = sel.getRangeAt(0);
+            const node = range.startContainer;
+            if (node.nodeType !== Node.TEXT_NODE) return false;
+            if (!node.parentNode || (node.parentNode.closest && node.parentNode.closest('.math-chip'))) return false;
+            const caret = range.startOffset;
+            if (node.textContent[caret - 1] !== ')') return false;
+            const mm = node.textContent.slice(0, caret).match(/\(([A-Za-z0-9]+)\)$/);
+            if (!mm) return false;
+            const entry = SHORTHAND[mm[1]] || SHORTHAND[mm[1].toLowerCase()];
+            if (!entry) return false;
+
+            _autoChipBusy = true;
+            const open = caret - mm[0].length;
+            const del = document.createRange();
+            del.setStart(node, open); del.setEnd(node, caret);
+            del.deleteContents();
+            const cr = document.createRange();
+            cr.setStart(node, open); cr.collapse(true);
+            sel.removeAllRanges(); sel.addRange(cr);
+            _dispatchShorthand(entry);
+            _autoChipBusy = false;
+            return true;
+        }
+
+        function _dispatchShorthand(e) {
+            if (e.sym) { openMathForSymbol(e.sym.proxy, e.sym.from, e.sym.to, e.sym.disp, e.sym.src); }
+            else if (e.mat) { openMatrixModal(e.mat.r, e.mat.c, e.mat.env); }
+            else if (e.modal) { openMath(e.l); }
+            else { insSym(e.l); }
+        }
+
+        // ── Shorthand library (cheatsheet) ──────────────────────────────
+        let _shSavedRange = null;
+        const _SH_CAT_ORDER = ['Structures','Calculus','Trig','Functions','Greek','Relations',
+            'Set Theory','Num Sets','Logic','Algebra','Brackets','Accents','Arrows','Matrix','Geometry','Physics','Misc'];
+
+        function openShorthandLib() {
+            const sel = window.getSelection();
+            _shSavedRange = (sel.rangeCount && wysiwyg.contains(sel.getRangeAt(0).startContainer))
+                ? sel.getRangeAt(0).cloneRange() : null;
+            _renderShorthandLib('');
+            document.getElementById('shorthand-lib').style.display = 'flex';
+            const s = document.getElementById('sh-lib-search'); s.value = '';
+            setTimeout(() => s.focus(), 50);
+        }
+        function closeShorthandLib() { document.getElementById('shorthand-lib').style.display = 'none'; }
+
+        function _shPreview(out) {
+            return out.replace(/\{\s*\}/g, '{\\square}')
+                      .replace(/\\left\(\\right\)/g, '\\left(\\square\\right)');
+        }
+        function _pickShorthand(name) {
+            const e = SHORTHAND[name]; if (!e) return;
+            closeShorthandLib();
+            wysiwyg.focus({ preventScroll: true });
+            if (_shSavedRange) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(_shSavedRange); }
+            _dispatchShorthand(e);
+        }
+        function _renderShorthandLib(filter) {
+            filter = (filter || '').trim().toLowerCase();
+            const groups = {};
+            for (const name in SHORTHAND) {
+                const e = SHORTHAND[name];
+                let out;
+                if (e.sym) out = e.sym.to;
+                else if (e.mat) { const c = []; for (let i = 0; i < e.mat.c; i++) c.push('\\square'); out = '\\begin{' + e.mat.env + '} ' + c.join(' & ') + ' \\end{' + e.mat.env + '}'; }
+                else out = e.l;
+                const cat = e.cat || 'Misc';
+                (groups[cat] = groups[cat] || {});
+                (groups[cat][out] = groups[cat][out] || { out, names: [] }).names.push(name);
+            }
+            const cats = _SH_CAT_ORDER.filter(c => groups[c]).concat(Object.keys(groups).filter(c => _SH_CAT_ORDER.indexOf(c) < 0));
+            let html = '';
+            for (const cat of cats) {
+                let rows = '';
+                const recs = Object.values(groups[cat]).sort((a, b) => a.names[0].localeCompare(b.names[0]));
+                for (const r of recs) {
+                    if (filter && !r.names.some(n => n.toLowerCase().indexOf(filter) >= 0) && cat.toLowerCase().indexOf(filter) < 0) continue;
+                    let sym;
+                    try { sym = katex.renderToString(_shPreview(r.out), { throwOnError: false }); }
+                    catch (err) { sym = '<span>' + r.out + '</span>'; }
+                    const names = r.names.slice().sort((a, b) => a.length - b.length).map(n => '(' + n + ')').join(' ');
+                    rows += '<div class="sh-row" onclick="_pickShorthand(\'' + r.names[0] + '\')"><span class="sh-sym">' + sym + '</span><span class="sh-names">' + names + '</span></div>';
+                }
+                if (rows) html += '<div class="sh-cat">' + cat + '</div><div class="sh-rows">' + rows + '</div>';
+            }
+            document.getElementById('sh-lib-body').innerHTML = html || '<div style="padding:1rem;color:var(--text-subtle);">No matches.</div>';
+        }
+
+        function _moveCursorBack(n) {
+            if (n <= 0) return;
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0).cloneRange();
+            range.setStart(range.startContainer, Math.max(0, range.startOffset - n));
+            range.collapse(true);
+            sel.removeAllRanges(); sel.addRange(range);
+        }
+
+        function _restoreRange(r) {
+            if (!r) return;
+            const sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(r);
+        }
+
+        let _editingChip = null;
+        // ────────────────────────────────────────────────────────────
 
         // KaTeX CSS with inlined woff2 fonts — built once, reused on every compile
         let _katexCssInlined = null;
@@ -870,10 +1637,12 @@ a{color:#1a3a6e}
             if (livePreviewUrl) URL.revokeObjectURL(livePreviewUrl);
             livePreviewUrl = URL.createObjectURL(blob);
             const iframe = document.getElementById('pdf-preview');
+            const scrollY = iframe.contentWindow ? iframe.contentWindow.scrollY : 0;
             iframe.src = livePreviewUrl;
             iframe.style.display = 'block';
             const ph = document.getElementById('pdf-placeholder');
             if (ph) ph.style.display = 'none';
+            if (scrollY) iframe.addEventListener('load', () => iframe.contentWindow.scrollTo(0, scrollY), { once: true });
         }
 
         function updateLivePreview() {
@@ -884,8 +1653,22 @@ a{color:#1a3a6e}
 
         function renderContent(raw) {
             const blocks = [];
-            let text = raw.replace(/\$\$([\s\S]*?)\$\$|\$([^$\n]+?)\$/g, (_, dm, im) => {
-                blocks.push(dm !== undefined ? {m: dm, d: true} : {m: im, d: false});
+            let src = raw
+                .replace(/\\documentclass(\[[^\]]*\])?\{[^}]*\}/g, '')
+                .replace(/\\usepackage(\[[^\]]*\])?\{[^}]*\}/g, '')
+                .replace(/\\begin\{document\}/g, '')
+                .replace(/\\end\{document\}/g, '')
+                .replace(/\\title\{([^}]*)\}/g, '# $1')
+                .replace(/\\author\{[^}]*\}/g, '')
+                .replace(/\\date\{[^}]*\}/g, '')
+                .replace(/\\maketitle/g, '')
+                .replace(/\\section\*?\{([^}]*)\}/g, '## $1')
+                .replace(/\\subsection\*?\{([^}]*)\}/g, '### $1')
+                .replace(/\\subsubsection\*?\{([^}]*)\}/g, '#### $1')
+                .replace(/\\hfill/g, '');
+            let text = src.replace(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\$((?:[^$\n\\]|\\.)+?)\$|\\\(([\s\S]*?)\\\)/g, (_, dm1, dm2, im1, im2) => {
+                const m = dm1 ?? dm2 ?? im1 ?? im2;
+                blocks.push({m, d: dm1 !== undefined || dm2 !== undefined});
                 return `%%MATH${blocks.length-1}%%`;
             });
             text = marked.parse(text, { breaks: true });
@@ -900,9 +1683,8 @@ a{color:#1a3a6e}
         const MODAL_SYMBOL_CATS = {
             'Calculus': [
                 {d:'∂',l:'\\partial'},{d:'∇',l:'\\nabla'},
-                {d:'∫',l:'\\int_{ }^{ }'},{d:'∬',l:'\\iint_{ }^{ }'},
-                {d:'∭',l:'\\iiint_{ }^{ }'},{d:'∮',l:'\\oint_{ }^{ }'},
-                {d:'∯',l:'\\oiint'},
+                {d:'∫',l:'\\int_{ }^{ }'},{d:'∮',l:'\\oint_{ }^{ }'},
+                {d:'∯',l:'\\oiint_{ }^{ }'},{d:'∰',l:'∰_{ }^{ }'},
                 {d:'Σ',l:'\\sum_{ }^{ }'},{d:'∏',l:'\\prod_{ }^{ }'},
                 {d:'⋃',l:'\\bigcup_{ }^{ }'},{d:'⋂',l:'\\bigcap_{ }^{ }'},
                 {d:'lim',l:'\\lim_{x\\to }'},{d:'limsup',l:'\\limsup_{n\\to\\infty}'},
@@ -1120,29 +1902,32 @@ a{color:#1a3a6e}
             ],
         };
 
-        let mathField, savedStart, savedEnd, initialTemplate;
+        let mathField, initialTemplate;
 
         // ── Toolbar helpers ──────────────────────────────────────────
         function ins(before, after) {
-            const start = input.selectionStart;
-            const end   = input.selectionEnd;
-            const sel   = input.value.slice(start, end);
-            input.setRangeText(before + sel + after, start, end, 'select');
-            if (start === end) input.setSelectionRange(start + before.length, start + before.length);
-            input.focus();
-            input.dispatchEvent(new Event('input'));
+            wysiwyg.focus({ preventScroll: true });
+            const sel = window.getSelection();
+            const selectedText = sel.rangeCount ? sel.toString() : '';
+            document.execCommand('insertText', false, before + selectedText + after);
+            if (!selectedText && after.length > 0) _moveCursorBack(after.length);
+            syncToTextarea();
         }
 
         function insSym(latex) {
-            const pos = input.selectionStart;
-            const prevChar = pos > 0 ? input.value[pos - 1] : '';
-            const prefix = prevChar === '$' ? ' ' : '';
-            ins(prefix + '$' + latex + '$', '');
+            // Pure symbols stay static; ones with an input slot (e.g. bra/ket
+            // delimiters) become editable — same rule used on reload, so a chip
+            // never changes clickability after a save.
+            insertChipAtCursor(makeMathChip(latex, false, _isComplexLatex(latex)));
+            syncToTextarea();
         }
 
         // ── Text formatting ──────────────────────────────────────────
-        let _fmtSel = [0, 0];
-        function _saveFmtSel() { _fmtSel = [input.selectionStart, input.selectionEnd]; }
+        let _savedFmtRange = null;
+        function _saveFmtSel() {
+            const sel = window.getSelection();
+            _savedFmtRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+        }
 
         function toggleFontDropdown() {
             const d = document.getElementById('font-dropdown');
@@ -1153,44 +1938,31 @@ a{color:#1a3a6e}
             if (d) d.style.display = 'none';
         }
 
+        function _applyWrap(tag, style) {
+            if (!_savedFmtRange || _savedFmtRange.collapsed) { wysiwyg.focus({ preventScroll: true }); return; }
+            _restoreRange(_savedFmtRange);
+            const selectedText = serializeNode(_savedFmtRange.cloneContents());
+            if (!selectedText) { wysiwyg.focus({ preventScroll: true }); return; }
+            _savedFmtRange.deleteContents();
+            document.execCommand('insertText', false, `<${tag} style="${style}">${selectedText}</${tag}>`);
+            syncToTextarea();
+            wysiwyg.focus({ preventScroll: true });
+        }
+
         function applyFont(family) {
             closeFontDropdown();
             if (!family) return;
-            const [s, e] = _fmtSel;
-            if (s === e) return;
-            const sel = input.value.slice(s, e);
-            input.setRangeText(`<span style="font-family:${family}">${sel}</span>`, s, e, 'end');
-            input.dispatchEvent(new Event('input'));
-            input.focus();
+            _applyWrap('span', `font-family:${family}`);
         }
 
         function applyFontSize(size) {
             if (!size) return;
-            const [s, e] = _fmtSel;
-            if (s === e) { input.focus(); return; }
-            const sel = input.value.slice(s, e);
-            input.setRangeText(`<span style="font-size:${size}">${sel}</span>`, s, e, 'end');
-            input.dispatchEvent(new Event('input'));
-            input.focus();
+            _applyWrap('span', `font-size:${size}`);
         }
 
-        function applyTextColor(color) {
-            const [s, e] = _fmtSel;
-            const sel = input.value.slice(s, e);
-            if (!sel) return;
-            input.setRangeText(`<span style="color:${color}">${sel}</span>`, s, e, 'end');
-            input.dispatchEvent(new Event('input'));
-            input.focus();
-        }
+        function applyTextColor(color) { _applyWrap('span', `color:${color}`); }
 
-        function applyHighlight(color) {
-            const [s, e] = _fmtSel;
-            const sel = input.value.slice(s, e);
-            if (!sel) return;
-            input.setRangeText(`<span style="background-color:${color}">${sel}</span>`, s, e, 'end');
-            input.dispatchEvent(new Event('input'));
-            input.focus();
-        }
+        function applyHighlight(color) { _applyWrap('span', `background-color:${color}`); }
 
         // ── Modal symbol picker ──────────────────────────────────────
         function _renderModalCatTabs() {
@@ -1252,7 +2024,15 @@ a{color:#1a3a6e}
                 btn.tabIndex = -1;
                 btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
                 btn.addEventListener('mousedown', e => e.preventDefault());
-                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('click', () => {
+                    if (l === '\\oiint_{ }^{ }' || l === '∰_{ }^{ }') {
+                        const ch = l.startsWith('∰') ? '∰' : '∯';
+                        _mathSymSub = { from: '\\oint', to: l.startsWith('∰') ? '∰' : '\\oiint' };
+                        mathField.latex('\\oint_{ }^{ }');
+                        setTimeout(() => _startMqSymWatch(ch), 80);
+                        mathField.focus();
+                    } else { _mqWrite(l); }
+                });
                 btn.addEventListener('mouseover', () => { if (document.activeElement !== btn) { btn.style.background='#dde8ff'; btn.style.borderColor='#7799cc'; } });
                 btn.addEventListener('mouseout',  () => { if (document.activeElement !== btn) { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; } });
                 btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
@@ -1317,7 +2097,7 @@ a{color:#1a3a6e}
                 btn.type = 'button'; btn.textContent = d; btn.title = l; btn.tabIndex = -1;
                 btn.style.cssText = 'margin:0;padding:3px 7px;font-size:0.9rem;cursor:pointer;background:#f7f8fc;border:1px solid #c5cce0;border-radius:3px;font-family:serif;line-height:1.4;';
                 btn.addEventListener('mousedown', e => e.preventDefault());
-                btn.addEventListener('click', () => { mathField.write(l); mathField.focus(); });
+                btn.addEventListener('click', () => { _mqWrite(l); });
                 btn.addEventListener('focus', () => { btn.style.background='#c8daff'; btn.style.borderColor='#4a90d9'; btn.style.outline='2px solid #4a90d9'; btn.style.outlineOffset='1px'; });
                 btn.addEventListener('blur',  () => { btn.style.background='#f7f8fc'; btn.style.borderColor='#c5cce0'; btn.style.outline=''; });
                 grid.appendChild(btn);
@@ -1352,59 +2132,53 @@ a{color:#1a3a6e}
 
         // ── Text alignment ───────────────────────────────────────────
         function setAlign(align) {
-            const val   = input.value;
-            let selStart = input.selectionStart;
-            let selEnd   = input.selectionEnd;
-
-            if (selStart === selEnd) {
-                selStart = val.lastIndexOf('\n', selStart - 1) + 1;
-                const next = val.indexOf('\n', selEnd);
-                selEnd = next === -1 ? val.length : next;
-            }
-
-            let selected = val.slice(selStart, selEnd);
-
-            // Replace existing alignment wrapper instead of double-wrapping
+            wysiwyg.focus({ preventScroll: true });
+            const sel = window.getSelection();
+            if (!sel.rangeCount) return;
+            const range = sel.getRangeAt(0).cloneRange();
+            const selected = serializeNode(range.cloneContents()) || serializeWysiwyg();
             const existing = selected.match(/^<div style="text-align:\w+">\n\n([\s\S]*?)\n\n<\/div>$/);
             const inner = existing ? existing[1] : selected;
-
             const wrapped = `<div style="text-align:${align}">\n\n${inner}\n\n</div>`;
-            input.setRangeText(wrapped, selStart, selEnd, 'end');
-            input.dispatchEvent(new Event('input'));
-            input.focus();
+            range.deleteContents();
+            document.execCommand('insertText', false, wrapped);
+            syncToTextarea();
         }
 
         // ── Link modal ───────────────────────────────────────────────
-        let linkSavedStart, linkSavedEnd;
+        let _savedLinkRange = null;
 
         function openLinkModal() {
-            linkSavedStart = input.selectionStart;
-            linkSavedEnd   = input.selectionEnd;
-            const sel = input.value.slice(linkSavedStart, linkSavedEnd);
-            document.getElementById('link-text').value = sel;
+            const sel = window.getSelection();
+            _savedLinkRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+            const selText = _savedLinkRange ? serializeNode(_savedLinkRange.cloneContents()) : '';
+            document.getElementById('link-text').value = selText;
             document.getElementById('link-url').value  = '';
-            const modal = document.getElementById('link-modal');
-            modal.style.display = 'flex';
-            document.getElementById(sel ? 'link-url' : 'link-text').focus();
+            document.getElementById('link-modal').style.display = 'flex';
+            document.getElementById(selText ? 'link-url' : 'link-text').focus();
         }
 
         function closeLinkModal() {
             document.getElementById('link-modal').style.display = 'none';
-            input.focus();
+            wysiwyg.focus({ preventScroll: true });
         }
 
         function insertLink() {
             const text = document.getElementById('link-text').value || 'link';
             const url  = document.getElementById('link-url').value.trim();
             if (!url) { closeLinkModal(); return; }
-            const markdown = `[${text}](${url})`;
-            input.setRangeText(markdown, linkSavedStart, linkSavedEnd, 'end');
+            wysiwyg.focus({ preventScroll: true });
+            if (_savedLinkRange) {
+                _restoreRange(_savedLinkRange);
+                _savedLinkRange.deleteContents();
+            }
+            document.execCommand('insertText', false, `[${text}](${url})`);
             closeLinkModal();
-            input.dispatchEvent(new Event('input'));
+            syncToTextarea();
         }
 
         // ── Matrix modal ─────────────────────────────────────────────
-        let _mRows, _mCols, _mEnv, _mSavedStart, _mSavedEnd, _mFields, _mActiveCell;
+        let _mRows, _mCols, _mEnv, _mSavedRange, _mFields, _mActiveCell;
 
         function _mSymGrid() { return document.getElementById('matrix-sym-grid'); }
         function _mSearch(q) { return document.getElementById('matrix-sym-search'); }
@@ -1500,8 +2274,8 @@ a{color:#1a3a6e}
 
         function openMatrixModal(rows, cols, env) {
             _mRows = rows; _mCols = cols; _mEnv = env;
-            _mSavedStart = input.selectionStart;
-            _mSavedEnd   = input.selectionEnd;
+            const _mSel = window.getSelection();
+            _mSavedRange = _mSel.rangeCount ? _mSel.getRangeAt(0).cloneRange() : null;
             const titles = { pmatrix: cols === 1 ? `Column Vector (${rows})` : `${rows}×${cols} Matrix`, vmatrix: `${rows}×${cols} Determinant` };
             document.getElementById('matrix-modal-title').textContent = titles[env] || `${rows}×${cols} Matrix`;
             const grid = document.getElementById('matrix-grid');
@@ -1556,42 +2330,71 @@ a{color:#1a3a6e}
 
         function closeMatrixModal() {
             document.getElementById('matrix-modal').style.display = 'none';
-            input.focus();
+            wysiwyg.focus({ preventScroll: true });
         }
 
         function doInsertMatrix() {
             const rowStrs = [];
             for (let r = 0; r < _mRows; r++) {
                 const cells = [];
-                for (let c = 0; c < _mCols; c++) {
-                    cells.push(_mFields[r][c].latex().trim() || '\\square');
-                }
+                for (let c = 0; c < _mCols; c++) cells.push(_mFields[r][c].latex().trim() || '\\square');
                 rowStrs.push(cells.join(' & '));
             }
-            const body   = rowStrs.join(' \\\\ ');
-            const latex  = `\\begin{${_mEnv}} ${body} \\end{${_mEnv}}`;
-            const mode   = document.querySelector('input[name="math-mode"]:checked').value;
-            const prevChar = _mSavedStart > 0 ? input.value[_mSavedStart - 1] : '';
-            const prefix   = (mode === 'inline' && prevChar === '$') ? ' ' : '';
-            const wrapped  = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
-            input.setRangeText(wrapped, _mSavedStart, _mSavedEnd, 'end');
+            const latex = `\\begin{${_mEnv}} ${rowStrs.join(' \\\\ ')} \\end{${_mEnv}}`;
+            const display = document.querySelector('input[name="math-mode"]:checked').value === 'display';
+            const chip = makeMathChip(latex, display);
+            wysiwyg.focus({ preventScroll: true });
+            if (_mSavedRange) { _restoreRange(_mSavedRange); _mSavedRange.deleteContents(); }
+            insertChipAtCursor(chip);
             closeMatrixModal();
-            input.dispatchEvent(new Event('input'));
+            syncToTextarea();
         }
 
         // ── MathQuill visual editor ──────────────────────────────────
+        let _savedMathRange = null;
+
+        const _MATHBB_UC = {
+            A:'𝔸',B:'𝔹',C:'ℂ',D:'𝔻',E:'𝔼',F:'𝔽',G:'𝔾',H:'ℍ',
+            I:'𝕀',J:'𝕁',K:'𝕂',L:'𝕃',M:'𝕄',N:'ℕ',O:'𝕆',P:'ℙ',
+            Q:'ℚ',R:'ℝ',S:'𝕊',T:'𝕋',U:'𝕌',V:'𝕍',W:'𝕎',X:'𝕏',Y:'𝕐',Z:'ℤ'
+        };
+
+        function _mqWrite(l) {
+            const bb = l.match(/^\\mathbb\{(.)\}$/);
+            if (bb) { mathField.write(_MATHBB_UC[bb[1]] || l); }
+            else { mathField.write(l); }
+            mathField.focus();
+        }
+
+        function _prepareForMQ(latex) {
+            return latex
+                .replace(/\\left\(/g, '(')
+                .replace(/\\right\)/g, ')')
+                .replace(/\\left\[/g, '[')
+                .replace(/\\right\]/g, ']')
+                .replace(/\\left\\\{/g, '\\{')
+                .replace(/\\right\\\}/g, '\\}')
+                .replace(/\\left\|/g, '|')
+                .replace(/\\right\|/g, '|')
+                .replace(/\\left\./g, '')
+                .replace(/\\right\./g, '');
+        }
+
         function openMath(latex) {
-            savedStart = input.selectionStart;
-            savedEnd   = input.selectionEnd;
+            if (!_editingChip) {
+                const sel = window.getSelection();
+                _savedMathRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+            }
             initialTemplate = latex;
-            mathField.latex(latex);
+            mathField.latex(_prepareForMQ(latex));
             renderDrafts();
-            const modal = document.getElementById('math-modal');
-            modal.style.display = 'flex';
+            document.getElementById('math-modal').style.display = 'flex';
             setTimeout(() => mathField.focus(), 50);
         }
 
         function closeMathModal() {
+            _mathSymSub = null;
+            _stopMqSymWatch();
             document.getElementById('math-modal').style.display = 'none';
             const ms = document.getElementById('modal-sym-search');
             if (ms && ms.value) {
@@ -1599,36 +2402,78 @@ a{color:#1a3a6e}
                 const active = document.querySelector('#modal-cat-tabs button[data-active="1"]');
                 if (active) _selectModalCat(active.dataset.cat);
             }
-            input.focus();
+            _editingChip = null;
+            wysiwyg.focus({ preventScroll: true });
         }
+
+        // ── Surface / volume integral proxy ──────────────────────────
+        let _mathSymSub = null, _mqSymObs = null;
+
+        function openMathForSymbol(proxyLatex, fromStr, toCmd, displayChar, srcChar) {
+            _mathSymSub = { from: fromStr, to: toCmd };
+            openMath(proxyLatex);
+            if (displayChar) setTimeout(() => _startMqSymWatch(displayChar, srcChar), 80);
+        }
+
+        function _startMqSymWatch(ch, src) {
+            src = src || '∮';
+            const mq = document.getElementById('mq-field');
+            function patch() {
+                const tw = document.createTreeWalker(mq, NodeFilter.SHOW_TEXT);
+                let n; while ((n = tw.nextNode())) { if (n.textContent === src) n.textContent = ch; }
+            }
+            patch();
+            if (_mqSymObs) _mqSymObs.disconnect();
+            _mqSymObs = new MutationObserver(patch);
+            _mqSymObs.observe(mq, { childList: true, subtree: true, characterData: true });
+        }
+
+        function _stopMqSymWatch() {
+            if (_mqSymObs) { _mqSymObs.disconnect(); _mqSymObs = null; }
+        }
+        // ─────────────────────────────────────────────────────────────
 
         function insertMath() {
             let latex = mathField.latex();
             latex = latex.replace(/\\placeholder\{[^}]*\}/g, '{}');
             latex = latex.replace(/\\MathQuillMathField\{[^}]*\}/g, '{}');
-            const mode    = document.querySelector('input[name="math-mode"]:checked').value;
-            const prevChar = savedStart > 0 ? input.value[savedStart - 1] : '';
-            const prefix  = (mode === 'inline' && prevChar === '$') ? ' ' : '';
-            const wrapped = mode === 'display' ? '$$\n' + latex + '\n$$' : prefix + '$' + latex + '$';
-            input.setRangeText(wrapped, savedStart, savedEnd, 'end');
+            if (_mathSymSub) { latex = latex.split(_mathSymSub.from).join(_mathSymSub.to); _mathSymSub = null; }
+            if (!latex) { closeMathModal(); return; }
+            const display = document.querySelector('input[name="math-mode"]:checked').value === 'display';
+            const chip = makeMathChip(latex, display, _isComplexLatex(latex));
+            if (_editingChip) {
+                _editingChip.replaceWith(chip);
+                _ensureChipSpacers(chip);
+            } else {
+                wysiwyg.focus({ preventScroll: true });
+                if (_savedMathRange) { _restoreRange(_savedMathRange); _savedMathRange.deleteContents(); }
+                insertChipAtCursor(chip);
+            }
             closeMathModal();
-            input.dispatchEvent(new Event('input'));
+            syncToTextarea();
         }
 
         // ── Math drafts ──────────────────────────────────────────────
         const DRAFTS_KEY = 'mathDrafts_notes';
         let mathDrafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '[]');
 
-        function saveDraft() {
+        async function saveDraft() {
             const latex = mathField.latex().trim();
             if (!latex) return;
-            mathDrafts.push(latex);
+            const mqEl = document.getElementById('mq-field');
+            let img = null;
+            try {
+                const canvas = await html2canvas(mqEl, { backgroundColor: null, scale: 2, logging: false });
+                img = canvas.toDataURL('image/png');
+            } catch(e) {}
+            mathDrafts.push({ latex, img });
             localStorage.setItem(DRAFTS_KEY, JSON.stringify(mathDrafts));
             renderDrafts();
         }
 
         function loadDraft(i) {
-            mathField.latex(mathDrafts[i]);
+            const d = mathDrafts[i];
+            mathField.latex(typeof d === 'string' ? d : d.latex);
             setTimeout(() => mathField.focus(), 50);
         }
 
@@ -1660,13 +2505,22 @@ a{color:#1a3a6e}
             if (!mathDrafts.length) { bar.style.display = 'none'; return; }
             bar.style.display = 'block';
             list.innerHTML = '';
-            mathDrafts.forEach((latex, i) => {
+            mathDrafts.forEach((d, i) => {
+                const latex = typeof d === 'string' ? d : d.latex;
+                const img   = typeof d === 'object' && d.img ? d.img : null;
                 const tab = document.createElement('div');
-                tab.style.cssText = 'display:inline-flex;align-items:center;gap:0.3rem;padding:0.25rem 0.5rem;background:#f0f4ff;border:1px solid #aac;border-radius:4px;cursor:pointer;max-width:220px;overflow:hidden;';
+                tab.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.6rem;background:#f0f4ff;border:1px solid #aac;border-radius:4px;cursor:pointer;';
                 const preview = document.createElement('span');
-                preview.style.cssText = 'font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
-                try { preview.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false }); }
-                catch(e) { preview.textContent = latex; }
+                preview.style.cssText = 'pointer-events:none;display:inline-block;vertical-align:middle;';
+                if (img) {
+                    const imgEl = document.createElement('img');
+                    imgEl.src = img;
+                    imgEl.style.cssText = 'height:2rem;display:block;';
+                    preview.appendChild(imgEl);
+                } else {
+                    try { preview.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false }); }
+                    catch(e) { preview.textContent = latex; }
+                }
                 const del = document.createElement('span');
                 del.textContent = '×';
                 del.style.cssText = 'color:#999;cursor:pointer;font-size:1rem;line-height:1;flex-shrink:0;';
@@ -1714,11 +2568,10 @@ a{color:#1a3a6e}
             document.querySelectorAll('.math-toolbar button[type="button"]').forEach(btn => {
                 btn.addEventListener('mousedown', e => e.preventDefault());
             });
-            // Save selection on every user interaction so _fmtSel is always current
-            input.addEventListener('mouseup', _saveFmtSel);
-            input.addEventListener('select',  _saveFmtSel);
-            input.addEventListener('keyup',   _saveFmtSel);
-            input.addEventListener('blur',    _saveFmtSel);
+            // Save selection on every user interaction so _savedFmtRange is always current
+            wysiwyg.addEventListener('mouseup', _saveFmtSel);
+            wysiwyg.addEventListener('keyup',   _saveFmtSel);
+            wysiwyg.addEventListener('blur',    _saveFmtSel);
             // Close font dropdown when clicking anywhere outside it
             document.addEventListener('click', e => {
                 if (!document.getElementById('font-dropdown-btn')?.contains(e.target) &&
@@ -1757,7 +2610,7 @@ a{color:#1a3a6e}
                             const rowTop = below[0].getBoundingClientRect().top;
                             const row = below.filter(b => b.getBoundingClientRect().top <= rowTop + 4);
                             ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
-                        } else { input.focus(); return; }
+                        } else { wysiwyg.focus({ preventScroll: true }); return; }
                     }
                     else if (e.key === 'ArrowUp') {
                         e.preventDefault();
@@ -1766,9 +2619,9 @@ a{color:#1a3a6e}
                             const rowTop = above[above.length - 1].getBoundingClientRect().top;
                             const row = above.filter(b => b.getBoundingClientRect().top >= rowTop - 4);
                             ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
-                        } else { input.focus(); return; }
+                        } else { wysiwyg.focus({ preventScroll: true }); return; }
                     }
-                    else if (e.key === 'Escape') { e.preventDefault(); input.focus(); return; }
+                    else if (e.key === 'Escape') { e.preventDefault(); wysiwyg.focus({ preventScroll: true }); return; }
                     if (ni !== idx) _focusNoScroll(btns[ni]);
                 });
             });
@@ -1777,17 +2630,115 @@ a{color:#1a3a6e}
             toolbar.addEventListener('focus', e => {
                 if (e.target === toolbar) { const f = _getToolbarBtns()[0]; if (f) _focusNoScroll(f); }
             });
-            // ArrowUp from textarea first line → toolbar bottom row
-            input.addEventListener('keydown', e => {
-                if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey
-                        && input.selectionStart === input.selectionEnd
-                        && input.value.lastIndexOf('\n', input.selectionStart - 1) === -1) {
+            // Enter key in wysiwyg → insert <br> + ZWS so the new line has a cursor anchor
+            // Backspace → treat chip+ZWS flanks as one unit; treat BR+ZWS as one unit
+            wysiwyg.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    const btns = _getToolbarBtns();
-                    if (btns.length) {
-                        const lastTop = btns[btns.length - 1].getBoundingClientRect().top;
-                        const lastRow = btns.filter(b => b.getBoundingClientRect().top >= lastTop - 4);
-                        _focusNoScroll(lastRow[0]);
+                    const sel = window.getSelection();
+                    if (sel.rangeCount) {
+                        const range = sel.getRangeAt(0);
+                        range.deleteContents();
+                        const br = document.createElement('br');
+                        const zws = document.createTextNode(ZWS);
+                        range.insertNode(zws);
+                        range.insertNode(br);
+                        const r2 = document.createRange();
+                        r2.setStart(zws, 0); r2.collapse(true);
+                        sel.removeAllRanges(); sel.addRange(r2);
+                    }
+                    syncToTextarea();
+                    return;
+                }
+
+                if (e.key === 'Backspace') {
+                    const sel = window.getSelection();
+                    if (!sel.rangeCount || !sel.isCollapsed) return;
+                    const { startContainer: sc, startOffset: so } = sel.getRangeAt(0);
+
+                    const _isChip = n => n && n.nodeType === 1 &&
+                        (n.classList.contains('math-chip') || n.classList.contains('math-chip-static'));
+                    const _isZWS  = n => n && n.nodeType === 3 && n.textContent === ZWS;
+
+                    let prevSib = null;
+                    let cursorInZWS = false;
+
+                    if (sc.nodeType === Node.TEXT_NODE) {
+                        if (so === 0) {
+                            prevSib = sc.previousSibling;
+                        } else if (so === 1 && sc.textContent === ZWS) {
+                            cursorInZWS = true;
+                            prevSib = sc.previousSibling;
+                        } else {
+                            return;
+                        }
+                    } else {
+                        prevSib = so > 0 ? sc.childNodes[so - 1] : sc.previousSibling;
+                    }
+
+                    if (!prevSib) return;
+
+                    let zwsAfter = null;
+                    let target   = prevSib;
+                    if (_isZWS(prevSib) && !cursorInZWS) {
+                        zwsAfter = prevSib;
+                        target   = prevSib.previousSibling;
+                    } else if (cursorInZWS) {
+                        zwsAfter = sc;
+                    }
+
+                    if (!target) return;
+
+                    if (_isChip(target)) {
+                        e.preventDefault();
+                        const chip    = target;
+                        const parent  = chip.parentNode;
+                        const zwsBef  = _isZWS(chip.previousSibling) ? chip.previousSibling : null;
+                        const zwsAft  = zwsAfter || (_isZWS(chip.nextSibling) ? chip.nextSibling : null);
+                        const anchor  = zwsBef ? zwsBef.previousSibling : chip.previousSibling;
+
+                        if (zwsAft && zwsAft.parentNode) zwsAft.remove();
+                        chip.remove();
+                        if (zwsBef && zwsBef.parentNode) zwsBef.remove();
+
+                        const r = document.createRange();
+                        if (anchor) {
+                            anchor.nodeType === Node.TEXT_NODE
+                                ? r.setStart(anchor, anchor.length)
+                                : r.setStartAfter(anchor);
+                        } else {
+                            r.setStart(parent, 0);
+                        }
+                        r.collapse(true);
+                        sel.removeAllRanges(); sel.addRange(r);
+                        syncToTextarea();
+                        return;
+                    }
+
+                    if (target.nodeName === 'BR') {
+                        e.preventDefault();
+                        const br     = target;
+                        const parent = br.parentNode;
+                        const anchor = br.previousSibling;
+
+                        let zwsAfterBR = zwsAfter;
+                        if (!zwsAfterBR && so === 0 && _isZWS(sc)) zwsAfterBR = sc;
+
+                        if (zwsAfterBR && zwsAfterBR.parentNode) zwsAfterBR.remove();
+                        br.remove();
+
+                        const r = document.createRange();
+                        if (anchor) {
+                            anchor.nodeType === Node.TEXT_NODE
+                                ? r.setStart(anchor, anchor.length)
+                                : r.setStartAfter(anchor);
+                        } else {
+                            r.setStart(parent, 0);
+                        }
+                        r.collapse(true);
+                        sel.removeAllRanges(); sel.addRange(r);
+                        syncToTextarea();
+                        return;
                     }
                 }
             });
@@ -1823,13 +2774,16 @@ a{color:#1a3a6e}
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     const v = e.target.value.trim();
-                    if (v) { applyFontSize(v + 'px'); e.target.value = ''; input.focus(); }
+                    if (v) { applyFontSize(v + 'px'); e.target.value = ''; wysiwyg.focus({ preventScroll: true }); }
                 }
             });
             document.getElementById('text-color-picker').addEventListener('change', e => applyTextColor(e.target.value));
             document.getElementById('highlight-picker').addEventListener('change', e => applyHighlight(e.target.value));
 
-            input.addEventListener('input', updateLivePreview);
+            wysiwyg.addEventListener('input', (e) => {
+                if (!(e && e.isComposing)) { if (!_tryAutoChip()) _tryShorthand(); }
+                syncToTextarea();
+            });
             _doLivePreview();
 
             // ── Modal symbol search ───────────────────────────────────
@@ -1856,8 +2810,11 @@ a{color:#1a3a6e}
             // ── Toolbar symbol search ─────────────────────────────────
             const _tbSearch = document.getElementById('toolbar-sym-search');
             const _tbResults = document.getElementById('toolbar-search-results');
-            let _tbSavedStart = 0, _tbSavedEnd = 0;
-            _tbSearch.addEventListener('focus', () => { _tbSavedStart = input.selectionStart; _tbSavedEnd = input.selectionEnd; });
+            let _tbSavedRange = null;
+            _tbSearch.addEventListener('focus', () => {
+                const sel = window.getSelection();
+                _tbSavedRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+            });
             _tbSearch.addEventListener('input', function() {
                 const q = this.value.trim().toLowerCase();
                 _tbResults.innerHTML = '';
@@ -1879,8 +2836,8 @@ a{color:#1a3a6e}
                     item.addEventListener('mouseover', () => item.style.background = '#eef2ff');
                     item.addEventListener('mouseout',  () => { if(document.activeElement!==item) item.style.background=''; });
                     item.addEventListener('click', () => {
-                        input.focus();
-                        input.setSelectionRange(_tbSavedStart, _tbSavedEnd);
+                        wysiwyg.focus({ preventScroll: true });
+                        if (_tbSavedRange) _restoreRange(_tbSavedRange);
                         origBtn.click();
                         _tbSearch.value = ''; _tbResults.style.display = 'none'; _tbResults.innerHTML = '';
                     });
@@ -1890,7 +2847,7 @@ a{color:#1a3a6e}
                         if (e.key === 'ArrowDown') { e.preventDefault(); if(ci+1<items.length) _focusNoScroll(items[ci+1]); }
                         else if (e.key === 'ArrowUp') { e.preventDefault(); if(ci>0) _focusNoScroll(items[ci-1]); else _focusNoScroll(_tbSearch); }
                         else if (e.key==='Enter'||e.key===' ') { e.preventDefault(); item.click(); }
-                        else if (e.key==='Escape') { e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; input.focus(); }
+                        else if (e.key==='Escape') { e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; wysiwyg.focus({ preventScroll: true }); }
                     });
                     _tbResults.appendChild(item);
                 });
@@ -1907,23 +2864,26 @@ a{color:#1a3a6e}
                     const r = _tbSearch.getBoundingClientRect();
                     const below = btns.filter((b,i) => i > idx && b.getBoundingClientRect().top > r.top + 4);
                     if (below.length) { const rt=below[0].getBoundingClientRect().top; const row=below.filter(b=>b.getBoundingClientRect().top<=rt+4); _focusNoScroll(row.reduce((a,b)=>Math.abs(b.getBoundingClientRect().left-r.left)<Math.abs(a.getBoundingClientRect().left-r.left)?b:a)); }
-                    else { input.focus(); }
+                    else { wysiwyg.focus({ preventScroll: true }); }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    input.focus();
+                    wysiwyg.focus({ preventScroll: true });
                 } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
                     e.preventDefault();
                     const btns = _getToolbarBtns();
                     const idx = btns.indexOf(_tbSearch);
                     if (idx + 1 < btns.length) _focusNoScroll(btns[idx + 1]);
                 } else if (e.key === 'Escape') {
-                    e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; input.focus();
+                    e.preventDefault(); _tbSearch.value=''; _tbResults.style.display='none'; wysiwyg.focus({ preventScroll: true });
                 }
             });
             document.addEventListener('click', e => {
                 if (!_tbSearch.contains(e.target) && !_tbResults.contains(e.target)) _tbResults.style.display = 'none';
             });
-            input.focus();
+
+            loadWysiwyg(input.value);
+            document.querySelector('form').addEventListener('submit', syncToTextarea);
+            wysiwyg.focus({ preventScroll: true });
         });
     </script>
 

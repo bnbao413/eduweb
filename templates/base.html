@@ -1,56 +1,13 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>EduWeb</title>
-    <style>
-        body {
-            font-family: Georgia, "Times New Roman", serif;
-            margin: 0;
-            background: #f8f8f8;
-            color: #111;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}EduWeb{% endblock %}</title>
 
-        .page-shell {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 40px 56px;
-        }
-
-        h1, h2, h3 {
-            line-height: 1.2;
-        }
-
-        p, li {
-            font-size: 1.1rem;
-            line-height: 1.7;
-        }
-
-        a {
-            color: #0b57d0;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .nav-links {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-        }
-
-        .meta {
-            color: #444;
-            margin-bottom: 24px;
-        }
-
-        .content-area {
-            margin-top: 24px;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-    </style>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
 
     <script>
         window.MathJax = {
@@ -60,26 +17,38 @@
             }
         };
     </script>
-    
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <div class="page-shell">
-        <div style="text-align:right; margin-bottom:1rem; font-size:0.95rem;">
-            {% if user.is_authenticated %}
-                Logged in as <strong>{{ user.username }}</strong> &nbsp;|&nbsp;
-                <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" style="background:none;border:none;color:#0b57d0;cursor:pointer;font-size:inherit;padding:0;text-decoration:none;">Log Out</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}">Log In</a> &nbsp;|&nbsp;
-                <a href="{% url 'register' %}">Create Account</a>
-            {% endif %}
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a href="{% url 'home' %}" class="brand">
+                <span class="brand-mark">E</span>
+                <span>EduWeb</span>
+            </a>
+            <nav class="nav">
+                <a href="{% url 'home' %}">Home</a>
+            </nav>
+            <div class="topbar-actions">
+                {% if user.is_authenticated %}
+                    <span>Signed in as <span class="user">{{ user.username }}</span></span>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ghost btn-sm">Log out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Log in</a>
+                    <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Create account</a>
+                {% endif %}
+            </div>
         </div>
-        {% block content %}
-        {% endblock %}
-    </div>
+    </header>
+
+    <main class="page-shell">
+        {% block content %}{% endblock %}
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

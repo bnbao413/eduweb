@@ -1,48 +1,180 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="page-header">
+<a href="{% url 'course_detail' page.unit.course.id %}" class="backlink">&lsaquo; Back to course</a>
+
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;gap:1.5rem;flex-wrap:wrap;">
     <div>
-        <h1>{{ page.title }}</h1>
-        <p><strong>Course:</strong> {{ page.unit.course.title }}</p>
-        <p><strong>Unit:</strong> {{ page.unit.title }}</p>
+        <h1 style="margin-bottom:0.4rem;">{{ page.title }}</h1>
+        <p class="meta" style="margin-bottom:0;">
+            {{ page.unit.course.title }} &middot; {{ page.unit.title }}
+        </p>
     </div>
-    <div class="page-jump">
-        <details>
-            <summary>Jump to page ▼</summary>
-            <select onchange="if (this.value) window.location.href=this.value;">
-                <option value="">Select a page</option>
-                {% for p in all_pages %}
-                    <option value="{% url 'textbook_detail' p.id %}" {% if p.id == page.id %}selected{% endif %}>
-                        {{ p.order }}. {{ p.title }}
-                    </option>
-                {% endfor %}
-            </select>
-        </details>
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-shrink:0;">
+        {% if user.is_staff %}
+            <a href="{% url 'textbook_edit' page.id %}" class="btn btn-secondary btn-sm">Edit page</a>
+        {% endif %}
+        <select onchange="if (this.value) window.location.href=this.value;" style="width:auto;font-size:0.9rem;padding:0.45rem 0.6rem;">
+            <option value="">Jump to page…</option>
+            {% for p in all_pages %}
+                <option value="{% url 'textbook_detail' p.id %}" {% if p.id == page.id %}selected{% endif %}>
+                    {{ p.order }}. {{ p.title }}
+                </option>
+            {% endfor %}
+        </select>
     </div>
 </div>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
+<style>
+.page-shell { max-width: 960px; padding-left: 24px; padding-right: 24px; }
+#content {
+    font-family: Georgia, serif;
+    font-size: 12pt;
+    line-height: 1.6;
+    background: #fff;
+    width: 816px;
+    max-width: 100%;
+    min-height: 1056px;
+    margin: 24px auto 38px;
+    padding: 96px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+#content .katex-display { margin: 0.8em 0; overflow-x: auto; }
+#content pre, #content code { white-space: pre-wrap; font-size: 10pt; }
+</style>
+<div id="doc-nav" style="display:none;justify-content:center;align-items:center;gap:1rem;max-width:816px;margin:0 auto 14px;">
+    <button id="doc-prev" onclick="_docPrev()" class="btn btn-secondary btn-sm">&lsaquo; Prev</button>
+    <span id="doc-indicator" style="font-size:0.85rem;color:var(--text-muted);min-width:7rem;text-align:center;"></span>
+    <button id="doc-next" onclick="_docNext()" class="btn btn-secondary btn-sm">Next &rsaquo;</button>
+</div>
 <div id="content" class="content-area"></div>
+<div id="doc-nav-b" style="display:none;justify-content:center;align-items:center;gap:1rem;max-width:816px;margin:0 auto 20px;">
+    <button id="doc-prev-b" onclick="_docPrev()" class="btn btn-secondary btn-sm">&lsaquo; Prev</button>
+    <span id="doc-indicator-b" style="font-size:0.85rem;color:var(--text-muted);min-width:7rem;text-align:center;"></span>
+    <button id="doc-next-b" onclick="_docNext()" class="btn btn-secondary btn-sm">Next &rsaquo;</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
 <script>
-    (function () {
-        function renderContent(raw) {
-            const blocks = [];
-            let text = raw.replace(/\$\$([\s\S]*?)\$\$|\$([^$\n]+?)\$/g, (_, dm, im) => {
-                blocks.push(dm !== undefined ? {m: dm, d: true} : {m: im, d: false});
-                return `%%MATH${blocks.length - 1}%%`;
-            });
-            text = marked.parse(text, {breaks: true});
-            return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
-                const {m, d} = blocks[+i];
-                try { return katex.renderToString(m, {throwOnError: false, displayMode: d}); }
-                catch (e) { return d ? `$$${m}$$` : `$${m}$`; }
-            });
+(function () {
+    const PAGE_H = 9 * 96;
+
+    function renderContent(raw) {
+        const blocks = [];
+        let src = raw
+            .replace(/\\documentclass(\[[^\]]*\])?\{[^}]*\}/g, '')
+            .replace(/\\usepackage(\[[^\]]*\])?\{[^}]*\}/g, '')
+            .replace(/\\begin\{document\}/g, '')
+            .replace(/\\end\{document\}/g, '')
+            .replace(/\\title\{([^}]*)\}/g, '# $1')
+            .replace(/\\author\{[^}]*\}/g, '')
+            .replace(/\\date\{[^}]*\}/g, '')
+            .replace(/\\maketitle/g, '')
+            .replace(/\\section\*?\{([^}]*)\}/g, '## $1')
+            .replace(/\\subsection\*?\{([^}]*)\}/g, '### $1')
+            .replace(/\\subsubsection\*?\{([^}]*)\}/g, '#### $1')
+            .replace(/\\hfill/g, '');
+        let text = src.replace(/\$\$([\s\S]*?)\$\$|\\\[([\s\S]*?)\\\]|\$((?:[^$\n\\]|\\.)+?)\$|\\\(([\s\S]*?)\\\)/g, (_, dm1, dm2, im1, im2) => {
+            const m = dm1 ?? dm2 ?? im1 ?? im2;
+            blocks.push({m, d: dm1 !== undefined || dm2 !== undefined});
+            return `%%MATH${blocks.length - 1}%%`;
+        });
+        text = marked.parse(text, {breaks: true});
+        return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
+            const {m, d} = blocks[+i];
+            try { return katex.renderToString(m, {throwOnError: false, displayMode: d}); }
+            catch (e) { return d ? `$$${m}$$` : `$${m}$`; }
+        });
+    }
+
+    function _paginateContent(bodyHtml) {
+        const m = document.createElement('div');
+        m.style.cssText =
+            'position:fixed;top:-9999px;left:0;width:624px;' +
+            'font-family:Georgia,serif;font-size:12pt;line-height:1.6;' +
+            'overflow-wrap:break-word;word-break:normal;' +
+            'visibility:hidden;pointer-events:none;';
+        m.innerHTML = bodyHtml;
+        document.body.appendChild(m);
+        const mTop = m.getBoundingClientRect().top;
+        const totalH = m.scrollHeight;
+        if (totalH <= PAGE_H) {
+            const html = m.innerHTML;
+            document.body.removeChild(m);
+            return [[html]];
         }
-        document.getElementById('content').innerHTML = renderContent("{{ raw_content|escapejs }}");
-    })();
+        const positions = [];
+        const walker = document.createTreeWalker(m, NodeFilter.SHOW_TEXT);
+        let tn;
+        while ((tn = walker.nextNode())) {
+            for (let i = 0; i <= tn.length; i++) positions.push({ node: tn, offset: i });
+        }
+        if (!positions.length) { document.body.removeChild(m); return [[bodyHtml]]; }
+        function rangeBottomAt(p) {
+            const r = document.createRange();
+            r.setStart(m, 0); r.setEnd(p.node, p.offset);
+            const rect = r.getBoundingClientRect();
+            if (!rect.height && !rect.width) return 0;
+            return rect.bottom - mTop;
+        }
+        function findSplit(targetY) {
+            let lo = 0, hi = positions.length - 1, best = -1;
+            while (lo <= hi) {
+                const mid = (lo + hi) >> 1;
+                if (rangeBottomAt(positions[mid]) <= targetY) { best = mid; lo = mid + 1; }
+                else hi = mid - 1;
+            }
+            return best >= 0 ? positions[best] : null;
+        }
+        const numPages = Math.ceil(totalH / PAGE_H);
+        const splits = [];
+        for (let p = 1; p < numPages; p++) splits.push(findSplit(p * PAGE_H));
+        const anchors = [null, ...splits, null];
+        const pages = [];
+        for (let i = 0; i < numPages; i++) {
+            const rng = document.createRange();
+            const s = anchors[i], e = anchors[i + 1];
+            s ? rng.setStart(s.node, s.offset) : rng.setStart(m, 0);
+            e ? rng.setEnd(e.node, e.offset) : rng.setEnd(m, m.childNodes.length);
+            const frag = rng.cloneContents();
+            const div = document.createElement('div');
+            div.appendChild(frag);
+            const html = div.innerHTML.trim();
+            if (html) pages.push([html]);
+        }
+        document.body.removeChild(m);
+        return pages.length ? pages : [[bodyHtml]];
+    }
+
+    let _pages = [], _idx = 0;
+
+    function _show() {
+        document.getElementById('content').innerHTML = _pages[_idx].join('');
+        const show = _pages.length > 1;
+        const label = 'Page ' + (_idx + 1) + ' of ' + _pages.length;
+        const atFirst = _idx === 0, atLast = _idx === _pages.length - 1;
+        ['', '-b'].forEach(s => {
+            document.getElementById('doc-nav' + s).style.display = show ? 'flex' : 'none';
+            if (show) {
+                document.getElementById('doc-indicator' + s).textContent = label;
+                document.getElementById('doc-prev' + s).disabled = atFirst;
+                document.getElementById('doc-next' + s).disabled = atLast;
+            }
+        });
+        window.scrollTo(0, 0);
+    }
+
+    window._docPrev = function () { if (_idx > 0) { _idx--; _show(); } };
+    window._docNext = function () { if (_idx < _pages.length - 1) { _idx++; _show(); } };
+
+    _pages = _paginateContent(renderContent("{{ raw_content|escapejs }}"));
+    _show();
+})();
 </script>
 
 <div class="nav-links">
@@ -58,13 +190,4 @@
     </div>
 </div>
 
-<p style="margin-top: 24px;">
-    <a href="{% url 'course_detail' page.unit.course.id %}">← Back to course</a>
-</p>
-
-{% if user.is_staff %}
-<p>
-    <a href="{% url 'textbook_edit' page.id %}">Edit this page</a>
-</p>
-{% endif %}
 {% endblock %}

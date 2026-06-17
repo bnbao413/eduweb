@@ -1,29 +1,37 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h1>{{ subject.title }}</h1>
+{% block title %}{{ subject.title }} — EduWeb{% endblock %}
 
-{% if subject.description %}
-    <p>{{ subject.description }}</p>
-{% endif %}
+{% block content %}
+<a href="{% url 'home' %}" class="backlink">&lsaquo; All subjects</a>
+
+<div class="page-header">
+    <h1>{{ subject.title }}</h1>
+    {% if subject.description %}
+        <p class="page-subtitle">{{ subject.description }}</p>
+    {% endif %}
+</div>
 
 {% if courses %}
-    {% for course in courses %}
-        <div style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ddd;">
-            <h2 style="margin-bottom: 0.25rem;">
-                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
-                {% if user.is_staff %}
-                    <a href="{% url 'course_delete' course.id %}" style="font-size:0.75rem; font-weight:normal; color:#c0392b; margin-left:0.75rem;">[Delete]</a>
-                {% endif %}
-            </h2>
-            {% if course.description %}
-                <p style="margin-top:0.4rem;">{{ course.description }}</p>
-            {% endif %}
-        </div>
-    {% endfor %}
+    <div class="card-stack">
+        {% for course in courses %}
+            <div class="list-card" style="cursor:default;">
+                <div>
+                    <a href="{% url 'course_detail' course.id %}" class="lc-title" style="display:inline-block;">{{ course.title }}</a>
+                    {% if course.description %}
+                        <p class="lc-desc">{{ course.description }}</p>
+                    {% endif %}
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+                    {% if user.is_staff %}
+                        <a href="{% url 'course_delete' course.id %}" class="btn btn-ghost btn-sm" style="color:var(--danger);">Delete</a>
+                    {% endif %}
+                    <a href="{% url 'course_detail' course.id %}" class="lc-arrow" aria-hidden="true">&rsaquo;</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% else %}
-    <p>No courses yet.</p>
+    <div class="empty">No courses yet.</div>
 {% endif %}
-
-<a href="/">← Back</a>
 {% endblock %}

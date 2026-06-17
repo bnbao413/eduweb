@@ -1,15 +1,19 @@
 {% extends "base.html" %}
 
+{% block title %}{{ exam.title }} — EduWeb{% endblock %}
+
 {% block content %}
-<h1>{{ exam.title }}</h1>
+<a href="{% url 'course_detail' exam.course.id %}" class="backlink">&lsaquo; Back to course</a>
 
-<p><strong>Course:</strong> {{ exam.course.title }}</p>
+<div class="page-header">
+    <span class="badge badge-accent" style="margin-bottom:0.6rem;">Final Exam</span>
+    <h1 style="margin-top:0.4rem;">{{ exam.title }}</h1>
+    <p class="meta" style="margin-bottom:0;">{{ exam.course.title }}</p>
+</div>
 
-<div>{{ exam.instructions }}</div>
+{% if exam.instructions %}
+    <div class="card content-area" style="padding:1.5rem;margin:0 0 1.5rem;">{{ exam.instructions }}</div>
+{% endif %}
 
-<p><a href="{% url 'start_final_exam' exam.id %}">Start Final Exam</a></p>
-
-<p>
-    <a href="{% url 'course_detail' exam.course.id %}">← Back to course</a>
-</p>
+<a href="{% url 'start_final_exam' exam.id %}" class="btn btn-primary">Start final exam</a>
 {% endblock %}
