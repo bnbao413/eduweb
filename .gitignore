@@ -24,3 +24,7 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local tooling / scratch
+_verify_render.py
+*.msi
