@@ -127,6 +127,8 @@
             box-shadow: var(--shadow-sm);
         }
         #wysiwyg:focus { border-color: var(--accent); box-shadow: var(--ring); }
+        /* Persistent "frozen" highlight shown while a toolbar input has focus */
+        ::highlight(fmt-keep) { background-color: rgba(79, 70, 229, 0.28); }
 
         .math-chip {
             display: inline-block;
@@ -325,14 +327,39 @@
             color: var(--text-subtle); margin: 1rem 0 0.4rem; position: sticky; top: 0;
             background: var(--surface); padding: 0.5rem 0 0.3rem;
         }
-        .sh-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px; }
+        .sh-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 2px; }
         .sh-row {
-            display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.5rem;
-            border-radius: var(--radius-sm); cursor: pointer;
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.4rem;
+            border-radius: var(--radius-sm);
         }
         .sh-row:hover { background: var(--accent-light); }
-        .sh-sym { min-width: 2.4rem; text-align: center; font-size: 1.05rem; flex-shrink: 0; }
-        .sh-names { color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sh-sym { min-width: 2.2rem; text-align: center; font-size: 1.05rem; flex-shrink: 0; cursor: pointer; }
+        .sh-sym:hover { color: var(--accent); }
+        .sh-edit {
+            flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 0.82rem;
+            color: var(--accent-active); background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px;
+        }
+        .sh-edit:focus { outline: none; border-color: var(--accent); box-shadow: var(--ring); background: var(--surface); }
+        /* help modal */
+        #help-modal {
+            display: none; position: fixed; inset: 0; z-index: 1300;
+            background: rgba(17,24,39,0.5); align-items: center; justify-content: center;
+        }
+        .help-body { line-height: 1.6; }
+        .help-body h4 { margin: 1.15rem 0 0.35rem; font-size: 0.95rem; color: var(--text); }
+        .help-body h4:first-child { margin-top: 0.25rem; }
+        .help-body p, .help-body li { font-size: 0.9rem; color: var(--text-muted); margin: 0.3rem 0; }
+        .help-body ul { margin: 0.3rem 0 0.5rem; padding-left: 1.2rem; }
+        .help-body code { font-family: var(--font-mono); background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 0.85em; color: var(--accent-active); }
+        .help-body kbd { font-family: var(--font-mono); background: var(--surface-2); border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 0.82em; }
+        .sh-bsample { font-family: var(--font-mono); font-weight: 700; color: var(--accent-active); min-width: 3.2rem; }
+        .sh-bex { font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted); flex: 1; }
+        .sh-brm { border: none; background: transparent; color: var(--text-subtle); cursor: pointer; font-size: 0.9rem; padding: 0 4px; }
+        .sh-brm:hover { color: var(--danger); }
+        .sh-addrow { display: flex; gap: 0.5rem; align-items: center; padding: 0.1rem 0.25rem; }
+        .sh-addrow .sh-edit { flex: 1; }
+        .sh-bmsg { font-size: 0.8rem; padding: 0.4rem 0.25rem 0; min-height: 1rem; }
 
         @media (max-width: 900px) {
             .editor-layout { flex-direction: column; }
@@ -351,6 +378,7 @@
                 <span class="et-label">Edit notes</span>
                 <div class="et-title-field">{{ form.title }}</div>
                 <div class="et-actions">
+                    <button type="button" onclick="openHelp()" class="btn btn-secondary btn-sm">Help</button>
                     <button type="button" onclick="openShorthandLib()" class="btn btn-secondary btn-sm">Shorthands</button>
                     <button type="button" id="export-btn" onclick="exportPDF()" class="btn btn-secondary btn-sm">Export PDF</button>
                     <button type="submit" class="btn btn-primary btn-sm">Save</button>
@@ -385,10 +413,10 @@
                             </div>
                             <input type="number" id="size-picker" title="Font size — select text, type size, press Enter" placeholder="Size" min="1" max="999" step="1" style="font-size:0.78rem;padding:2px 4px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;width:58px;height:22px;">
                             <span style="font-size:0.78rem;color:#666;">px</span>
-                            <button type="button" title="Bold" onclick="ins('**','**')" style="font-weight:700;">B</button>
-                            <button type="button" title="Italic" onclick="ins('*','*')" style="font-style:italic;">I</button>
-                            <button type="button" title="Underline" onclick="ins('<u>','</u>')"><u>U</u></button>
-                            <button type="button" title="Strikethrough" onclick="ins('<s>','</s>')"><s>S</s></button>
+                            <button type="button" title="Bold" onclick="_fmtTag('strong')" style="font-weight:700;">B</button>
+                            <button type="button" title="Italic" onclick="_fmtTag('em')" style="font-style:italic;">I</button>
+                            <button type="button" title="Underline" onclick="_fmtTag('u')"><u>U</u></button>
+                            <button type="button" title="Strikethrough" onclick="_fmtTag('s')"><s>S</s></button>
                             <label title="Text color — select text, then pick color" style="display:inline-flex;align-items:center;gap:2px;cursor:pointer;padding:2px 5px;border:1px solid #c5cce0;border-radius:3px;background:#f7f8fc;font-size:0.82rem;line-height:1.4;font-family:serif;white-space:nowrap;">
                                 A <input type="color" id="text-color-picker" value="#e53e3e" style="width:20px;height:14px;padding:0;border:none;cursor:pointer;vertical-align:middle;">
                             </label>
@@ -824,10 +852,59 @@
         <div class="sh-box">
             <div class="sh-head">
                 <h3>Shorthand library</h3>
-                <input type="text" id="sh-lib-search" placeholder="Filter… e.g. frac, alpha, sum" autocomplete="off" spellcheck="false" oninput="_renderShorthandLib(this.value)">
+                <input type="text" id="sh-lib-search" placeholder="Filter… e.g. frac, alpha, sum" autocomplete="off" spellcheck="false" oninput="_onShSearch(this.value)">
+                <button type="button" class="btn btn-secondary btn-sm" id="sh-borders-btn" onclick="_toggleBordersView()">Borders</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeShorthandLib()">Close</button>
             </div>
             <div class="sh-body" id="sh-lib-body"></div>
+        </div>
+    </div>
+
+    <div id="help-modal">
+        <div class="sh-box">
+            <div class="sh-head">
+                <h3>How to use the editor</h3>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeHelp()" style="margin-left:auto;">Close</button>
+            </div>
+            <div class="sh-body help-body">
+                <h4>Writing</h4>
+                <p>Type in the left pane. The right pane is a live preview of how the page will look once saved. Press <kbd>Enter</kbd> for a new line.</p>
+
+                <h4>Formatting</h4>
+                <p>Use the toolbar for bold, italic, underline, text colour, highlight, font, size, alignment and links. Select your text first, then click a button.</p>
+
+                <h4>Inserting math</h4>
+                <p>Click any symbol or structure in the toolbar (fractions, integrals, Greek letters, matrices, and so on). The math editor opens — fill in the boxes and click <strong>Insert</strong>. The math is added to the page as a blue <em>chip</em>.</p>
+
+                <h4>Editing math</h4>
+                <ul>
+                    <li><strong>Click a chip</strong> to reopen and edit it.</li>
+                    <li>Press <kbd>Backspace</kbd> next to a chip to delete the whole thing at once.</li>
+                </ul>
+
+                <h4>Typing math directly</h4>
+                <p>Type LaTeX and it turns into a chip automatically once you close the delimiter:</p>
+                <ul>
+                    <li><code>$x^2$</code> — inline math</li>
+                    <li><code>$$ ... $$</code> — display (centred) math</li>
+                    <li><code>\( ... \)</code> and <code>\[ ... \]</code> also work</li>
+                </ul>
+
+                <h4>Shorthands</h4>
+                <p>Type a notation's name wrapped in a border to insert it instantly — for example <code>(frac)</code>, <code>(alpha)</code>, <code>(sum)</code>, <code>(int)</code>. The borders <code>( )</code>, <code>[ ]</code>, <code>{ }</code> and <code>$ $</code> all work.</p>
+                <p>Click <strong>Shorthands</strong> (top right) to browse and search every shorthand. There you can:</p>
+                <ul>
+                    <li>Click a symbol to insert it.</li>
+                    <li>Edit a name to rename its shorthand.</li>
+                    <li>Open the <strong>Borders</strong> tab to add your own border — one character, the same on both sides (e.g. <code>a</code> lets you type <code>afraca</code>).</li>
+                </ul>
+
+                <h4>Copy &amp; paste</h4>
+                <p>Select text and chips (<kbd>Ctrl</kbd>+<kbd>A</kbd> selects everything), then copy. Chips travel as LaTeX, so pasting into another page rebuilds them, and pasting into a LaTeX or Markdown document renders correctly.</p>
+
+                <h4>Saving &amp; exporting</h4>
+                <p><strong>Save</strong> stores the page. <strong>Export PDF</strong> downloads a PDF of the document.</p>
+            </div>
         </div>
     </div>
 
@@ -846,7 +923,14 @@
             span.contentEditable = 'false';
             span.dataset.latex = latex;
             span.dataset.display = display ? 'true' : 'false';
-            try { span.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: display }); }
+            // Always render inline (textstyle) so every chip is the same size;
+            // display chips just sit centered on their own line (.display-chip).
+            // Matrices/arrays are scaled down so they aren't oversized vs other math.
+            try {
+                let _h = katex.renderToString(latex, { throwOnError: false, displayMode: false });
+                if (/\\begin\{/.test(latex)) _h = `<span style="font-size:0.8em;display:inline-block;vertical-align:middle">${_h}</span>`;
+                span.innerHTML = _h;
+            }
             catch(e) { span.textContent = display ? `\\[${latex}\\]` : `\\(${latex}\\)`; }
             if (clickable) {
                 span.addEventListener('click', e => {
@@ -883,18 +967,39 @@
             return span;
         }
 
+        // formatting elements that round-trip as HTML in the saved source
+        const _FMT_TAGS = { B:'strong', STRONG:'strong', I:'em', EM:'em', U:'u', S:'s', STRIKE:'s', MARK:'mark', SUB:'sub', SUP:'sup', SPAN:'span', FONT:'span' };
+        function _escText(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function _escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
         function serializeNode(node) {
             let out = '';
             for (const child of node.childNodes) {
                 if (child.nodeType === Node.TEXT_NODE) {
-                    out += child.textContent.replace(new RegExp(ZWS, 'g'), '');
+                    out += _escText(child.textContent.replace(new RegExp(ZWS, 'g'), ''));
                 } else if (child.nodeName === 'BR') {
                     out += '\n';
                 } else if (child.classList && child.classList.contains('math-chip')) {
                     const d = child.dataset.display === 'true';
                     out += d ? `\\[${child.dataset.latex}\\]` : `\\(${child.dataset.latex}\\)`;
                 } else {
-                    out += serializeNode(child);
+                    const fmt = _FMT_TAGS[child.nodeName];
+                    const inner = serializeNode(child);
+                    if (fmt) {
+                        if (!inner) continue;
+                        let style = (child.getAttribute && child.getAttribute('style')) || '';
+                        if (child.nodeName === 'FONT') {
+                            const c = child.getAttribute('color'); if (c) style += 'color:' + c + ';';
+                            const f = child.getAttribute('face');  if (f) style += 'font-family:' + f + ';';
+                        }
+                        out += style ? `<${fmt} style="${_escAttr(style)}">${inner}</${fmt}>` : `<${fmt}>${inner}</${fmt}>`;
+                    } else if (child.nodeName === 'DIV') {
+                        const style = (child.getAttribute && child.getAttribute('style')) || '';
+                        const m = /text-align\s*:\s*(left|center|right|justify)/.exec(style);
+                        if (m) out += `\n<div style="text-align:${m[1]}">${inner}</div>\n`;
+                        else { if (out && !out.endsWith('\n')) out += '\n'; out += inner; }
+                    } else {
+                        out += inner;
+                    }
                 }
             }
             return out;
@@ -927,19 +1032,19 @@
 
         // Parse source text ($...$, \(...\), $$...$$, \[...\]) into a DOM fragment
         // of text + chips. Used to load the document AND to paste copied content.
+        // turn a text segment (may contain formatting HTML + newlines) into nodes
+        function _appendSourceText(frag, textPart) {
+            if (!textPart) return;
+            const tmp = document.createElement('div');
+            tmp.innerHTML = textPart.replace(/\n/g, '<br>');
+            while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+        }
         function sourceToFragment(raw) {
             const re = /\\\[([\s\S]*?)\\\]|\$\$([\s\S]*?)\$\$|\\\(([\s\S]*?)\\\)|\$((?:[^$\n\\]|\\.)+?)\$/g;
             const frag = document.createDocumentFragment();
             let last = 0, m;
             while ((m = re.exec(raw)) !== null) {
-                const textPart = raw.slice(last, m.index);
-                if (textPart) {
-                    const lines = textPart.split('\n');
-                    lines.forEach((line, i) => {
-                        if (line) frag.appendChild(document.createTextNode(line));
-                        if (i < lines.length - 1) frag.appendChild(document.createElement('br'));
-                    });
-                }
+                _appendSourceText(frag, raw.slice(last, m.index));
                 const latex = (m[1] ?? m[2] ?? m[3] ?? m[4]).trim();
                 const display = m[1] !== undefined || m[2] !== undefined;
                 frag.appendChild(document.createTextNode(ZWS));
@@ -947,14 +1052,7 @@
                 frag.appendChild(document.createTextNode(ZWS));
                 last = m.index + m[0].length;
             }
-            const tail = raw.slice(last);
-            if (tail) {
-                const lines = tail.split('\n');
-                lines.forEach((line, i) => {
-                    if (line) frag.appendChild(document.createTextNode(line));
-                    if (i < lines.length - 1) frag.appendChild(document.createElement('br'));
-                });
-            }
+            _appendSourceText(frag, raw.slice(last));
             return frag;
         }
 
@@ -1112,6 +1210,31 @@
         // (included inline just above this script). Edit it there; both editors +
         // the library stay in sync automatically.
 
+        // ── Borders ─────────────────────────────────────────────────────
+        // A shorthand fires when its name is wrapped in a border on BOTH sides.
+        // Built-in borders (always on): ( ) [ ] { } and $ $.
+        // You can add custom borders in the library: one character, identical on
+        // both sides (e.g. a, A, 6) — then type it like  afraca .
+        const _DEFAULT_BORDERS = [
+            { open: '(', close: ')' }, { open: '[', close: ']' },
+            { open: '{', close: '}' }, { open: '$', close: '$' }
+        ];
+        const SH_BORDERS_KEY = 'shCustomBorders_v1';
+        let BORDERS = _DEFAULT_BORDERS.slice();
+        let _borderCloseSet = new Set();
+        function _customBorders() {
+            try { return JSON.parse(localStorage.getItem(SH_BORDERS_KEY) || '[]'); } catch (e) { return []; }
+        }
+        function _loadBorders() {
+            BORDERS = _DEFAULT_BORDERS.slice();
+            for (const c of _customBorders()) {
+                if (typeof c === 'string' && c.length === 1 && !BORDERS.some(b => b.open === c || b.close === c))
+                    BORDERS.push({ open: c, close: c, custom: true });
+            }
+            _borderCloseSet = new Set(BORDERS.map(b => b.close));
+        }
+        _loadBorders();
+
         function _tryShorthand() {
             if (_autoChipBusy) return false;
             const sel = window.getSelection();
@@ -1121,23 +1244,38 @@
             if (node.nodeType !== Node.TEXT_NODE) return false;
             if (!node.parentNode || (node.parentNode.closest && node.parentNode.closest('.math-chip'))) return false;
             const caret = range.startOffset;
-            if (node.textContent[caret - 1] !== ')') return false;
-            const mm = node.textContent.slice(0, caret).match(/\(([A-Za-z0-9]+)\)$/);
-            if (!mm) return false;
-            const entry = SHORTHAND[mm[1]] || SHORTHAND[mm[1].toLowerCase()];
-            if (!entry) return false;
-
-            _autoChipBusy = true;
-            const open = caret - mm[0].length;
-            const del = document.createRange();
-            del.setStart(node, open); del.setEnd(node, caret);
-            del.deleteContents();
-            const cr = document.createRange();
-            cr.setStart(node, open); cr.collapse(true);
-            sel.removeAllRanges(); sel.addRange(cr);
-            _dispatchShorthand(entry);
-            _autoChipBusy = false;
-            return true;
+            const text = node.textContent;
+            const close = text[caret - 1];
+            if (!_borderCloseSet.has(close)) return false;
+            for (const b of BORDERS) {
+                if (b.close !== close) continue;
+                let openIdx = -1;
+                for (let i = caret - 2; i >= 0; i--) {
+                    const ch = text[i];
+                    if (ch === '\n') break;
+                    if (b.open !== b.close && ch === b.close) break;          // bracket: stop at nested closer
+                    if (ch === b.open && text[i - 1] !== '\\') {
+                        const nm = text.slice(i + 1, caret - 1);
+                        if (nm && (SHORTHAND[nm] || SHORTHAND[nm.toLowerCase()])) { openIdx = i; break; }
+                        if (!b.custom) break;                                  // built-in: only the nearest opener counts
+                        // custom char border: keep scanning (name may contain the border char, e.g. afraca)
+                    }
+                }
+                if (openIdx < 0) continue;
+                const name = text.slice(openIdx + 1, caret - 1);
+                const entry = SHORTHAND[name] || SHORTHAND[name.toLowerCase()];
+                _autoChipBusy = true;
+                const del = document.createRange();
+                del.setStart(node, openIdx); del.setEnd(node, caret);
+                del.deleteContents();
+                const cr = document.createRange();
+                cr.setStart(node, openIdx); cr.collapse(true);
+                sel.removeAllRanges(); sel.addRange(cr);
+                _dispatchShorthand(entry);
+                _autoChipBusy = false;
+                return true;
+            }
+            return false;
         }
 
         function _dispatchShorthand(e) {
@@ -1147,15 +1285,116 @@
             else { insSym(e.l); }
         }
 
-        // ── Shorthand library (cheatsheet) ──────────────────────────────
+        // ── Shorthand library (cheatsheet + inline editing) ─────────────
         let _shSavedRange = null;
         const _SH_CAT_ORDER = ['Structures','Calculus','Trig','Functions','Greek','Relations',
             'Set Theory','Num Sets','Logic','Algebra','Brackets','Accents','Arrows','Matrix','Geometry','Physics','Misc'];
+        const SH_OV_KEY = 'shOverrides_v1';
+
+        function _esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        // stable identity for a notation (independent of its shorthand name)
+        function _outId(e) {
+            if (e.sym) return 'S:' + e.sym.to;
+            if (e.mat) return 'M:' + e.mat.env + e.mat.r + 'x' + e.mat.c;
+            return 'L:' + e.l;
+        }
+        function _saveShOverride(oid, name) {
+            let ov; try { ov = JSON.parse(localStorage.getItem(SH_OV_KEY) || '{}'); } catch (e) { ov = {}; }
+            ov[oid] = name;
+            localStorage.setItem(SH_OV_KEY, JSON.stringify(ov));
+        }
+        // apply saved renames on top of the base map (persists across reloads, per browser)
+        function _applyShOverrides() {
+            let ov; try { ov = JSON.parse(localStorage.getItem(SH_OV_KEY) || '{}'); } catch (e) { return; }
+            for (const oid in ov) {
+                const name = ov[oid];
+                let entry = null;
+                for (const k of Object.keys(SHORTHAND)) {
+                    if (_outId(SHORTHAND[k]) === oid) { entry = SHORTHAND[k]; delete SHORTHAND[k]; }
+                }
+                if (entry && name) SHORTHAND[name] = entry;
+            }
+        }
+        // rename a notation's shorthand from the library input
+        function _saveShEdit(inp) {
+            const oid = inp.dataset.oid, oldName = inp.dataset.name, newName = inp.value.trim();
+            if (!newName || newName === oldName) { inp.value = oldName; return; }
+            if (/[()\[\]{}$\\\n]/.test(newName)) { inp.value = oldName; return; }            // no border chars in the name
+            if (SHORTHAND[newName] && _outId(SHORTHAND[newName]) !== oid) { inp.value = oldName; return; } // already used
+            let entry = null;
+            for (const k of Object.keys(SHORTHAND)) {
+                if (_outId(SHORTHAND[k]) === oid) { entry = SHORTHAND[k]; delete SHORTHAND[k]; }
+            }
+            if (!entry) return;
+            SHORTHAND[newName] = entry;
+            _saveShOverride(oid, newName);
+            _renderShorthandLib(document.getElementById('sh-lib-search').value);
+        }
+
+        // ── Borders editor tab ──────────────────────────────────────────
+        let _shView = 'list';
+        function _onShSearch(v) { _shView = 'list'; _setBordersBtn(); _renderShorthandLib(v); }
+        function _setBordersBtn() {
+            const btn = document.getElementById('sh-borders-btn');
+            if (btn) btn.textContent = (_shView === 'borders') ? 'Shorthands' : 'Borders';
+        }
+        function _toggleBordersView() {
+            _shView = (_shView === 'borders') ? 'list' : 'borders';
+            _setBordersBtn();
+            if (_shView === 'borders') _renderBordersPanel();
+            else _renderShorthandLib(document.getElementById('sh-lib-search').value);
+        }
+        function _shBorderMsg(t, ok) {
+            const m = document.getElementById('sh-border-msg');
+            if (m) { m.textContent = t || ''; m.style.color = ok ? 'var(--success)' : 'var(--danger)'; }
+        }
+        function _addCustomBorder(raw) {
+            let s = (raw || '').trim();
+            if (s.length === 2 && s[0] !== s[1]) { _shBorderMsg('Border must be the SAME character on both sides (e.g. aa, not 6a).'); return; }
+            if (s.length === 2) s = s[0];
+            if (s.length !== 1) { _shBorderMsg('Enter one character (e.g. a, A or 6).'); return; }
+            const c = s;
+            if (/[\s\\]/.test(c)) { _shBorderMsg('That character can’t be used as a border.'); return; }
+            if (BORDERS.some(b => b.open === c || b.close === c)) { _shBorderMsg('“' + c + '” is already a border.'); return; }
+            const cust = _customBorders(); cust.push(c);
+            localStorage.setItem(SH_BORDERS_KEY, JSON.stringify(cust));
+            _loadBorders();
+            _renderBordersPanel();
+            _shBorderMsg('Added “' + c + '” — type it like ' + c + 'frac' + c, true);
+        }
+        function _removeCustomBorder(c) {
+            localStorage.setItem(SH_BORDERS_KEY, JSON.stringify(_customBorders().filter(x => x !== c)));
+            _loadBorders();
+            _renderBordersPanel();
+        }
+        function _renderBordersPanel() {
+            let html = '<div class="sh-cat">Active borders</div><div class="sh-rows" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">';
+            for (const b of BORDERS) {
+                const eg = b.open + 'frac' + b.close;
+                html += '<div class="sh-row">'
+                     +    '<span class="sh-bsample">' + _esc(b.open + ' … ' + b.close) + '</span>'
+                     +    '<span class="sh-bex">' + _esc(eg) + '</span>'
+                     +    (b.custom ? '<button class="sh-brm" type="button" data-bc="' + _esc(b.open) + '" title="Remove">✕</button>' : '')
+                     + '</div>';
+            }
+            html += '</div>';
+            html += '<div class="sh-cat">Add a border</div>'
+                 +  '<div class="sh-addrow">'
+                 +    '<input id="sh-new-border" class="sh-edit" type="text" maxlength="2" spellcheck="false" placeholder="e.g. a, A, 6 (or aa)">'
+                 +    '<button class="btn btn-primary btn-sm" type="button" id="sh-add-border">Add</button>'
+                 +  '</div><div id="sh-border-msg" class="sh-bmsg"></div>';
+            document.getElementById('sh-lib-body').innerHTML = html;
+            const inp = document.getElementById('sh-new-border');
+            document.getElementById('sh-add-border').onclick = () => _addCustomBorder(inp.value);
+            inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); _addCustomBorder(inp.value); } };
+            inp.focus();
+        }
 
         function openShorthandLib() {
             const sel = window.getSelection();
             _shSavedRange = (sel.rangeCount && wysiwyg.contains(sel.getRangeAt(0).startContainer))
                 ? sel.getRangeAt(0).cloneRange() : null;
+            _shView = 'list'; _setBordersBtn();
             document.getElementById('shorthand-lib').style.display = 'flex';
             const s = document.getElementById('sh-lib-search'); s.value = '';
             try {
@@ -1167,6 +1406,8 @@
             setTimeout(() => s.focus(), 50);
         }
         function closeShorthandLib() { document.getElementById('shorthand-lib').style.display = 'none'; }
+        function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+        function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
         function _shPreview(out) {
             return out.replace(/\{\s*\}/g, '{\\square}')
@@ -1184,13 +1425,13 @@
             const groups = {};
             for (const name in SHORTHAND) {
                 const e = SHORTHAND[name];
-                let out;
-                if (e.sym) out = e.sym.to;
-                else if (e.mat) { const c = []; for (let i = 0; i < e.mat.c; i++) c.push('\\square'); out = '\\begin{' + e.mat.env + '} ' + c.join(' & ') + ' \\end{' + e.mat.env + '}'; }
-                else out = e.l;
+                const oid = _outId(e);
+                const out = e.sym ? e.sym.to
+                    : (e.mat ? ('\\begin{' + e.mat.env + '} ' + Array(e.mat.c).fill('\\square').join(' & ') + ' \\end{' + e.mat.env + '}')
+                             : e.l);
                 const cat = e.cat || 'Misc';
                 (groups[cat] = groups[cat] || {});
-                (groups[cat][out] = groups[cat][out] || { out, names: [] }).names.push(name);
+                (groups[cat][oid] = groups[cat][oid] || { oid, out, names: [] }).names.push(name);
             }
             const cats = _SH_CAT_ORDER.filter(c => groups[c]).concat(Object.keys(groups).filter(c => _SH_CAT_ORDER.indexOf(c) < 0));
             let html = '';
@@ -1198,16 +1439,21 @@
                 let rows = '';
                 const recs = Object.values(groups[cat]).sort((a, b) => a.names[0].localeCompare(b.names[0]));
                 for (const r of recs) {
+                    const primary = r.names.slice().sort((a, b) => a.length - b.length)[0];
                     if (filter && !r.names.some(n => n.toLowerCase().indexOf(filter) >= 0) && cat.toLowerCase().indexOf(filter) < 0) continue;
                     let sym;
                     try { sym = katex.renderToString(_shPreview(r.out), { throwOnError: false }); }
                     catch (err) { sym = '<span>' + r.out + '</span>'; }
-                    const names = r.names.slice().sort((a, b) => a.length - b.length).map(n => '(' + n + ')').join(' ');
-                    rows += '<div class="sh-row" onclick="_pickShorthand(\'' + r.names[0] + '\')"><span class="sh-sym">' + sym + '</span><span class="sh-names">' + names + '</span></div>';
+                    rows += '<div class="sh-row">'
+                         +    '<span class="sh-sym" data-name="' + _esc(primary) + '" title="Insert">' + sym + '</span>'
+                         +    '<input class="sh-edit" type="text" spellcheck="false" value="' + _esc(primary) + '"'
+                         +           ' data-oid="' + _esc(r.oid) + '" data-name="' + _esc(primary) + '"'
+                         +           ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}">'
+                         + '</div>';
                 }
                 if (rows) html += '<div class="sh-cat">' + cat + '</div><div class="sh-rows">' + rows + '</div>';
             }
-            document.getElementById('sh-lib-body').innerHTML = html || '<div style="padding:1rem;color:var(--text-subtle);">No matches.</div>';
+            document.getElementById('sh-lib-body').innerHTML = html;
         }
 
         function _moveCursorBack(n) {
@@ -1480,11 +1726,10 @@ a{color:#1a3a6e}
             text = marked.parse(text, { breaks: true });
             return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
                 const {m, d} = blocks[+i];
-                try { return katex.renderToString(m, {throwOnError:false, displayMode:d}); }
+                try { let _h = katex.renderToString(m, {throwOnError:false, displayMode:false}); if (/\\begin\{/.test(m)) _h = `<span style="font-size:0.8em;display:inline-block;vertical-align:middle">${_h}</span>`; return d ? `<div style="text-align:center;margin:0.6em 0">${_h}</div>` : _h; }
                 catch(e) { return d ? `$$${m}$$` : `$${m}$`; }
             });
         }
-
 
         const MODAL_SYMBOL_CATS = {
             'Calculus': [
@@ -1728,11 +1973,70 @@ a{color:#1a3a6e}
             syncToTextarea();
         }
 
-        // ── Text formatting ──────────────────────────────────────────
+        // ── Text formatting (real, visible) ───────────────────────────
         let _savedFmtRange = null;
+        // Focusing a toolbar input (size/colour) hides the contenteditable's native
+        // selection, so the blue highlight appears to vanish. Paint our own highlight
+        // over the saved range (CSS Custom Highlight API) so it stays visible while you
+        // work the controls — Google-Docs style. Clears once a real selection returns.
+        const _hlSupported = (typeof Highlight !== 'undefined') && window.CSS && CSS.highlights;
+        function _setKeepHL(range) {
+            if (!_hlSupported || !range || range.collapsed) return;
+            try { CSS.highlights.set('fmt-keep', new Highlight(range.cloneRange())); } catch (e) {}
+        }
+        function _clearKeepHL() {
+            if (!_hlSupported) return;
+            try { CSS.highlights.delete('fmt-keep'); } catch (e) {}
+        }
         function _saveFmtSel() {
             const sel = window.getSelection();
-            _savedFmtRange = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+            if (!sel.rangeCount) return;
+            const r = sel.getRangeAt(0);
+            if (r.collapsed) return;   // never let a plain click/caret wipe the saved highlight
+            if (wysiwyg.contains(r.startContainer) || wysiwyg.contains(r.endContainer) || wysiwyg.contains(r.commonAncestorContainer))
+                _savedFmtRange = r.cloneRange();
+        }
+        // Apply formatting to the selection saved while you last had text highlighted
+        // (a plain click/caret never overwrites it — see _saveFmtSel), using the
+        // browser's native rich-text commands so it works on any selection. The text
+        // stays highlighted afterward so you can stack changes (Google-Docs style).
+        function _applyFmt(action) {
+            wysiwyg.focus({ preventScroll: true });
+            if (_savedFmtRange && !_savedFmtRange.collapsed) _restoreRange(_savedFmtRange);
+            const sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) return;
+            try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+            action();
+            syncToTextarea();
+            const s2 = window.getSelection();
+            if (s2.rangeCount && !s2.getRangeAt(0).collapsed) _savedFmtRange = s2.getRangeAt(0).cloneRange();
+            _clearKeepHL();   // native selection is back in the editor
+        }
+        const _FMT_CMD = { strong: 'bold', em: 'italic', u: 'underline', s: 'strikeThrough' };
+        function _fmtTag(tag) { _applyFmt(() => document.execCommand(_FMT_CMD[tag] || tag, false, null)); }
+        // Wrap the selection in a clean <span style="prop:val"> (predictable output
+        // that the Markdown preview renders — unlike execCommand's legacy <font>).
+        function _wrapStyle(prop, val) {
+            const sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) return;
+            const range = sel.getRangeAt(0);
+            let frag;
+            try { frag = range.extractContents(); } catch (e) { return; }
+            // Drop the same property from any nested spans so the new value wins
+            // (otherwise an inner <span> overrides ours) and styling can't pile up.
+            frag.querySelectorAll('span[style]').forEach(s => {
+                if (s.style[prop]) s.style[prop] = '';
+                if (!s.getAttribute('style')) {
+                    while (s.firstChild) s.parentNode.insertBefore(s.firstChild, s);
+                    s.parentNode.removeChild(s);
+                }
+            });
+            const span = document.createElement('span');
+            span.style[prop] = val;
+            span.appendChild(frag);
+            range.insertNode(span);
+            const r = document.createRange(); r.selectNodeContents(span);
+            sel.removeAllRanges(); sel.addRange(r);
         }
 
         function toggleFontDropdown() {
@@ -1744,31 +2048,10 @@ a{color:#1a3a6e}
             if (d) d.style.display = 'none';
         }
 
-        function _applyWrap(tag, style) {
-            if (!_savedFmtRange || _savedFmtRange.collapsed) { wysiwyg.focus({ preventScroll: true }); return; }
-            _restoreRange(_savedFmtRange);
-            const selectedText = serializeNode(_savedFmtRange.cloneContents());
-            if (!selectedText) { wysiwyg.focus({ preventScroll: true }); return; }
-            _savedFmtRange.deleteContents();
-            document.execCommand('insertText', false, `<${tag} style="${style}">${selectedText}</${tag}>`);
-            syncToTextarea();
-            wysiwyg.focus({ preventScroll: true });
-        }
-
-        function applyFont(family) {
-            closeFontDropdown();
-            if (!family) return;
-            _applyWrap('span', `font-family:${family}`);
-        }
-
-        function applyFontSize(size) {
-            if (!size) return;
-            _applyWrap('span', `font-size:${size}`);
-        }
-
-        function applyTextColor(color) { _applyWrap('span', `color:${color}`); }
-
-        function applyHighlight(color) { _applyWrap('span', `background-color:${color}`); }
+        function applyFont(family)     { closeFontDropdown(); if (family) _applyFmt(() => _wrapStyle('fontFamily', family)); }
+        function applyFontSize(size)   { if (size) _applyFmt(() => _wrapStyle('fontSize', size)); }
+        function applyTextColor(color) { _applyFmt(() => _wrapStyle('color', color)); }
+        function applyHighlight(color) { _applyFmt(() => _wrapStyle('backgroundColor', color)); }
 
         // ── Modal symbol picker ──────────────────────────────────────
         function _renderModalCatTabs() {
@@ -1938,17 +2221,8 @@ a{color:#1a3a6e}
 
         // ── Text alignment ───────────────────────────────────────────
         function setAlign(align) {
-            wysiwyg.focus({ preventScroll: true });
-            const sel = window.getSelection();
-            if (!sel.rangeCount) return;
-            const range = sel.getRangeAt(0).cloneRange();
-            const selected = serializeNode(range.cloneContents()) || serializeWysiwyg();
-            const existing = selected.match(/^<div style="text-align:\w+">\n\n([\s\S]*?)\n\n<\/div>$/);
-            const inner = existing ? existing[1] : selected;
-            const wrapped = `<div style="text-align:${align}">\n\n${inner}\n\n</div>`;
-            range.deleteContents();
-            document.execCommand('insertText', false, wrapped);
-            syncToTextarea();
+            const cmd = { left: 'justifyLeft', center: 'justifyCenter', right: 'justifyRight', justify: 'justifyFull' }[align];
+            if (cmd) _applyFmt(() => document.execCommand(cmd, false, null));
         }
 
         // ── Link modal ───────────────────────────────────────────────
@@ -2172,6 +2446,31 @@ a{color:#1a3a6e}
             mathField.focus();
         }
 
+        // In-field shorthand: type e.g. (frac) right in the equation. Only the bracket
+        // pair STRICTLY around the name converts (the name must be purely alphanumeric),
+        // so outer brackets are ignored — ((frac)) → ( fraction ) — and real math like
+        // (x+1) is never touched.
+        const _MQ_SH_PATS = [
+            /\\left\(([A-Za-z0-9]+)\\right\)/,
+            /\\left\[([A-Za-z0-9]+)\\right\]/,
+            /\\left\\\{([A-Za-z0-9]+)\\right\\\}/,
+            /\\left\|([A-Za-z0-9]+)\\right\|/
+        ];
+        let _mqShBusy = false;
+        function _mqShorthandCheck() {
+            const lat = mathField.latex();
+            for (const re of _MQ_SH_PATS) {
+                const m = lat.match(re);
+                if (!m) continue;
+                const e = SHORTHAND[m[1]] || SHORTHAND[m[1].toLowerCase()];
+                if (!e || !e.l) continue;          // only insert entries with plain LaTeX
+                _mqShBusy = true;
+                mathField.latex(lat.replace(re, () => e.l));
+                _mqShBusy = false;
+                return;
+            }
+        }
+
         function _prepareForMQ(latex) {
             return latex
                 .replace(/\\left\(/g, '(')
@@ -2346,6 +2645,7 @@ a{color:#1a3a6e}
                 handlers: {
                     enter: insertMath,
                     edit: function() {
+                        if (_mqShBusy) return;
                         if (mathField.latex().trim() === '' && initialTemplate) {
                             mathField.latex(initialTemplate);
                         }
@@ -2356,6 +2656,17 @@ a{color:#1a3a6e}
                     }
                 }
             });
+            // No backslash commands; a shorthand in the field converts only when you
+            // type its CLOSING border — so (x+1) then (frac) only fires on the ")".
+            (function () {
+                const ta = document.querySelector('#mq-field textarea');
+                if (!ta) return;
+                const CLOSERS = new Set([')', ']', '}', '|']);
+                ta.addEventListener('keydown', e => {
+                    if (e.key === '\\') { e.preventDefault(); return; }
+                    if (CLOSERS.has(e.key)) setTimeout(_mqShorthandCheck, 0);
+                }, true);
+            })();
 
 
             _renderModalCatTabs();
@@ -2374,10 +2685,17 @@ a{color:#1a3a6e}
             document.querySelectorAll('.math-toolbar button[type="button"]').forEach(btn => {
                 btn.addEventListener('mousedown', e => e.preventDefault());
             });
-            // Save selection on every user interaction so _savedFmtRange is always current
+            // Keep the current selection up to date as you edit…
             wysiwyg.addEventListener('mouseup', _saveFmtSel);
             wysiwyg.addEventListener('keyup',   _saveFmtSel);
-            wysiwyg.addEventListener('blur',    _saveFmtSel);
+            // Starting a fresh click/selection in the editor: drop the painted highlight.
+            wysiwyg.addEventListener('mousedown', _clearKeepHL);
+            // …and capture it the instant you press ANY toolbar control (capture phase,
+            // before a colour/size input can steal focus and collapse the highlight).
+            document.querySelector('.math-toolbar').addEventListener('mousedown', e => {
+                _saveFmtSel();
+                _setKeepHL(_savedFmtRange);   // keep it visible while the control has focus
+            }, true);
             // Close font dropdown when clicking anywhere outside it
             document.addEventListener('click', e => {
                 if (!document.getElementById('font-dropdown-btn')?.contains(e.target) &&
@@ -2576,23 +2894,35 @@ a{color:#1a3a6e}
             })();
             // ─────────────────────────────────────────────────────────
 
+            // Apply size on change so the spinner arrows work (not just Enter); Enter
+            // commits via blur and is prevented from submitting the form.
             document.getElementById('size-picker').addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const v = e.target.value.trim();
-                    if (v) { applyFontSize(v + 'px'); e.target.value = ''; wysiwyg.focus({ preventScroll: true }); }
-                }
+                if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+            });
+            document.getElementById('size-picker').addEventListener('change', e => {
+                const v = parseInt(e.target.value, 10);
+                if (v > 0) applyFontSize(v + 'px');
             });
             document.getElementById('text-color-picker').addEventListener('change', e => applyTextColor(e.target.value));
             document.getElementById('highlight-picker').addEventListener('change', e => applyHighlight(e.target.value));
 
             wysiwyg.addEventListener('input', (e) => {
-                if (!(e && e.isComposing)) { if (!_tryAutoChip()) _tryShorthand(); }
+                if (!(e && e.isComposing)) { if (!_tryShorthand()) _tryAutoChip(); }
                 syncToTextarea();
             });
             wysiwyg.addEventListener('copy',  e => _clipboardCopy(e, false));
             wysiwyg.addEventListener('cut',   e => _clipboardCopy(e, true));
             wysiwyg.addEventListener('paste', e => _clipboardPaste(e));
+            // shorthand library: apply saved renames, insert on symbol click, rename on edit
+            _applyShOverrides();
+            (function () {
+                const b = document.getElementById('sh-lib-body');
+                b.addEventListener('click', e => {
+                    const rm = e.target.closest('.sh-brm'); if (rm) { _removeCustomBorder(rm.dataset.bc); return; }
+                    const s = e.target.closest('.sh-sym'); if (s) _pickShorthand(s.dataset.name);
+                });
+                b.addEventListener('change', e => { if (e.target.classList && e.target.classList.contains('sh-edit')) _saveShEdit(e.target); });
+            })();
             _doLivePreview();
 
             // ── Modal symbol search ───────────────────────────────────

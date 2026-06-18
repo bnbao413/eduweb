@@ -80,7 +80,7 @@
         text = marked.parse(text, {breaks: true});
         return text.replace(/%%MATH(\d+)%%/g, (_, i) => {
             const {m, d} = blocks[+i];
-            try { return katex.renderToString(m, {throwOnError: false, displayMode: d}); }
+            try { let _h = katex.renderToString(m, {throwOnError: false, displayMode: false}); if (/\\begin\{/.test(m)) _h = `<span style="font-size:0.8em;display:inline-block;vertical-align:middle">${_h}</span>`; return d ? `<div style="text-align:center;margin:0.6em 0">${_h}</div>` : _h; }
             catch (e) { return d ? `$$${m}$$` : `$${m}$`; }
         });
     }
