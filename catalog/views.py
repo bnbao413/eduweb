@@ -16,6 +16,7 @@ def server_error(request):
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from .models import (
     Subject, Course, Unit, TextbookPage, NotesPage, PracticeSet, UnitTest, FinalExam,
@@ -44,8 +45,10 @@ def home(request):
     return render(request, 'catalog/home.html', {'subjects': subjects})
 
 
+@login_required
 def general_editor(request):
-    """Standalone math/markdown editor not tied to any model."""
+    """Standalone math/markdown editor, open to any logged-in account
+    (not staff-only, unlike the textbook/notes editors)."""
     return render(request, 'catalog/general_edit.html')
 
 
@@ -228,7 +231,9 @@ def start_final_exam(request, exam_id):
 # PDF export — serialized preview DOM (KaTeX already rendered) → Playwright PDF
 # ---------------------------------------------------------------------------
 
-@staff_member_required
+# Export is available to any logged-in account so the public general editor can
+# produce PDFs (the staff-only textbook/notes editors also use it).
+@login_required
 @require_POST
 def export_pdf(request):
     try:
@@ -241,6 +246,9 @@ def export_pdf(request):
 
     rendered_html = request.POST.get('rendered_html', '')
     title = request.POST.get('title', 'document').strip() or 'document'
+    page_format = request.POST.get('page_format', 'Letter')
+    if page_format not in ('Letter', 'A4'):
+        page_format = 'Letter'
 
     if not rendered_html:
         return HttpResponse('rendered_html is required', status=400, content_type='text/plain')
@@ -251,7 +259,7 @@ def export_pdf(request):
             pg = browser.new_page()
             pg.set_content(rendered_html, wait_until='domcontentloaded')
             pdf_bytes = pg.pdf(
-                format='Letter',
+                format=page_format,
                 margin={'top': '1in', 'right': '1in', 'bottom': '1in', 'left': '1in'},
                 print_background=True,
             )

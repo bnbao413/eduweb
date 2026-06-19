@@ -40,8 +40,8 @@
     padding: 96px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     box-sizing: border-box;
-    overflow-wrap: break-word;
-    word-break: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 #content .katex-display { margin: 0.8em 0; overflow-x: auto; }
 #content pre, #content code { white-space: pre-wrap; font-size: 10pt; }
@@ -97,7 +97,7 @@
         m.style.cssText =
             'position:fixed;top:-9999px;left:0;width:624px;' +
             'font-family:Georgia,serif;font-size:12pt;line-height:1.6;' +
-            'overflow-wrap:break-word;word-break:normal;' +
+            'overflow-wrap:anywhere;word-break:break-word;' +
             'visibility:hidden;pointer-events:none;';
         m.innerHTML = bodyHtml;
         document.body.appendChild(m);

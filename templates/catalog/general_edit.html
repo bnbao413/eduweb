@@ -374,12 +374,16 @@
 
         <div class="editor-topbar">
             <div class="editor-topbar-inner">
-                <a href="{% url 'home' %}" class="et-back" title="Back to home">&lsaquo;</a>
+                <a id="editor-exit" class="et-back" title="Back to documents" style="cursor:pointer">&lsaquo;</a>
                 <span class="et-label">Editor</span>
                 <div class="et-title-field"><input type="text" name="title" maxlength="200" placeholder="Untitled document" autocomplete="off"></div>
                 <div class="et-actions">
                     <button type="button" onclick="openHelp()" class="btn btn-secondary btn-sm">Help</button>
                     <button type="button" onclick="openShorthandLib()" class="btn btn-secondary btn-sm">Shorthands</button>
+                    <select id="docsize-select" title="Page size" style="font-size:0.82rem;padding:0 6px;height:30px;border:1px solid #c5cce0;border-radius:6px;background:#fff;cursor:pointer;">
+                        <option value="letter">US Letter</option>
+                        <option value="a4">A4</option>
+                    </select>
                     <button type="button" id="import-pdf-btn" class="btn btn-secondary btn-sm" title="Import a PDF: extract its text into the editor (garbled math becomes empty chips to fill in)">Import PDF</button>
                     <input type="file" id="import-pdf-input" accept="application/pdf" style="display:none;">
                     <button type="button" id="export-btn" onclick="exportPDF()" class="btn btn-secondary btn-sm">Export PDF</button>
@@ -1521,14 +1525,15 @@
             const katexCss = await _getKatexCss();
             setStatus('Rendering PDF…');
             const title = (document.querySelector('input[name="title"]')?.value || '').trim() || 'document';
+            const _D = _docDims();
             const bodyHtml = renderContent(input.value);
             const fullHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <title>${title.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</title>
 <style>${katexCss}</style>
 <style>
-@page{size:letter;margin:1in}
-body{font-family:Georgia,serif;font-size:12pt;line-height:1.6;margin:0}
+@page{size:${_D.fmt === 'A4' ? 'A4' : 'letter'};margin:1in}
+body{font-family:Georgia,serif;font-size:12pt;line-height:1.6;margin:0;overflow-wrap:anywhere;word-break:break-word}
 .katex-display{margin:0.8em 0;overflow-x:visible}
 pre,code{white-space:pre-wrap;font-size:10pt}
 a{color:#1a3a6e}
@@ -1537,6 +1542,7 @@ a{color:#1a3a6e}
             const fd = new FormData();
             fd.append('rendered_html', fullHtml);
             fd.append('title', title);
+            fd.append('page_format', _D.fmt);
             fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
             const res = await fetch('{% url "export_pdf" %}', { method: 'POST', body: fd });
             if (!res.ok) throw new Error(await res.text());
@@ -1584,14 +1590,23 @@ a{color:#1a3a6e}
         let livePreviewUrl = null;
         let _liveTimer = null;
 
+        // Page dimensions at 96dpi for the chosen document size (US Letter / A4).
+        // content/pageH are the printable area with 1in margins all round.
+        function _docDims() {
+            const a4 = (window._docSize && window._docSize() === 'a4');
+            return a4 ? { w: 794, h: 1123, content: 602, pageH: 931, fmt: 'A4' }
+                      : { w: 816, h: 1056, content: 624, pageH: 864, fmt: 'Letter' };
+        }
+
         function _paginateContent(bodyHtml) {
-            const PAGE_H = 9 * 96; // 864 px (9in content area at 96dpi)
+            const _D = _docDims();
+            const PAGE_H = _D.pageH;
 
             const m = document.createElement('div');
             m.style.cssText =
-                'position:fixed;top:-9999px;left:0;width:624px;' +
+                'position:fixed;top:-9999px;left:0;width:' + _D.content + 'px;' +
                 'font-family:Georgia,serif;font-size:12pt;line-height:1.6;' +
-                'overflow-wrap:break-word;word-break:normal;' +
+                'overflow-wrap:anywhere;word-break:break-word;' +
                 'visibility:hidden;pointer-events:none;';
             m.innerHTML = bodyHtml;
             document.body.appendChild(m);
@@ -1664,6 +1679,7 @@ a{color:#1a3a6e}
         }
 
         function _doLivePreview() {
+            const _D = _docDims();
             const title = (document.querySelector('input[name="title"]')?.value || '').trim() || 'document';
             const bodyHtml = renderContent(input.value);
             const pages = _paginateContent(bodyHtml);
@@ -1676,10 +1692,10 @@ a{color:#1a3a6e}
 html{background:#e0e0e0;padding:0;margin:0;overflow-x:hidden}
 body{margin:0;overflow-x:hidden}
 .page{font-family:Georgia,serif;font-size:12pt;line-height:1.6;
-      background:#fff;width:816px;min-height:1056px;
+      background:#fff;width:${_D.w}px;min-height:${_D.h}px;
       margin:0 auto 38px;padding:96px;
       box-shadow:0 2px 10px rgba(0,0,0,0.35);box-sizing:border-box;
-      overflow-wrap:break-word;word-break:normal}
+      overflow-wrap:anywhere;word-break:break-word}
 .page:first-child{margin-top:38px}
 .katex-display{margin:0.8em 0;overflow-x:visible}
 pre,code{white-space:pre-wrap;font-size:10pt}
@@ -1688,7 +1704,7 @@ a{color:#1a3a6e}
 <script>
 (function(){
   function fit(){
-    var s=Math.min(1,document.documentElement.clientWidth/816);
+    var s=Math.min(1,document.documentElement.clientWidth/${_D.w});
     document.body.style.zoom=s;
   }
   document.addEventListener('DOMContentLoaded',fit);
@@ -3046,6 +3062,7 @@ a{color:#1a3a6e}
         });
     </script>
 
+    {% url 'home' as docsback %}{% include "catalog/_docs.html" with ns="general" backurl=docsback %}
 
 </body>
 </html>

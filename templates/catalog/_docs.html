@@ -1,0 +1,340 @@
+{% comment %}
+Google-Docs-style document shell, shared by all editors.
+Include AFTER the editor's main <script>:
+  {% url 'home' as _u %}{% include "catalog/_docs.html" with ns="general" backurl=_u %}
+
+Opening an editor lands on a full-screen DOCUMENT GALLERY (not the editor):
+a "+ New document" card plus a card per saved document. Clicking + asks for a
+page size (US Letter / A4 — hard-locked, no way to dismiss without choosing),
+then enters the editor. Exiting a document returns to the gallery, where it
+stays saved and can be reopened. Edits auto-save (debounced + on exit).
+
+Exposes window._docSize() -> 'letter'|'a4' for the editor's preview/export.
+Relies on host globals: wysiwyg, serializeWysiwyg(), loadWysiwyg(),
+syncToTextarea(), updateLivePreview(). Hooks: #docsize-select, #editor-exit.
+{% endcomment %}
+<style>
+#docs-gallery { display:none; position:fixed; inset:0; z-index:900; background:#f3f4f6;
+    overflow-y:auto; flex-direction:column; }
+.dg-bar { display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:16px 28px; background:#fff; border-bottom:1px solid #e5e7eb; position:sticky; top:0; }
+.dg-bar .dg-title { font-size:1.15rem; font-weight:700; color:#111827; }
+.dg-bar a, .dg-bar button { font-size:.9rem; }
+.dg-bar .dg-link { color:#4f46e5; text-decoration:none; font-weight:600; }
+.dg-bar .dg-link:hover { text-decoration:underline; }
+.dg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    gap:18px; padding:28px; max-width:1100px; margin:0 auto; width:100%; box-sizing:border-box; }
+.dg-card { position:relative; background:#fff; border:1px solid #e5e7eb; border-radius:10px;
+    padding:16px; cursor:pointer; display:flex; flex-direction:column; gap:6px; min-height:128px;
+    transition:border-color .12s, box-shadow .12s; }
+.dg-card:hover { border-color:#4f46e5; box-shadow:0 6px 16px rgba(17,24,39,.1); }
+.dg-card .dg-ct { font-weight:600; color:#111827; overflow:hidden; text-overflow:ellipsis;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.dg-card .dg-cs { font-size:.78rem; color:#6b7280; margin-top:auto; padding-right:24px; }
+.dg-kebab { position:absolute; top:8px; right:8px; width:28px; height:28px; border:none;
+    background:none; border-radius:6px; cursor:pointer; color:#6b7280; font-size:1.15rem;
+    line-height:1; display:flex; align-items:center; justify-content:center; }
+.dg-kebab:hover { background:#f3f4f6; color:#111827; }
+#dg-menu { position:absolute; z-index:950; display:none; background:#fff; border:1px solid #e5e7eb;
+    border-radius:8px; box-shadow:0 8px 24px rgba(17,24,39,.16); min-width:170px; padding:5px; }
+#dg-menu button { display:block; width:100%; text-align:left; background:none; border:none;
+    padding:8px 12px; font-size:.88rem; color:#111827; border-radius:6px; cursor:pointer; }
+#dg-menu button:hover { background:#f3f4f6; }
+#dg-menu button.danger { color:#dc2626; }
+#dg-menu button.danger:hover { background:#fef2f2; }
+.dg-new { align-items:center; justify-content:center; border:2px dashed #c7cdd9; background:#fafbfc;
+    color:#4f46e5; font-weight:600; }
+.dg-new:hover { border-color:#4f46e5; background:#eef2ff; }
+.dg-new .dg-plus { font-size:2.2rem; line-height:1; }
+.dg-empty-hint { color:#6b7280; font-size:.9rem; }
+/* hard-locked size dialog */
+#docsize-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(17,24,39,.55);
+    align-items:center; justify-content:center; padding:16px; }
+#docsize-modal .ws-card { background:#fff; border-radius:12px; width:100%; max-width:420px;
+    box-shadow:0 20px 50px rgba(0,0,0,.3); overflow:hidden; }
+#docsize-modal .ws-head { padding:14px 18px; border-bottom:1px solid #e5e7eb; font-weight:700;
+    display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.ws-x { background:none; border:none; cursor:pointer; font-size:1.4rem; line-height:1; color:#6b7280;
+    padding:0 4px; border-radius:6px; }
+.ws-x:hover { color:#111827; background:#f3f4f6; }
+.ws-sizebody { padding:20px 18px; color:#111827; }
+.ws-sizebtns { display:flex; gap:12px; margin-top:14px; }
+.ws-sizebtns button { flex:1; padding:18px 10px; border:1px solid #d1d5db; border-radius:10px;
+    background:#f9fafb; cursor:pointer; font-size:.95rem; font-weight:600; color:#111827; }
+.ws-sizebtns button:hover { border-color:#4f46e5; background:#eef2ff; color:#4f46e5; }
+.ws-sizebtns small { display:block; font-weight:400; color:#6b7280; margin-top:4px; }
+#ws-toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:#111827;
+    color:#fff; padding:9px 16px; border-radius:8px; font-size:.9rem; z-index:1100; opacity:0;
+    transition:opacity .2s; pointer-events:none; }
+#ws-toast.show { opacity:1; }
+</style>
+<script>
+(function () {
+    const NS = "{{ ns|default:'general' }}{% if pageid %}-{{ pageid }}{% endif %}";
+    const BACK_URL = "{{ backurl|default:'/' }}";
+    const STORE_KEY = 'eduDocs_' + NS;
+
+    function loadAll() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { return []; } }
+    function saveAll(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function fmtDate(ms) { try { return new Date(ms).toLocaleString(); } catch (e) { return ''; } }
+
+    let curId = null;
+    let curSize = 'letter';
+    window._docSize = function () { return curSize; };
+
+    function titleField() { return document.querySelector('input[name="title"]'); }
+    function curTitle() { const t = titleField(); return t ? t.value.trim() : ''; }
+    function setTitleField(v) { const t = titleField(); if (t) t.value = v || ''; }
+    function findDoc(id) { return loadAll().find(d => d.id === id); }
+
+    let _toastTimer = null;
+    function flash(msg) {
+        const el = document.getElementById('ws-toast'); if (!el) return;
+        el.textContent = msg; el.classList.add('show');
+        clearTimeout(_toastTimer); _toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    function autosave() {
+        if (!curId) return;
+        const list = loadAll();
+        const rec = { id: curId, title: curTitle(), source: serializeWysiwyg(), size: curSize, updatedAt: Date.now() };
+        const i = list.findIndex(d => d.id === curId);
+        if (i >= 0) list[i] = rec; else list.unshift(rec);
+        saveAll(list);
+    }
+    let _saveTimer = null;
+    function scheduleSave() { if (curId) { clearTimeout(_saveTimer); _saveTimer = setTimeout(autosave, 700); } }
+
+    function applySize() {
+        const sel = document.getElementById('docsize-select');
+        if (sel) sel.value = curSize;
+        if (typeof updateLivePreview === 'function') updateLivePreview();
+    }
+
+    // ── gallery ⇄ editor ───────────────────────────────────────────────────
+    function gallery() { return document.getElementById('docs-gallery'); }
+
+    function enterEditor(d) {
+        curId = d.id; curSize = (d.size === 'a4') ? 'a4' : 'letter';
+        loadWysiwyg(d.source || '');
+        setTitleField(d.title || '');
+        applySize();
+        if (typeof syncToTextarea === 'function') syncToTextarea();
+        gallery().style.display = 'none';
+        wysiwyg.focus({ preventScroll: true });
+    }
+
+    function exitToGallery() {
+        autosave();
+        curId = null;
+        showGallery();
+    }
+    window._exitToDocs = exitToGallery;
+
+    function showGallery() { renderGallery(); gallery().style.display = 'flex'; }
+
+    function renderGallery() {
+        const grid = document.getElementById('dg-grid'); if (!grid) return;
+        const list = loadAll().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        let html = '<div class="dg-card dg-new" data-act="new"><div class="dg-plus">+</div><div>New document</div></div>';
+        html += list.map(d =>
+            '<div class="dg-card" data-act="open" data-id="' + d.id + '">' +
+                '<button type="button" class="dg-kebab" data-id="' + d.id + '" title="More options" aria-label="More options">&#8942;</button>' +
+                '<div class="dg-ct">' + esc(d.title || 'Untitled') + '</div>' +
+                '<div class="dg-cs">' + (d.size === 'a4' ? 'A4' : 'US Letter') + ' &middot; ' + esc(fmtDate(d.updatedAt)) + '</div>' +
+            '</div>'
+        ).join('');
+        grid.innerHTML = html;
+    }
+
+    function createAndEnter(size, seed, title) {
+        const d = { id: uid(), title: title || '', source: seed || '',
+                    size: (size === 'a4') ? 'a4' : 'letter', updatedAt: Date.now() };
+        const list = loadAll(); list.unshift(d); saveAll(list);
+        enterEditor(d);
+    }
+
+    function deleteDoc(id) {
+        if (!confirm('Delete this document?')) return;
+        saveAll(loadAll().filter(d => d.id !== id));
+        if (id === curId) curId = null;
+        renderGallery();
+    }
+    function renameDoc(id) {
+        const list = loadAll();
+        const d = list.find(x => x.id === id); if (!d) return;
+        const name = prompt('Rename document', d.title || '');
+        if (name === null) return;
+        d.title = name.trim();
+        d.updatedAt = Date.now();
+        saveAll(list);
+        if (id === curId) setTitleField(d.title);
+        renderGallery();
+    }
+    function duplicateDoc(id) {
+        const d = findDoc(id); if (!d) return;
+        const copy = { id: uid(), title: ((d.title || 'Untitled') + ' (copy)'),
+                       source: d.source || '', size: d.size === 'a4' ? 'a4' : 'letter', updatedAt: Date.now() };
+        const list = loadAll(); list.unshift(copy); saveAll(list);
+        renderGallery(); flash('Duplicated');
+    }
+    function downloadDoc(id) {
+        const d = findDoc(id); if (!d) return;
+        const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = ((d.title || 'document').replace(/[^\w\-]+/g, '_') || 'document') + '.edudoc.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function importFile(file) {
+        const r = new FileReader();
+        r.onload = () => {
+            try {
+                const d = JSON.parse(r.result);
+                if (!d || typeof d.source !== 'string') throw new Error('bad');
+                const list = loadAll();
+                list.unshift({ id: uid(), title: d.title || 'Imported', source: d.source,
+                               size: (d.size === 'a4') ? 'a4' : 'letter', updatedAt: Date.now() });
+                saveAll(list); renderGallery(); flash('Document imported');
+            } catch (e) { alert('That is not a valid document file.'); }
+        };
+        r.readAsText(file);
+    }
+
+    // ── hard-locked size dialog ─────────────────────────────────────────────
+    let _sizeCb = null;
+    function askSize(cb) { _sizeCb = cb; document.getElementById('docsize-modal').style.display = 'flex'; }
+    function chooseSize(size) {
+        document.getElementById('docsize-modal').style.display = 'none';
+        const cb = _sizeCb; _sizeCb = null;
+        if (cb) cb(size);
+    }
+
+    function buildUI() {
+        if (document.getElementById('docs-gallery')) return;
+        const g = document.createElement('div');
+        g.id = 'docs-gallery';
+        g.innerHTML =
+            '<div class="dg-bar">' +
+                '<span style="display:flex;gap:18px;align-items:center;">' +
+                    '<a class="dg-link" href="' + BACK_URL + '">&lsaquo; Back</a>' +
+                    '<span class="dg-title">Documents</span>' +
+                '</span>' +
+            '</div>' +
+            '<div id="dg-grid" class="dg-grid"></div>';
+        document.body.appendChild(g);
+
+        const sz = document.createElement('div');
+        sz.id = 'docsize-modal';
+        sz.innerHTML =
+            '<div class="ws-card"><div class="ws-head"><span>Choose a page size</span>' +
+                '<button type="button" id="docsize-close" class="ws-x" aria-label="Close">&times;</button></div>' +
+                '<div class="ws-sizebody">' +
+                    '<div class="ws-sizebtns">' +
+                        '<button type="button" data-size="letter">US Letter<small>8.5 × 11 in</small></button>' +
+                        '<button type="button" data-size="a4">A4<small>210 × 297 mm</small></button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(sz);
+
+        const toast = document.createElement('div'); toast.id = 'ws-toast'; document.body.appendChild(toast);
+
+        // per-card kebab menu (Google-Docs style)
+        const menu = document.createElement('div');
+        menu.id = 'dg-menu';
+        menu.innerHTML =
+            '<button type="button" data-mact="open">Open</button>' +
+            '<button type="button" data-mact="rename">Rename</button>' +
+            '<button type="button" data-mact="duplicate">Make a copy</button>' +
+            '<button type="button" data-mact="download">Download</button>' +
+            '<button type="button" class="danger" data-mact="delete">Delete</button>';
+        document.body.appendChild(menu);
+
+        function closeMenu() { menu.style.display = 'none'; menu.dataset.id = ''; }
+        function openMenu(kebab, id) {
+            menu.dataset.id = id;
+            menu.style.display = 'block';
+            const r = kebab.getBoundingClientRect();
+            const mw = menu.offsetWidth || 170, mh = menu.offsetHeight || 200;
+            let left = r.right - mw, top = r.bottom + 4;
+            if (top + mh > window.innerHeight) top = Math.max(8, r.top - mh - 4);
+            if (left < 8) left = 8;
+            menu.style.left = (left + window.scrollX) + 'px';
+            menu.style.top = (top + window.scrollY) + 'px';
+        }
+
+        // gallery clicks (new / open / kebab)
+        document.getElementById('dg-grid').addEventListener('click', e => {
+            const kebab = e.target.closest('.dg-kebab');
+            if (kebab) { e.stopPropagation();
+                if (menu.style.display === 'block' && menu.dataset.id === kebab.dataset.id) closeMenu();
+                else openMenu(kebab, kebab.dataset.id);
+                return;
+            }
+            const card = e.target.closest('.dg-card'); if (!card) return;
+            if (card.dataset.act === 'new') {
+                askSize(size => createAndEnter(size, '', ''));
+            } else if (card.dataset.act === 'open') {
+                const d = findDoc(card.dataset.id); if (d) enterEditor(d);
+            }
+        });
+        menu.addEventListener('click', e => {
+            const b = e.target.closest('button[data-mact]'); if (!b) return;
+            const id = menu.dataset.id; closeMenu();
+            if (!id) return;
+            const act = b.dataset.mact;
+            if (act === 'open') { const d = findDoc(id); if (d) enterEditor(d); }
+            else if (act === 'rename') renameDoc(id);
+            else if (act === 'duplicate') duplicateDoc(id);
+            else if (act === 'download') downloadDoc(id);
+            else if (act === 'delete') deleteDoc(id);
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#dg-menu') && !e.target.closest('.dg-kebab')) closeMenu();
+        });
+        window.addEventListener('scroll', closeMenu, true);
+        window.addEventListener('resize', closeMenu);
+
+        // size dialog: pick a size, or close with the X (cancel back to the gallery)
+        sz.querySelectorAll('.ws-sizebtns button').forEach(b =>
+            b.addEventListener('click', () => chooseSize(b.dataset.size)));
+        sz.querySelector('#docsize-close').addEventListener('click', () => {
+            sz.style.display = 'none'; _sizeCb = null;
+        });
+    }
+
+    function wire() {
+        buildUI();
+        const exitBtn = document.getElementById('editor-exit');
+        if (exitBtn) exitBtn.addEventListener('click', e => { e.preventDefault(); exitToGallery(); });
+        const sel = document.getElementById('docsize-select');
+        if (sel) sel.addEventListener('change', () => {
+            curSize = (sel.value === 'a4') ? 'a4' : 'letter';
+            autosave();
+            if (typeof updateLivePreview === 'function') updateLivePreview();
+        });
+
+        wysiwyg.addEventListener('input', scheduleSave);
+        const t = titleField(); if (t) t.addEventListener('input', scheduleSave);
+        window.addEventListener('beforeunload', autosave);
+
+        // Seed a document from already-loaded content (textbook/notes pages) so the
+        // published page shows up as a card the first time.
+        if (!loadAll().length) {
+            const seed = (typeof serializeWysiwyg === 'function') ? serializeWysiwyg() : '';
+            if (seed.trim()) {
+                saveAll([{ id: uid(), title: curTitle(), source: seed, size: 'letter', updatedAt: Date.now() }]);
+            }
+        }
+        // Always land on the gallery — never auto-open the editor.
+        showGallery();
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+    else wire();
+})();
+</script>

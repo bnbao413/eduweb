@@ -34,7 +34,7 @@ Exposes:
         try {
             const body = _htmlEsc((src || '').replace(/\r/g, '')).replace(/\n/g, ' ' + NL_TOKEN + ' ');
             // Invisible (white, small) but reliably painted -> in the PDF text layer.
-            return '<div style="color:#ffffff;font-size:8px;line-height:1.4">'
+            return '<div style="color:#ffffff;font-size:8px;line-height:1.4;overflow-wrap:anywhere;word-break:break-word">'
                  + SRC_MARK + ' ' + body + ' ' + SRC_MARK + '</div>';
         } catch (e) { return ''; }
     };
