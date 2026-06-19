@@ -380,6 +380,8 @@
                 <div class="et-actions">
                     <button type="button" onclick="openHelp()" class="btn btn-secondary btn-sm">Help</button>
                     <button type="button" onclick="openShorthandLib()" class="btn btn-secondary btn-sm">Shorthands</button>
+                    <button type="button" id="import-pdf-btn" class="btn btn-secondary btn-sm" title="Import a PDF: extract its text into the editor (garbled math becomes empty chips to fill in)">Import PDF</button>
+                    <input type="file" id="import-pdf-input" accept="application/pdf" style="display:none;">
                     <button type="button" id="export-btn" onclick="exportPDF()" class="btn btn-secondary btn-sm">Export PDF</button>
                     <button type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
@@ -906,6 +908,7 @@
     </div>
 
     {% include "catalog/_shorthand.html" %}
+    {% include "catalog/_pdfimport.html" %}
 
     <script>
         let input = document.getElementById("content-input");
@@ -923,12 +926,18 @@
             // Always render inline (textstyle) so every chip is the same size;
             // display chips just sit centered on their own line (.display-chip).
             // Matrices/arrays are scaled down so they aren't oversized vs other math.
-            try {
-                let _h = katex.renderToString(latex, { throwOnError: false, displayMode: false });
-                if (/\\begin\{/.test(latex)) _h = `<span style="font-size:0.8em;display:inline-block;vertical-align:middle">${_h}</span>`;
-                span.innerHTML = _h;
+            if (!latex) {
+                // Empty placeholder chip (e.g. from PDF import) — click to fill in.
+                span.classList.add('math-chip-ph');
+                span.innerHTML = '<span style="opacity:.6;font-style:italic">[ math ]</span>';
+            } else {
+                try {
+                    let _h = katex.renderToString(latex, { throwOnError: false, displayMode: false });
+                    if (/\\begin\{/.test(latex)) _h = `<span style="font-size:0.8em;display:inline-block;vertical-align:middle">${_h}</span>`;
+                    span.innerHTML = _h;
+                }
+                catch(e) { span.textContent = display ? `\\[${latex}\\]` : `\\(${latex}\\)`; }
             }
-            catch(e) { span.textContent = display ? `\\[${latex}\\]` : `\\(${latex}\\)`; }
             if (clickable) {
                 span.addEventListener('click', e => {
                     e.preventDefault(); e.stopPropagation();
@@ -1010,6 +1019,7 @@
         }
 
         function _isComplexLatex(latex) {
+            if (!latex) return true;   // empty placeholder chip (fill-me) is clickable
             // Pure palette symbols that happen to contain braces/superscripts but are
             // NOT meant to be re-edited — keep them as static (non-clickable) chips so
             // they behave identically when freshly inserted and when reloaded.
@@ -1524,7 +1534,7 @@ body{font-family:Georgia,serif;font-size:12pt;line-height:1.6;margin:0}
 pre,code{white-space:pre-wrap;font-size:10pt}
 a{color:#1a3a6e}
 </style>
-</head><body>${bodyHtml}</body></html>`;
+</head><body>${bodyHtml}${(window._exportSourceEmbed ? _exportSourceEmbed(input.value) : '')}</body></html>`;
             const fd = new FormData();
             fd.append('rendered_html', fullHtml);
             fd.append('title', title);

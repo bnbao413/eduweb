@@ -1,28 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}EduWeb — Subjects{% endblock %}
+{% block title %}EduWeb{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Subjects</h1>
-    <p class="page-subtitle">Browse courses, notes, and practice across every subject.</p>
-</div>
-
-{% if subjects %}
-    <div class="card-stack">
-        {% for subject in subjects %}
-            <a href="{% url 'subject_detail' subject.id %}" class="list-card">
-                <div>
-                    <p class="lc-title">{{ subject.title }}</p>
-                    {% if subject.description %}
-                        <p class="lc-desc">{{ subject.description }}</p>
-                    {% endif %}
-                </div>
-                <span class="lc-arrow" aria-hidden="true">&rsaquo;</span>
-            </a>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="empty">No subjects yet.</div>
-{% endif %}
 {% endblock %}

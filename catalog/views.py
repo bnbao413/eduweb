@@ -18,7 +18,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
 from django.db import IntegrityError
 from .models import (
-    Subject, Course, TextbookPage, NotesPage, PracticeSet, UnitTest, FinalExam,
+    Subject, Course, Unit, TextbookPage, NotesPage, PracticeSet, UnitTest, FinalExam,
 )
 from .forms import TextbookPageForm, NotesPageForm, RegisterForm
 
@@ -42,6 +42,52 @@ def register(request):
 def home(request):
     subjects = Subject.objects.all()
     return render(request, 'catalog/home.html', {'subjects': subjects})
+
+
+def general_editor(request):
+    """Standalone math/markdown editor not tied to any model."""
+    return render(request, 'catalog/general_edit.html')
+
+
+def search(request):
+    """Live site search across all content types; returns JSON for the
+    front-page search box. Each result links straight to its page."""
+    from django.http import JsonResponse
+    from django.urls import reverse
+
+    q = (request.GET.get('q') or '').strip()
+    results = []
+    if q:
+        for s in Subject.objects.filter(title__icontains=q)[:6]:
+            results.append({'title': s.title, 'type': 'Subject', 'context': '',
+                            'url': reverse('subject_detail', args=[s.id])})
+        for c in Course.objects.filter(title__icontains=q).select_related('subject')[:6]:
+            results.append({'title': c.title, 'type': 'Course',
+                            'context': c.subject.title if c.subject else '',
+                            'url': reverse('course_detail', args=[c.id])})
+        for u in Unit.objects.filter(title__icontains=q).select_related('course')[:6]:
+            results.append({'title': u.title, 'type': 'Unit', 'context': u.course.title,
+                            'url': reverse('course_detail', args=[u.course.id])})
+        for p in TextbookPage.objects.filter(title__icontains=q).select_related('unit__course')[:8]:
+            results.append({'title': p.title, 'type': 'Textbook',
+                            'context': f'{p.unit.course.title} · {p.unit.title}',
+                            'url': reverse('textbook_detail', args=[p.id])})
+        for p in NotesPage.objects.filter(title__icontains=q).select_related('unit__course')[:8]:
+            results.append({'title': p.title, 'type': 'Notes',
+                            'context': f'{p.unit.course.title} · {p.unit.title}',
+                            'url': reverse('notes_detail', args=[p.id])})
+        for p in PracticeSet.objects.filter(title__icontains=q).select_related('unit__course')[:6]:
+            results.append({'title': p.title, 'type': 'Practice',
+                            'context': f'{p.unit.course.title} · {p.unit.title}',
+                            'url': reverse('practice_detail', args=[p.id])})
+        for t in UnitTest.objects.filter(title__icontains=q).select_related('unit__course')[:6]:
+            results.append({'title': t.title, 'type': 'Unit test',
+                            'context': f'{t.unit.course.title} · {t.unit.title}',
+                            'url': reverse('unit_test_detail', args=[t.id])})
+        for e in FinalExam.objects.filter(title__icontains=q).select_related('course')[:6]:
+            results.append({'title': e.title, 'type': 'Final exam', 'context': e.course.title,
+                            'url': reverse('final_exam_detail', args=[e.id])})
+    return JsonResponse({'results': results})
 
 def subject_detail(request, subject_id):
     subject = get_object_or_404(Subject, id=subject_id)

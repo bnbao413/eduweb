@@ -161,6 +161,61 @@ small { font-size: 0.85rem; }
 }
 .topbar-actions .user { color: var(--text); font-weight: 600; }
 
+/* ----- site search (topbar) ------------------------------------------------ */
+.topbar-search { position: relative; width: 300px; max-width: 34vw; }
+.topbar-search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 0.7rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-sizing: border-box;
+    outline: none;
+}
+.topbar-search input:focus { border-color: var(--accent); box-shadow: var(--ring); }
+
+.search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 200;
+}
+.search-results a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+}
+.search-results a:last-child { border-bottom: none; }
+.search-results a:hover,
+.search-results a.active { background: var(--surface-2); text-decoration: none; }
+.sr-main { display: flex; flex-direction: column; min-width: 0; }
+.sr-title { font-weight: 600; font-size: 0.9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-context { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-type {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+}
+.search-empty { padding: 0.75rem 0.8rem; color: var(--text-muted); font-size: 0.88rem; }
+
 /* ----- page layout --------------------------------------------------------- */
 
 .page-shell {

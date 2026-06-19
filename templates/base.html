@@ -7,7 +7,7 @@
     <title>{% block title %}EduWeb{% endblock %}</title>
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
+    <link rel="stylesheet" href="{% static 'catalog/app.css' %}?v=2">
 
     <script>
         window.MathJax = {
@@ -26,9 +26,15 @@
                 <span class="brand-mark">E</span>
                 <span>EduWeb</span>
             </a>
+            <a href="{% url 'general_editor' %}" class="btn btn-primary btn-sm">Open editor</a>
             <nav class="nav">
                 <a href="{% url 'home' %}">Home</a>
             </nav>
+            <div class="topbar-search">
+                <input id="site-search" type="text" placeholder="Search…"
+                       autocomplete="off" spellcheck="false" aria-label="Search">
+                <div id="search-results" class="search-results" style="display:none;"></div>
+            </div>
             <div class="topbar-actions">
                 {% if user.is_authenticated %}
                     <span>Signed in as <span class="user">{{ user.username }}</span></span>
@@ -49,6 +55,89 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script>
+    (function () {
+        const input = document.getElementById('site-search');
+        const box = document.getElementById('search-results');
+        if (!input || !box) return;
+        const SEARCH_URL = "{% url 'search' %}";
+        let timer = null, active = -1, items = [];
+
+        function hide() { box.style.display = 'none'; box.innerHTML = ''; active = -1; items = []; }
+
+        function render(results) {
+            if (!results.length) {
+                box.innerHTML = '<div class="search-empty">No matches.</div>';
+                box.style.display = 'block';
+                items = []; active = -1;
+                return;
+            }
+            box.innerHTML = results.map(r =>
+                '<a href="' + r.url + '">' +
+                    '<span class="sr-main">' +
+                        '<span class="sr-title"></span>' +
+                        (r.context ? '<span class="sr-context"></span>' : '') +
+                    '</span>' +
+                    '<span class="sr-type"></span>' +
+                '</a>'
+            ).join('');
+            const anchors = Array.from(box.querySelectorAll('a'));
+            anchors.forEach((a, i) => {
+                a.querySelector('.sr-title').textContent = results[i].title;
+                const ctx = a.querySelector('.sr-context');
+                if (ctx) ctx.textContent = results[i].context;
+                a.querySelector('.sr-type').textContent = results[i].type;
+            });
+            items = anchors;
+            active = -1;
+            box.style.display = 'block';
+        }
+
+        function run(q) {
+            fetch(SEARCH_URL + '?q=' + encodeURIComponent(q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.json())
+                .then(d => render(d.results || []))
+                .catch(hide);
+        }
+
+        input.addEventListener('input', function () {
+            const q = this.value.trim();
+            clearTimeout(timer);
+            if (!q) { hide(); return; }
+            timer = setTimeout(() => run(q), 180);
+        });
+
+        input.addEventListener('keydown', function (e) {
+            if (box.style.display === 'none') return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!items.length) return;
+                active = (active + 1) % items.length;
+                highlight();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!items.length) return;
+                active = (active - 1 + items.length) % items.length;
+                highlight();
+            } else if (e.key === 'Enter') {
+                if (active >= 0 && items[active]) { e.preventDefault(); window.location.href = items[active].href; }
+                else if (items.length) { e.preventDefault(); window.location.href = items[0].href; }
+            } else if (e.key === 'Escape') {
+                hide();
+            }
+        });
+
+        function highlight() {
+            items.forEach((a, i) => a.classList.toggle('active', i === active));
+            if (active >= 0) items[active].scrollIntoView({ block: 'nearest' });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!input.contains(e.target) && !box.contains(e.target)) hide();
+        });
+    })();
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

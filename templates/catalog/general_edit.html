@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Notes Page — EduWeb</title>
+    <title>Editor — EduWeb</title>
+
     <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
-
 
     <style>
         /* Local design tokens — keeps this standalone editor self-contained
@@ -369,21 +369,20 @@
     </style>
 </head>
 <body>
-    <form method="post">
+    <form method="post" onsubmit="return false;">
         {% csrf_token %}
 
         <div class="editor-topbar">
             <div class="editor-topbar-inner">
-                <a href="{% url 'notes_detail' page.id %}" class="et-back" title="Back to notes page">&lsaquo;</a>
-                <span class="et-label">Edit notes</span>
-                <div class="et-title-field">{{ form.title }}</div>
+                <a href="{% url 'home' %}" class="et-back" title="Back to home">&lsaquo;</a>
+                <span class="et-label">Editor</span>
+                <div class="et-title-field"><input type="text" name="title" maxlength="200" placeholder="Untitled document" autocomplete="off"></div>
                 <div class="et-actions">
                     <button type="button" onclick="openHelp()" class="btn btn-secondary btn-sm">Help</button>
                     <button type="button" onclick="openShorthandLib()" class="btn btn-secondary btn-sm">Shorthands</button>
                     <button type="button" id="import-pdf-btn" class="btn btn-secondary btn-sm" title="Import a PDF: extract its text into the editor (garbled math becomes empty chips to fill in)">Import PDF</button>
                     <input type="file" id="import-pdf-input" accept="application/pdf" style="display:none;">
                     <button type="button" id="export-btn" onclick="exportPDF()" class="btn btn-secondary btn-sm">Export PDF</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
             </div>
         </div>
@@ -430,37 +429,37 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Structures</div>
                         <div class="toolbar-group-buttons">
-                    <button type="button" title="Fraction" onclick="openMath('\\frac{}{}')">a/b</button>
-                    <button type="button" title="Binomial coefficient" onclick="openMath('\\binom{}{}')">C(n,k)</button>
-                    <button type="button" title="Square root" onclick="openMath('\\sqrt{}')">√</button>
-                    <button type="button" title="nth root" onclick="openMath('\\sqrt[n]{}')">ⁿ√</button>
-                    <button type="button" title="Superscript" onclick="openMath('x^{}')">xⁿ</button>
-                    <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
-                    <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
-                    <button type="button" title="Contour integral" onclick="openMath('\\oint_{ }^{ }')">∮</button>
-                    <button type="button" title="Double closed surface integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','\\oiint','∯')">∯</button>
-                    <button type="button" title="Triple closed volume integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','∰','∰')">∰</button>
-                    <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
-                    <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
-                    <button type="button" title="Big union" onclick="openMath('\\bigcup_{ }^{ }')">⋃</button>
-                    <button type="button" title="Big intersection" onclick="openMath('\\bigcap_{ }^{ }')">⋂</button>
-                    <button type="button" title="Big wedge (exterior)" onclick="openMath('\\bigwedge_{ }')">⋀</button>
-                    <button type="button" title="Big vee" onclick="openMath('\\bigvee_{ }')">⋁</button>
-                    <button type="button" title="Limit" onclick="openMath('\\lim_{x\\to }')">lim</button>
-                    <button type="button" title="Limsup" onclick="openMath('\\limsup_{n\\to\\infty}')">limsup</button>
-                    <button type="button" title="Liminf" onclick="openMath('\\liminf_{n\\to\\infty}')">liminf</button>
-                    <button type="button" title="Direct limit / colimit" onclick="openMath('\\varinjlim_{ }')">colim</button>
-                    <button type="button" title="Inverse / projective limit" onclick="openMath('\\varprojlim_{ }')">lim←</button>
+                            <button type="button" title="Fraction" onclick="openMath('\\frac{}{}')">a/b</button>
+                            <button type="button" title="Binomial coefficient" onclick="openMath('\\binom{}{}')">C(n,k)</button>
+                            <button type="button" title="Square root" onclick="openMath('\\sqrt{}')">√</button>
+                            <button type="button" title="nth root" onclick="openMath('\\sqrt[n]{}')">ⁿ√</button>
+                            <button type="button" title="Superscript" onclick="openMath('x^{}')">xⁿ</button>
+                            <button type="button" title="Subscript" onclick="openMath('x_{}')">xₙ</button>
+                            <button type="button" title="Integral" onclick="openMath('\\int_{ }^{ }')">∫</button>
+                            <button type="button" title="Contour integral" onclick="openMath('\\oint_{ }^{ }')">∮</button>
+                            <button type="button" title="Double closed surface integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','\\oiint','∯')">∯</button>
+                            <button type="button" title="Triple closed volume integral" onclick="openMathForSymbol('\\oint_{ }^{ }','\\oint','∰','∰')">∰</button>
+                            <button type="button" title="Sum" onclick="openMath('\\sum_{ }^{ }')">Σ</button>
+                            <button type="button" title="Product" onclick="openMath('\\prod_{ }^{ }')">∏</button>
+                            <button type="button" title="Big union" onclick="openMath('\\bigcup_{ }^{ }')">⋃</button>
+                            <button type="button" title="Big intersection" onclick="openMath('\\bigcap_{ }^{ }')">⋂</button>
+                            <button type="button" title="Big wedge" onclick="openMath('\\bigwedge_{ }')">⋀</button>
+                            <button type="button" title="Big vee" onclick="openMath('\\bigvee_{ }')">⋁</button>
+                            <button type="button" title="Limit" onclick="openMath('\\lim_{x\\to }')">lim</button>
+                            <button type="button" title="Limsup" onclick="openMath('\\limsup_{n\\to\\infty}')">limsup</button>
+                            <button type="button" title="Liminf" onclick="openMath('\\liminf_{n\\to\\infty}')">liminf</button>
+                            <button type="button" title="Colimit" onclick="openMath('\\varinjlim_{ }')">colim</button>
+                            <button type="button" title="Inverse limit" onclick="openMath('\\varprojlim_{ }')">lim←</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Calculus</div>
                         <div class="toolbar-group-buttons">
-                    <button type="button" title="Partial derivative" onclick="insSym('\\partial')">∂</button>
-                    <button type="button" title="Nabla / gradient / div / curl" onclick="insSym('\\nabla')">∇</button>
-                    <button type="button" title="d/dx operator" onclick="openMath('\\frac{d}{dx}')">d/dx</button>
-                    <button type="button" title="∂/∂x operator" onclick="openMath('\\frac{\\partial}{\\partial x}')">∂/∂x</button>
-                    <button type="button" title="d'Alembertian / box operator" onclick="insSym('\\square')">□</button>
+                            <button type="button" title="Partial derivative" onclick="insSym('\\partial')">∂</button>
+                            <button type="button" title="Nabla / gradient" onclick="insSym('\\nabla')">∇</button>
+                            <button type="button" title="d/dx operator" onclick="openMath('\\frac{d}{dx}')">d/dx</button>
+                            <button type="button" title="∂/∂x operator" onclick="openMath('\\frac{\\partial}{\\partial x}')">∂/∂x</button>
+                            <button type="button" title="d'Alembertian / box" onclick="insSym('\\square')">□</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -513,7 +512,7 @@
                             <button type="button" title="Determinant" onclick="openMath('\\det\\left(\\right)')">det</button>
                             <button type="button" title="Trace" onclick="openMath('\\operatorname{tr}\\left(\\right)')">tr</button>
                             <button type="button" title="Rank" onclick="openMath('\\operatorname{rank}\\left(\\right)')">rank</button>
-                            <button type="button" title="Kernel / null space" onclick="openMath('\\ker\\left(\\right)')">ker</button>
+                            <button type="button" title="Kernel" onclick="openMath('\\ker\\left(\\right)')">ker</button>
                             <button type="button" title="Span" onclick="openMath('\\operatorname{span}\\left(\\right)')">span</button>
                             <button type="button" title="Argument" onclick="openMath('\\arg\\left(\\right)')">arg</button>
                             <button type="button" title="Real part" onclick="openMath('\\operatorname{Re}\\left(\\right)')">Re</button>
@@ -760,7 +759,7 @@
         <div class="editor-layout">
             <div class="editor-pane">
                 <div class="pane-label">Editor</div>
-                <textarea id="content-input" name="content" style="display:none;">{{ form.instance.content }}</textarea>
+                <textarea id="content-input" name="content" style="display:none;"></textarea>
                 <div id="wysiwyg" contenteditable="true" spellcheck="false"></div>
             </div>
             <div class="pdf-pane">
@@ -773,10 +772,7 @@
         </div>
         </div>
 
-
     </form>
-
-
 
 
 
@@ -905,7 +901,7 @@
                 <p>Select text and chips (<kbd>Ctrl</kbd>+<kbd>A</kbd> selects everything), then copy. Chips travel as LaTeX, so pasting into another page rebuilds them, and pasting into a LaTeX or Markdown document renders correctly.</p>
 
                 <h4>Saving &amp; exporting</h4>
-                <p><strong>Save</strong> stores the page. <strong>Export PDF</strong> downloads a PDF of the document.</p>
+                <p><strong>Export PDF</strong> downloads a PDF of the document.</p>
             </div>
         </div>
     </div>
@@ -1474,6 +1470,11 @@
             range.setStart(range.startContainer, Math.max(0, range.startOffset - n));
             range.collapse(true);
             sel.removeAllRanges(); sel.addRange(range);
+        }
+
+        function _getSavedRange(r) {
+            if (!r) return null;
+            return r.cloneRange ? r : null;
         }
 
         function _restoreRange(r) {
@@ -2165,6 +2166,7 @@ a{color:#1a3a6e}
                             const row = above.filter(b => b.getBoundingClientRect().top >= rowTop - 4);
                             ni = btns.indexOf(row.reduce((a, b) => Math.abs(b.getBoundingClientRect().left - r.left) < Math.abs(a.getBoundingClientRect().left - r.left) ? b : a));
                         } else {
+                            // Already on first row — move up to category tabs
                             const active = document.querySelector('#modal-cat-tabs button[data-active="1"]');
                             if (active) active.focus();
                             return;
@@ -2569,7 +2571,7 @@ a{color:#1a3a6e}
         }
 
         // ── Math drafts ──────────────────────────────────────────────
-        const DRAFTS_KEY = 'mathDrafts_notes';
+        const DRAFTS_KEY = 'mathDrafts_general';
         let mathDrafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) || '[]');
 
         async function saveDraft() {
@@ -2794,6 +2796,8 @@ a{color:#1a3a6e}
                         (n.classList.contains('math-chip') || n.classList.contains('math-chip-static'));
                     const _isZWS  = n => n && n.nodeType === 3 && n.textContent === ZWS;
 
+                    // Determine the node immediately before the cursor,
+                    // and whether the cursor itself is inside a single-char ZWS text node.
                     let prevSib = null;
                     let cursorInZWS = false;
 
@@ -2804,7 +2808,7 @@ a{color:#1a3a6e}
                             cursorInZWS = true;
                             prevSib = sc.previousSibling;
                         } else {
-                            return;
+                            return; // regular text — let browser handle
                         }
                     } else {
                         prevSib = so > 0 ? sc.childNodes[so - 1] : sc.previousSibling;
@@ -2812,6 +2816,7 @@ a{color:#1a3a6e}
 
                     if (!prevSib) return;
 
+                    // Unwrap one ZWS level between cursor and the real target
                     let zwsAfter = null;
                     let target   = prevSib;
                     if (_isZWS(prevSib) && !cursorInZWS) {
@@ -2819,10 +2824,12 @@ a{color:#1a3a6e}
                         target   = prevSib.previousSibling;
                     } else if (cursorInZWS) {
                         zwsAfter = sc;
+                        // target stays as prevSib
                     }
 
                     if (!target) return;
 
+                    // ── Chip: delete [ZWS_before chip ZWS_after] as one unit ──
                     if (_isChip(target)) {
                         e.preventDefault();
                         const chip    = target;
@@ -2849,12 +2856,14 @@ a{color:#1a3a6e}
                         return;
                     }
 
+                    // ── BR: delete [BR + its ZWS anchor] as one unit ──
                     if (target.nodeName === 'BR') {
                         e.preventDefault();
                         const br     = target;
                         const parent = br.parentNode;
                         const anchor = br.previousSibling;
 
+                        // The ZWS that was inserted right after the BR during Enter handling
                         let zwsAfterBR = zwsAfter;
                         if (!zwsAfterBR && so === 0 && _isZWS(sc)) zwsAfterBR = sc;
 
@@ -3030,11 +3039,13 @@ a{color:#1a3a6e}
                 if (!_tbSearch.contains(e.target) && !_tbResults.contains(e.target)) _tbResults.style.display = 'none';
             });
 
+            // Load initial content as chips and sync on form submit
             loadWysiwyg(input.value);
             document.querySelector('form').addEventListener('submit', syncToTextarea);
             wysiwyg.focus({ preventScroll: true });
         });
     </script>
+
 
 </body>
 </html>

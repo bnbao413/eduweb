@@ -1,0 +1,166 @@
+{% comment %}
+Shared PDF import for all editors. Free / client-side via PDF.js.
+- Extracts text + light structure and feeds it through the editor's existing
+  source->chip pipeline (sourceToFragment), so any literal LaTeX becomes chips.
+- Math glyphs that come through garbled are collapsed into EMPTY clickable chips
+  (\(\)) for the user to fill in.
+- PDFs exported by this editor embed their exact source (base64, hidden text),
+  so re-importing one of our own PDFs reconstructs the document perfectly.
+
+Relies on these globals defined by the host editor:
+  wysiwyg, sourceToFragment(), syncToTextarea()
+Exposes:
+  window._exportSourceEmbed(src)  -> hidden <div> to append before </body> on export
+{% endcomment %}
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+(function () {
+    const PDFJS_VER = '3.11.174';
+
+    // Round-trip embed: the LITERAL editor source is laid down as a hidden text
+    // layer under the rendered PDF, so scanning the PDF reads the real code back.
+    // Markers/tokens are matched space-tolerantly because PDF text extraction can
+    // sprinkle whitespace; real line breaks are carried by the EDUNL token.
+    const SRC_MARK = 'EDUWEBSRC';
+    const NL_TOKEN = 'EDUNL';
+    const _spaced = w => w.split('').join('\\s*');     // "AB" -> "A\s*B"
+    const SRC_RE = new RegExp(_spaced(SRC_MARK) + '([\\s\\S]*?)' + _spaced(SRC_MARK));
+    const NL_RE  = new RegExp('\\s*' + _spaced(NL_TOKEN) + '\\s*', 'g');
+
+    function _htmlEsc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    // Hidden, extractable text block carrying the literal editor source.
+    window._exportSourceEmbed = function (src) {
+        try {
+            const body = _htmlEsc((src || '').replace(/\r/g, '')).replace(/\n/g, ' ' + NL_TOKEN + ' ');
+            // Invisible (white, small) but reliably painted -> in the PDF text layer.
+            return '<div style="color:#ffffff;font-size:8px;line-height:1.4">'
+                 + SRC_MARK + ' ' + body + ' ' + SRC_MARK + '</div>';
+        } catch (e) { return ''; }
+    };
+
+    // ── garbled-math detection ────────────────────────────────────────────
+    // Math symbols / Greek / scripts that survive PDF extraction as glyphs.
+    const MATHCH = '∫∮∯∰∑∏∐√∞≤≥≠≈≅≡∝∂∇∈∉∋⊂⊃⊆⊇⊄∪∩∅±∓×÷·∘∗⊕⊗→←↦↔⇒⇐⇔∀∃∄∴∵'
+                 + 'ℝℕℤℚℂℵ'
+                 + 'αβγδεζηθϑικλμνξοπϖρςστυφϕχψω'
+                 + 'ΓΔΘΛΞΠΣΦΨΩ'
+                 + '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎';
+    // A maximal "formula-looking" run: math glyph(s) plus any adjacent
+    // alphanumerics / operators (no spaces). Replaced by one empty chip.
+    const GARBLE_RE = new RegExp(
+        '[A-Za-z0-9()\\[\\]{}+\\-=/^_.,|]*[' + MATHCH + '][A-Za-z0-9()\\[\\]{}+\\-=/^_.,|' + MATHCH + ']*',
+        'gu'
+    );
+
+    function _looksHeading(line) {
+        const t = line.trim();
+        if (!t || t.length > 70) return false;
+        // numbered section, e.g. "2" or "2.1 Methods"
+        if (/^\d+(\.\d+)*\.?\s+\S/.test(t)) return true;
+        // ALL CAPS title line with at least two words
+        if (/^[A-Z0-9][A-Z0-9 .,:;'\-]{3,}$/.test(t) && /\s/.test(t)) return true;
+        return false;
+    }
+
+    // Reconstruct page text from PDF.js text items, grouping by line (y).
+    async function _pageText(page) {
+        const tc = await page.getTextContent();
+        const lines = [];
+        let cur = null, lastY = null;
+        tc.items.forEach(it => {
+            if (typeof it.str !== 'string' || !it.str.length) return;
+            const y = Math.round(it.transform[5]);
+            if (lastY === null || Math.abs(y - lastY) > 3) {
+                cur = []; lines.push(cur); lastY = y;
+            }
+            cur.push(it.str);
+        });
+        return lines
+            .map(parts => parts.join('').replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join('\n');
+    }
+
+    // Turn reconstructed plain text into editor source.
+    function _textToSource(text) {
+        // collapse 3+ blank lines
+        let src = text.replace(/\n{3,}/g, '\n\n');
+        // garbled math -> empty placeholder chips
+        src = src.replace(GARBLE_RE, '\\(\\)');
+        // merge runs of adjacent placeholders into one
+        src = src.replace(/(?:\\\(\\\)[ \t]*){2,}/g, '\\(\\) ');
+        // light heading detection, line by line
+        src = src.split('\n').map(line => {
+            if (_looksHeading(line) && !/^#/.test(line)) {
+                const m = /^(\d+(?:\.\d+)*)\.?\s+(.*)$/.exec(line.trim());
+                if (m) return (m[1].includes('.') ? '### ' : '## ') + m[1] + ' ' + m[2];
+                return '## ' + line.trim();
+            }
+            return line;
+        }).join('\n');
+        return src;
+    }
+
+    async function _importFromFile(file, btn) {
+        const label = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
+        try {
+            if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js failed to load.');
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdn.jsdelivr.net/npm/pdfjs-dist@' + PDFJS_VER + '/build/pdf.worker.min.js';
+
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+
+            const pages = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+                pages.push(await _pageText(await pdf.getPage(p)));
+            }
+            const fullText = pages.join('\n\n');
+
+            // 1) Perfect round-trip if this is one of our own exports: read the
+            //    literal source embedded between the EDUWEBSRC markers.
+            let source = null;
+            const hit = SRC_RE.exec(fullText);
+            if (hit) {
+                source = hit[1]
+                    .replace(/\s+/g, ' ')        // normalize extraction whitespace
+                    .replace(NL_RE, '\n')        // restore real line breaks
+                    .trim();
+            }
+            // 2) Otherwise best-effort conversion (strip any stray embed first)
+            if (!source) {
+                source = _textToSource(fullText.replace(SRC_RE, ''));
+            }
+
+            if (!source.trim()) { alert('No extractable text was found in that PDF.'); return; }
+
+            // Append (non-destructive) at the end of the document
+            const needsGap = wysiwyg.textContent.trim().length > 0;
+            wysiwyg.appendChild(sourceToFragment((needsGap ? '\n\n' : '') + source));
+            syncToTextarea();
+            wysiwyg.focus({ preventScroll: true });
+        } catch (e) {
+            alert('Could not import that PDF:\n' + (e && e.message ? e.message : e));
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = label || 'Import PDF'; }
+        }
+    }
+
+    function _wire() {
+        const btn = document.getElementById('import-pdf-btn');
+        const inp = document.getElementById('import-pdf-input');
+        if (!btn || !inp) return;
+        btn.addEventListener('click', () => inp.click());
+        inp.addEventListener('change', () => {
+            const f = inp.files && inp.files[0];
+            inp.value = '';                 // allow re-importing the same file
+            if (f) _importFromFile(f, btn);
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _wire);
+    else _wire();
+})();
+</script>
