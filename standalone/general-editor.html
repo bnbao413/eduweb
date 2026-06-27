@@ -1,11 +1,538 @@
-{% load static %}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Editor — Didelta</title>
 
-    <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
+    <style>
+/* ===========================================================================
+   Didelta design system — lean, clean, solid colors. Indigo accent.
+   =========================================================================== */
+
+:root {
+    /* "Crappy 1960s government office" palette: manila paper, drab olive/tan,
+       navy ink, hard borders, no rounded corners, no shadows, Times type. */
+    --bg:            #b7b29c;   /* drab olive/tan desktop */
+    --surface:       #f4f1e6;   /* manila folder paper */
+    --surface-2:     #e3ddca;   /* slightly darker panel */
+    --border:        #8a8163;
+    --border-strong: #5b5440;
+
+    --text:          #1a1a1a;
+    --text-muted:    #4c4636;
+    --text-subtle:   #6f6650;
+
+    --accent:        #0a246a;   /* government navy */
+    --accent-hover:  #1c3a8f;
+    --accent-active: #06163f;
+    --accent-light:  #dfe2ec;
+    --accent-border: #0a246a;
+    --on-accent:     #ffffff;
+
+    --danger:        #8b0000;
+    --danger-hover:  #b00000;
+    --danger-light:  #f1d9d9;
+    --success:       #1f5c1f;
+
+    --radius:    0;
+    --radius-sm: 0;
+    --radius-lg: 0;
+
+    --shadow-sm: none;
+    --shadow:    none;
+    --shadow-md: none;
+    --shadow-lg: none;
+
+    --ring: 0 0 0 2px #0a246a;
+
+    --font-ui:    "Times New Roman", Times, Georgia, serif;
+    --font-serif: "Times New Roman", Times, Georgia, serif;
+    --font-mono:  "Courier New", Courier, monospace;
+}
+
+/* ----- reset --------------------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+    line-height: 1.25;
+    font-weight: bold;
+    letter-spacing: normal;
+    color: var(--text);
+    margin: 0 0 0.5em;
+}
+
+h1 { font-size: 1.9rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.15rem; }
+
+p { margin: 0 0 1rem; }
+
+a {
+    color: #0000ee;
+    text-decoration: underline;
+    transition: color 0.12s ease;
+}
+a:visited { color: #551a8b; }
+a:hover { color: #0000ee; text-decoration: underline; }
+/* keep chrome/components from rendering as underlined body links */
+.nav a, .list-card, .list-card:hover, .btn, .backlink { text-decoration: none; }
+
+hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1.75rem 0;
+}
+
+small { font-size: 0.85rem; }
+
+/* ----- top navigation ------------------------------------------------------ */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--surface-2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 2px solid var(--border-strong);
+}
+
+.topbar-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.nav a {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    font-weight: 500;
+    padding: 0.4rem 0.7rem;
+    border-radius: var(--radius-sm);
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.nav a:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.nav a.active { color: var(--accent); background: var(--accent-light); }
+
+.topbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+.topbar-actions .user { color: var(--text); font-weight: 600; }
+
+/* ----- site search (topbar) ------------------------------------------------ */
+.topbar-search { position: relative; width: 300px; max-width: 34vw; }
+.topbar-search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 0.7rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-sizing: border-box;
+    outline: none;
+}
+.topbar-search input:focus { border-color: var(--accent); box-shadow: var(--ring); }
+
+.search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 200;
+}
+.search-results a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+}
+.search-results a:last-child { border-bottom: none; }
+.search-results a:hover,
+.search-results a.active { background: var(--surface-2); text-decoration: none; }
+.sr-main { display: flex; flex-direction: column; min-width: 0; }
+.sr-title { font-weight: 600; font-size: 0.9rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-context { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr-type {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: var(--accent-light);
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+}
+.search-empty { padding: 0.75rem 0.8rem; color: var(--text-muted); font-size: 0.88rem; }
+
+/* ----- page layout --------------------------------------------------------- */
+
+.page-shell {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+}
+
+.page-header {
+    margin-bottom: 1.75rem;
+}
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 1.02rem;
+    margin-top: -0.25rem;
+}
+
+.meta { color: var(--text-muted); margin-bottom: 1.25rem; }
+.muted { color: var(--text-muted); }
+
+/* breadcrumb / back link */
+.backlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 1.25rem;
+}
+.backlink:hover { color: var(--accent); text-decoration: none; }
+
+/* ----- buttons ------------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 0.6rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease,
+                box-shadow 0.12s ease, color 0.12s ease, transform 0.04s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible { outline: none; box-shadow: var(--ring); }
+.btn:disabled, .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.btn:disabled:active, .btn[disabled]:active { transform: none; }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--on-accent);
+}
+.btn-primary:hover { background: var(--accent-hover); color: #fff; text-decoration: none; }
+.btn-primary:active { background: var(--accent-active); }
+
+.btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+.btn-secondary:hover { background: var(--surface-2); border-color: var(--text-subtle); text-decoration: none; }
+
+.btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+
+.btn-danger {
+    background: var(--danger);
+    color: #fff;
+}
+.btn-danger:hover { background: var(--danger-hover); color: #fff; text-decoration: none; }
+
+/* keep button text colour regardless of link visited/unvisited state
+   (so navy primary buttons stay white, not purple) */
+.btn-primary:link, .btn-primary:visited { color: var(--on-accent); }
+.btn-secondary:link, .btn-secondary:visited { color: var(--text); }
+.btn-ghost:link, .btn-ghost:visited { color: var(--text-muted); }
+.btn-danger:link, .btn-danger:visited { color: #fff; }
+
+.btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+.btn-block { width: 100%; }
+
+/* ----- cards --------------------------------------------------------------- */
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+/* a card that is itself a link/row */
+.list-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    color: inherit;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+}
+.list-card:hover {
+    border-color: var(--accent-border);
+    box-shadow: var(--shadow-md);
+    text-decoration: none;
+    color: inherit;
+}
+.list-card .lc-title {
+    font-size: 1.08rem;
+    font-weight: 650;
+    color: var(--text);
+    margin: 0;
+}
+.list-card .lc-desc {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin: 0.2rem 0 0;
+}
+.list-card .lc-arrow {
+    color: var(--text-subtle);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    transition: transform 0.12s ease, color 0.12s ease;
+}
+.list-card:hover .lc-arrow { color: var(--accent); transform: translateX(2px); }
+
+.card-stack { display: flex; flex-direction: column; gap: 0.75rem; }
+
+/* ----- badges -------------------------------------------------------------- */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+.badge-accent { background: var(--accent-light); color: var(--accent-active); border-color: var(--accent-border); }
+
+/* ----- forms --------------------------------------------------------------- */
+
+label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+input[type="text"], input[type="password"], input[type="email"],
+input[type="number"], input[type="url"], input[type="search"],
+select, textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--text);
+    background: var(--surface);
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--ring);
+}
+::placeholder { color: var(--text-subtle); }
+
+/* Django form-as-p layout */
+.form-card form p { margin: 0 0 1.1rem; }
+.form-card form label { display: block; margin-bottom: 0.35rem; }
+.form-card .helptext {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-subtle);
+    font-weight: 400;
+    margin-top: 0.35rem;
+}
+.form-card ul.errorlist {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--danger-light);
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    color: var(--danger-hover);
+    font-size: 0.85rem;
+}
+
+/* centered narrow auth/forms */
+.narrow {
+    max-width: 420px;
+    margin: 0 auto;
+}
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+}
+
+/* ----- accordion (details/summary) ----------------------------------------- */
+
+.accordion details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 0.6rem;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+.accordion summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.85rem 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    user-select: none;
+    transition: background 0.12s ease;
+}
+.accordion summary:hover { background: var(--surface-2); }
+.accordion summary::-webkit-details-marker { display: none; }
+.accordion summary::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid var(--text-subtle);
+    border-bottom: 2px solid var(--text-subtle);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+}
+.accordion details[open] > summary::before { transform: rotate(45deg); }
+.accordion .acc-body { padding: 0.25rem 1.1rem 1rem 2.2rem; }
+
+/* nested sub-accordion */
+.accordion .sub details {
+    border: none;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    background: transparent;
+}
+.accordion .sub summary { padding: 0.6rem 0; font-weight: 500; font-size: 0.95rem; }
+
+/* simple link list inside accordions */
+.link-list { list-style: none; margin: 0; padding: 0; }
+.link-list li { margin: 0; }
+.link-list li + li { border-top: 1px solid var(--border); }
+.link-list a {
+    display: block;
+    padding: 0.55rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 0.95rem;
+}
+.link-list a:hover { background: var(--accent-light); color: var(--accent-active); text-decoration: none; }
+.link-list .none { color: var(--text-subtle); font-size: 0.9rem; padding: 0.4rem 0.5rem; }
+
+/* ----- prev / next nav ----------------------------------------------------- */
+
+.nav-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+.nav-links a {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+.nav-links a:hover { color: var(--accent); text-decoration: none; }
+
+/* ----- empty state --------------------------------------------------------- */
+
+.empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-subtle);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+}
+
+/* ----- content (long-form reading) ----------------------------------------- */
+
+.content-area { margin-top: 1.5rem; overflow-wrap: break-word; word-break: normal; }
+
+/* ----- responsive ---------------------------------------------------------- */
+
+@media (max-width: 640px) {
+    .topbar-inner { padding: 0 16px; gap: 1rem; }
+    .nav a { padding: 0.4rem 0.5rem; }
+    .page-shell { padding: 28px 16px 64px; }
+    h1 { font-size: 1.6rem; }
+}
+
+    </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
 
@@ -367,11 +894,29 @@
             .math-modal-box { min-width: 0; width: 94vw; padding: 1.25rem; }
         }
     </style>
-    {% if site_theme_css %}<style>{{ site_theme_css|safe }}</style>{% endif %}
+    <!-- (site-theme injection removed in standalone build) -->
 </head>
 <body>
+<script>
+/* =========================================================================
+   Standalone General Editor  —  integration config
+   -------------------------------------------------------------------------
+   This editor is 100% client-side EXCEPT the "Compile PDF" button, which
+   POSTs the rendered HTML to a backend that returns a PDF (the source project
+   used Django + Playwright). Point exportPdfUrl at your own endpoint (it must
+   accept multipart fields: rendered_html, title, page_format, and return a PDF
+   blob), or remove the Compile button if you don't need server-side PDF.
+   Everything else — editing, KaTeX, MathQuill, shorthands, matrices, the
+   localStorage document gallery, and PDF import (pdf.js) — needs no server.
+   External libs load from jsDelivr (KaTeX, MathQuill, html2canvas, pdf.js).
+   ========================================================================= */
+window.GENERAL_EDITOR_CONFIG = {
+    exportPdfUrl: '/export-pdf/',   // your backend PDF endpoint (POST)
+    docsBackUrl: '#'                // where the gallery "Back" link points
+};
+</script>
     <form method="post" onsubmit="return false;">
-        {% csrf_token %}
+        <input type="hidden" name="csrfmiddlewaretoken" value="">
 
         <div class="editor-topbar">
             <div class="editor-topbar-inner">
@@ -923,8 +1468,410 @@
         </div>
     </div>
 
-    {% include "catalog/_shorthand.html" %}
-    {% include "catalog/_pdfimport.html" %}
+<script>
+// Shared shorthand map — single source of truth for BOTH editors
+// (textbook_edit.html and notes_edit.html) and the Shorthand library.
+// Edit here once; the library is generated live from this object.
+var SHORTHAND = {
+    frac:{l:'\\frac{}{}', modal:true, cat:'Structures'},
+    binom:{l:'\\binom{}{}', modal:true, cat:'Structures'},
+    sqrt:{l:'\\sqrt{}', modal:true, cat:'Structures'},
+    nthroot:{l:'\\sqrt[n]{}', modal:true, cat:'Structures'},
+    pow:{l:'x^{}', modal:true, cat:'Structures'},
+    sub:{l:'x_{}', modal:true, cat:'Structures'},
+    int:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
+    sum:{l:'\\sum_{ }^{ }', modal:true, cat:'Structures'},
+    prod:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
+    bigcup:{l:'\\bigcup_{ }^{ }', modal:true, cat:'Structures'},
+    bigcap:{l:'\\bigcap_{ }^{ }', modal:true, cat:'Structures'},
+    bigwedge:{l:'\\bigwedge_{ }', modal:true, cat:'Structures'},
+    bigvee:{l:'\\bigvee_{ }', modal:true, cat:'Structures'},
+    lim:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
+    limsup:{l:'\\limsup_{n\\to\\infty}', modal:true, cat:'Structures'},
+    liminf:{l:'\\liminf_{n\\to\\infty}', modal:true, cat:'Structures'},
+    varinjlim:{l:'\\varinjlim_{ }', modal:true, cat:'Structures'},
+    varprojlim:{l:'\\varprojlim_{ }', modal:true, cat:'Structures'},
+    partial:{l:'\\partial', cat:'Calculus'},
+    nabla:{l:'\\nabla', cat:'Calculus'},
+    ddx:{l:'\\frac{d}{dx}', modal:true, cat:'Calculus'},
+    pdx:{l:'\\frac{\\partial}{\\partial x}', modal:true, cat:'Calculus'},
+    square:{l:'\\square', cat:'Calculus'},
+    hbar:{l:'\\hbar', cat:'Physics'},
+    hslash:{l:'\\hslash', cat:'Physics'},
+    bra:{l:'\\langle  |', cat:'Physics'},
+    ket:{l:'|  \\rangle', cat:'Physics'},
+    braket:{l:'\\langle  |  \\rangle', cat:'Physics'},
+    dagger:{l:'\\dagger', cat:'Physics'},
+    ddagger:{l:'\\ddagger', cat:'Physics'},
+    Re:{l:'\\Re', cat:'Physics'},
+    Im:{l:'\\Im', cat:'Physics'},
+    wp:{l:'\\wp', cat:'Physics'},
+    aleph:{l:'\\aleph', cat:'Physics'},
+    beth:{l:'\\beth', cat:'Physics'},
+    sin:{l:'\\sin\\left(\\right)', modal:true, cat:'Trig'},
+    cos:{l:'\\cos\\left(\\right)', modal:true, cat:'Trig'},
+    tan:{l:'\\tan\\left(\\right)', modal:true, cat:'Trig'},
+    arcsin:{l:'\\arcsin\\left(\\right)', modal:true, cat:'Trig'},
+    arccos:{l:'\\arccos\\left(\\right)', modal:true, cat:'Trig'},
+    arctan:{l:'\\arctan\\left(\\right)', modal:true, cat:'Trig'},
+    sec:{l:'\\sec\\left(\\right)', modal:true, cat:'Trig'},
+    csc:{l:'\\csc\\left(\\right)', modal:true, cat:'Trig'},
+    cot:{l:'\\cot\\left(\\right)', modal:true, cat:'Trig'},
+    sinh:{l:'\\sinh\\left(\\right)', modal:true, cat:'Trig'},
+    cosh:{l:'\\cosh\\left(\\right)', modal:true, cat:'Trig'},
+    tanh:{l:'\\tanh\\left(\\right)', modal:true, cat:'Trig'},
+    log:{l:'\\log\\left(\\right)', modal:true, cat:'Functions'},
+    log2:{l:'\\log_{ }\\left(\\right)', modal:true, cat:'Functions'},
+    ln:{l:'\\ln\\left(\\right)', modal:true, cat:'Functions'},
+    exp:{l:'\\exp\\left(\\right)', modal:true, cat:'Functions'},
+    sup:{l:'\\sup_{ }', modal:true, cat:'Functions'},
+    inf:{l:'\\inf_{ }', modal:true, cat:'Functions'},
+    max:{l:'\\max_{ }', modal:true, cat:'Functions'},
+    min:{l:'\\min_{ }', modal:true, cat:'Functions'},
+    gcd:{l:'\\gcd\\left(\\right)', modal:true, cat:'Functions'},
+    lcm:{l:'\\operatorname{lcm}\\left(\\right)', modal:true, cat:'Functions'},
+    det:{l:'\\det\\left(\\right)', modal:true, cat:'Functions'},
+    tr:{l:'\\operatorname{tr}\\left(\\right)', modal:true, cat:'Functions'},
+    rank:{l:'\\operatorname{rank}\\left(\\right)', modal:true, cat:'Functions'},
+    ker:{l:'\\ker\\left(\\right)', modal:true, cat:'Functions'},
+    span:{l:'\\operatorname{span}\\left(\\right)', modal:true, cat:'Functions'},
+    arg:{l:'\\arg\\left(\\right)', modal:true, cat:'Functions'},
+    re:{l:'\\operatorname{Re}\\left(\\right)', modal:true, cat:'Functions'},
+    im:{l:'\\operatorname{Im}\\left(\\right)', modal:true, cat:'Functions'},
+    res:{l:'\\operatorname{Res}_{  }\\left(\\right)', modal:true, cat:'Functions'},
+    hom:{l:'\\operatorname{Hom}\\left(,\\right)', modal:true, cat:'Functions'},
+    aut:{l:'\\operatorname{Aut}\\left(\\right)', modal:true, cat:'Functions'},
+    end:{l:'\\operatorname{End}\\left(\\right)', modal:true, cat:'Functions'},
+    gal:{l:'\\operatorname{Gal}\\left(\\right)', modal:true, cat:'Functions'},
+    spec:{l:'\\operatorname{Spec}\\left(\\right)', modal:true, cat:'Functions'},
+    ext:{l:'\\operatorname{Ext}^{  }\\left(,\\right)', modal:true, cat:'Functions'},
+    tor:{l:'\\operatorname{Tor}_{  }\\left(,\\right)', modal:true, cat:'Functions'},
+    alpha:{l:'\\alpha', cat:'Greek'},
+    beta:{l:'\\beta', cat:'Greek'},
+    gamma:{l:'\\gamma', cat:'Greek'},
+    Gamma:{l:'\\Gamma', cat:'Greek'},
+    delta:{l:'\\delta', cat:'Greek'},
+    Delta:{l:'\\Delta', cat:'Greek'},
+    epsilon:{l:'\\varepsilon', cat:'Greek'},
+    zeta:{l:'\\zeta', cat:'Greek'},
+    eta:{l:'\\eta', cat:'Greek'},
+    theta:{l:'\\theta', cat:'Greek'},
+    Theta:{l:'\\Theta', cat:'Greek'},
+    iota:{l:'\\iota', cat:'Greek'},
+    kappa:{l:'\\kappa', cat:'Greek'},
+    lambda:{l:'\\lambda', cat:'Greek'},
+    Lambda:{l:'\\Lambda', cat:'Greek'},
+    mu:{l:'\\mu', cat:'Greek'},
+    nu:{l:'\\nu', cat:'Greek'},
+    xi:{l:'\\xi', cat:'Greek'},
+    Xi:{l:'\\Xi', cat:'Greek'},
+    pi:{l:'\\pi', cat:'Greek'},
+    Pi:{l:'\\Pi', cat:'Greek'},
+    rho:{l:'\\rho', cat:'Greek'},
+    sigma:{l:'\\sigma', cat:'Greek'},
+    Sigma:{l:'\\Sigma', cat:'Greek'},
+    tau:{l:'\\tau', cat:'Greek'},
+    upsilon:{l:'\\upsilon', cat:'Greek'},
+    Upsilon:{l:'\\Upsilon', cat:'Greek'},
+    phi:{l:'\\varphi', cat:'Greek'},
+    Phi:{l:'\\Phi', cat:'Greek'},
+    chi:{l:'\\chi', cat:'Greek'},
+    psi:{l:'\\psi', cat:'Greek'},
+    Psi:{l:'\\Psi', cat:'Greek'},
+    omega:{l:'\\omega', cat:'Greek'},
+    Omega:{l:'\\Omega', cat:'Greek'},
+    infty:{l:'\\infty', cat:'Greek'},
+    ell:{l:'\\ell', cat:'Greek'},
+    in:{l:'\\in', cat:'Set Theory'},
+    notin:{l:'\\notin', cat:'Set Theory'},
+    subset:{l:'\\subset', cat:'Set Theory'},
+    subseteq:{l:'\\subseteq', cat:'Set Theory'},
+    supset:{l:'\\supset', cat:'Set Theory'},
+    supseteq:{l:'\\supseteq', cat:'Set Theory'},
+    cup:{l:'\\cup', cat:'Set Theory'},
+    cap:{l:'\\cap', cat:'Set Theory'},
+    emptyset:{l:'\\varnothing', cat:'Set Theory'},
+    forall:{l:'\\forall', cat:'Set Theory'},
+    exists:{l:'\\exists', cat:'Set Theory'},
+    nexists:{l:'\\nexists', cat:'Set Theory'},
+    setminus:{l:'\\setminus', cat:'Set Theory'},
+    N:{l:'\\mathbb{N}', cat:'Num Sets'},
+    Z:{l:'\\mathbb{Z}', cat:'Num Sets'},
+    Q:{l:'\\mathbb{Q}', cat:'Num Sets'},
+    R:{l:'\\mathbb{R}', cat:'Num Sets'},
+    C:{l:'\\mathbb{C}', cat:'Num Sets'},
+    P:{l:'\\mathbb{P}', cat:'Num Sets'},
+    H:{l:'\\mathbb{H}', cat:'Num Sets'},
+    F:{l:'\\mathbb{F}', cat:'Num Sets'},
+    E:{l:'\\mathbb{E}', cat:'Num Sets'},
+    implies:{l:'\\Rightarrow', cat:'Logic'},
+    iff:{l:'\\Leftrightarrow', cat:'Logic'},
+    wedge:{l:'\\wedge', cat:'Logic'},
+    vee:{l:'\\vee', cat:'Logic'},
+    neg:{l:'\\neg', cat:'Logic'},
+    therefore:{l:'\\therefore', cat:'Logic'},
+    because:{l:'\\because', cat:'Logic'},
+    vdash:{l:'\\vdash', cat:'Logic'},
+    models:{l:'\\models', cat:'Logic'},
+    top:{l:'\\top', cat:'Logic'},
+    bot:{l:'\\bot', cat:'Logic'},
+    leq:{l:'\\leq', cat:'Relations'},
+    geq:{l:'\\geq', cat:'Relations'},
+    neq:{l:'\\neq', cat:'Relations'},
+    approx:{l:'\\approx', cat:'Relations'},
+    equiv:{l:'\\equiv', cat:'Relations'},
+    cong:{l:'\\cong', cat:'Relations'},
+    sim:{l:'\\sim', cat:'Relations'},
+    propto:{l:'\\propto', cat:'Relations'},
+    perp:{l:'\\perp', cat:'Relations'},
+    parallel:{l:'\\parallel', cat:'Relations'},
+    ll:{l:'\\ll', cat:'Relations'},
+    gg:{l:'\\gg', cat:'Relations'},
+    mid:{l:'\\mid', cat:'Relations'},
+    nmid:{l:'\\nmid', cat:'Relations'},
+    prec:{l:'\\prec', cat:'Relations'},
+    succ:{l:'\\succ', cat:'Relations'},
+    preceq:{l:'\\preceq', cat:'Relations'},
+    succeq:{l:'\\succeq', cat:'Relations'},
+    pm:{l:'\\pm', cat:'Algebra'},
+    times:{l:'\\times', cat:'Algebra'},
+    cdot:{l:'\\cdot', cat:'Algebra'},
+    div:{l:'\\div', cat:'Algebra'},
+    circ:{l:'\\circ', cat:'Algebra'},
+    oplus:{l:'\\oplus', cat:'Algebra'},
+    otimes:{l:'\\otimes', cat:'Algebra'},
+    rtimes:{l:'\\rtimes', cat:'Algebra'},
+    ltimes:{l:'\\ltimes', cat:'Algebra'},
+    trianglelefteq:{l:'\\trianglelefteq', cat:'Algebra'},
+    triangleleft:{l:'\\triangleleft', cat:'Algebra'},
+    ast:{l:'\\ast', cat:'Algebra'},
+    floor:{l:'\\lfloor  \\rfloor', modal:true, cat:'Brackets'},
+    ceil:{l:'\\lceil  \\rceil', modal:true, cat:'Brackets'},
+    abs:{l:'\\left|  \\right|', modal:true, cat:'Brackets'},
+    norm:{l:'\\lVert  \\rVert', modal:true, cat:'Brackets'},
+    inner:{l:'\\langle  ,  \\rangle', modal:true, cat:'Brackets'},
+    hat:{l:'\\hat{}', modal:true, cat:'Accents'},
+    bar:{l:'\\overline{}', modal:true, cat:'Accents'},
+    tilde:{l:'\\tilde{}', modal:true, cat:'Accents'},
+    vec:{l:'\\vec{}', modal:true, cat:'Accents'},
+    dot:{l:'\\dot{}', modal:true, cat:'Accents'},
+    ddot:{l:'\\ddot{}', modal:true, cat:'Accents'},
+    check:{l:'\\check{}', modal:true, cat:'Accents'},
+    underline:{l:'\\underline{}', modal:true, cat:'Accents'},
+    overbrace:{l:'\\overbrace{}^{}', modal:true, cat:'Accents'},
+    underbrace:{l:'\\underbrace{}_{}', modal:true, cat:'Accents'},
+    prime:{l:'\\prime', cat:'Accents'},
+    cal:{l:'\\mathcal{}', modal:true, cat:'Accents'},
+    frak:{l:'\\mathfrak{}', modal:true, cat:'Accents'},
+    bf:{l:'\\mathbf{}', modal:true, cat:'Accents'},
+    to:{l:'\\to', cat:'Arrows'},
+    leftarrow:{l:'\\leftarrow', cat:'Arrows'},
+    leftrightarrow:{l:'\\leftrightarrow', cat:'Arrows'},
+    mapsto:{l:'\\mapsto', cat:'Arrows'},
+    longrightarrow:{l:'\\longrightarrow', cat:'Arrows'},
+    hookrightarrow:{l:'\\hookrightarrow', cat:'Arrows'},
+    twoheadrightarrow:{l:'\\twoheadrightarrow', cat:'Arrows'},
+    uparrow:{l:'\\uparrow', cat:'Arrows'},
+    downarrow:{l:'\\downarrow', cat:'Arrows'},
+    matrix:{mat:{r:2,c:2,env:'pmatrix'}, cat:'Matrix'},
+    angle:{l:'\\angle', cat:'Geometry'},
+    measuredangle:{l:'\\measuredangle', cat:'Geometry'},
+    sphericalangle:{l:'\\sphericalangle', cat:'Geometry'},
+    triangle:{l:'\\triangle', cat:'Geometry'},
+    Diamond:{l:'\\Diamond', cat:'Geometry'},
+    bigcirc:{l:'\\bigcirc', cat:'Geometry'},
+    frown:{l:'\\frown', cat:'Geometry'},
+    smile:{l:'\\smile', cat:'Geometry'},
+    ldots:{l:'\\ldots', cat:'Misc'},
+    cdots:{l:'\\cdots', cat:'Misc'},
+    vdots:{l:'\\vdots', cat:'Misc'},
+    ddots:{l:'\\ddots', cat:'Misc'},
+    deg:{l:'^\\circ', cat:'Misc'},
+    sharp:{l:'\\sharp', cat:'Misc'},
+    flat:{l:'\\flat', cat:'Misc'},
+    natural:{l:'\\natural', cat:'Misc'},
+    S:{l:'\\S', cat:'Misc'},
+    P2:{l:'\\P', cat:'Misc'},
+    '2int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iint',disp:'∬',src:'∫'}, cat:'Calculus'},
+    '3int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\iiint',disp:'∭',src:'∫'}, cat:'Calculus'},
+    '4int':{sym:{proxy:'\\int_{ }^{ }',from:'\\int',to:'\\int\\!\\!\\!\\int\\!\\!\\!\\int\\!\\!\\!\\int',disp:'⨌',src:'∫'}, cat:'Calculus'},
+    // closed-surface integrals: regular int shorthand with a "cs" prefix
+    csint:{l:'\\oint_{ }^{ }', modal:true, cat:'Calculus'},
+    cs2int:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'\\oiint',disp:'∯',src:'∮'}, cat:'Calculus'},
+    cs3int:{sym:{proxy:'\\oint_{ }^{ }',from:'\\oint',to:'∰',disp:'∰',src:'∮'}, cat:'Calculus'},
+    fraction:{l:'\\frac{}{}', modal:true, cat:'Structures'},
+    integral:{l:'\\int_{ }^{ }', modal:true, cat:'Structures'},
+    product:{l:'\\prod_{ }^{ }', modal:true, cat:'Structures'},
+    limit:{l:'\\lim_{x\\to }', modal:true, cat:'Structures'},
+    choose:{l:'\\binom{}{}', modal:true, cat:'Structures'},
+    infinity:{l:'\\infty', cat:'Greek'},
+    le:{l:'\\leq', cat:'Relations'},
+    ge:{l:'\\geq', cat:'Relations'},
+    ne:{l:'\\neq', cat:'Relations'},
+    union:{l:'\\cup', cat:'Set Theory'},
+    power:{l:'x^{}', modal:true, cat:'Structures'},
+    naturals:{l:'\\mathbb{N}', cat:'Num Sets'},
+    reals:{l:'\\mathbb{R}', cat:'Num Sets'},
+    integers:{l:'\\mathbb{Z}', cat:'Num Sets'},
+    grad:{l:'\\nabla', cat:'Calculus'},
+    degree:{l:'^\\circ', cat:'Misc'},
+    infin:{l:'\\infty', cat:'Greek'},
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+(function () {
+    const PDFJS_VER = '3.11.174';
+
+    // Round-trip embed: the LITERAL editor source is laid down as a hidden text
+    // layer under the rendered PDF, so scanning the PDF reads the real code back.
+    // Markers/tokens are matched space-tolerantly because PDF text extraction can
+    // sprinkle whitespace; real line breaks are carried by the EDUNL token.
+    const SRC_MARK = 'EDUWEBSRC';
+    const NL_TOKEN = 'EDUNL';
+    const _spaced = w => w.split('').join('\\s*');     // "AB" -> "A\s*B"
+    const SRC_RE = new RegExp(_spaced(SRC_MARK) + '([\\s\\S]*?)' + _spaced(SRC_MARK));
+    const NL_RE  = new RegExp('\\s*' + _spaced(NL_TOKEN) + '\\s*', 'g');
+
+    function _htmlEsc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    // Hidden, extractable text block carrying the literal editor source.
+    window._exportSourceEmbed = function (src) {
+        try {
+            const body = _htmlEsc((src || '').replace(/\r/g, '')).replace(/\n/g, ' ' + NL_TOKEN + ' ');
+            // Invisible (white, small) but reliably painted -> in the PDF text layer.
+            return '<div style="color:#ffffff;font-size:8px;line-height:1.4;overflow-wrap:anywhere;word-break:break-word">'
+                 + SRC_MARK + ' ' + body + ' ' + SRC_MARK + '</div>';
+        } catch (e) { return ''; }
+    };
+
+    // ── garbled-math detection ────────────────────────────────────────────
+    // Math symbols / Greek / scripts that survive PDF extraction as glyphs.
+    const MATHCH = '∫∮∯∰∑∏∐√∞≤≥≠≈≅≡∝∂∇∈∉∋⊂⊃⊆⊇⊄∪∩∅±∓×÷·∘∗⊕⊗→←↦↔⇒⇐⇔∀∃∄∴∵'
+                 + 'ℝℕℤℚℂℵ'
+                 + 'αβγδεζηθϑικλμνξοπϖρςστυφϕχψω'
+                 + 'ΓΔΘΛΞΠΣΦΨΩ'
+                 + '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎';
+    // A maximal "formula-looking" run: math glyph(s) plus any adjacent
+    // alphanumerics / operators (no spaces). Replaced by one empty chip.
+    const GARBLE_RE = new RegExp(
+        '[A-Za-z0-9()\\[\\]{}+\\-=/^_.,|]*[' + MATHCH + '][A-Za-z0-9()\\[\\]{}+\\-=/^_.,|' + MATHCH + ']*',
+        'gu'
+    );
+
+    function _looksHeading(line) {
+        const t = line.trim();
+        if (!t || t.length > 70) return false;
+        // numbered section, e.g. "2" or "2.1 Methods"
+        if (/^\d+(\.\d+)*\.?\s+\S/.test(t)) return true;
+        // ALL CAPS title line with at least two words
+        if (/^[A-Z0-9][A-Z0-9 .,:;'\-]{3,}$/.test(t) && /\s/.test(t)) return true;
+        return false;
+    }
+
+    // Reconstruct page text from PDF.js text items, grouping by line (y).
+    async function _pageText(page) {
+        const tc = await page.getTextContent();
+        const lines = [];
+        let cur = null, lastY = null;
+        tc.items.forEach(it => {
+            if (typeof it.str !== 'string' || !it.str.length) return;
+            const y = Math.round(it.transform[5]);
+            if (lastY === null || Math.abs(y - lastY) > 3) {
+                cur = []; lines.push(cur); lastY = y;
+            }
+            cur.push(it.str);
+        });
+        return lines
+            .map(parts => parts.join('').replace(/\s+/g, ' ').trim())
+            .filter(Boolean)
+            .join('\n');
+    }
+
+    // Turn reconstructed plain text into editor source.
+    function _textToSource(text) {
+        // collapse 3+ blank lines
+        let src = text.replace(/\n{3,}/g, '\n\n');
+        // garbled math -> empty placeholder chips
+        src = src.replace(GARBLE_RE, '\\(\\)');
+        // merge runs of adjacent placeholders into one
+        src = src.replace(/(?:\\\(\\\)[ \t]*){2,}/g, '\\(\\) ');
+        // light heading detection, line by line
+        src = src.split('\n').map(line => {
+            if (_looksHeading(line) && !/^#/.test(line)) {
+                const m = /^(\d+(?:\.\d+)*)\.?\s+(.*)$/.exec(line.trim());
+                if (m) return (m[1].includes('.') ? '### ' : '## ') + m[1] + ' ' + m[2];
+                return '## ' + line.trim();
+            }
+            return line;
+        }).join('\n');
+        return src;
+    }
+
+    async function _importFromFile(file, btn) {
+        const label = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = 'Importing…'; }
+        try {
+            if (typeof pdfjsLib === 'undefined') throw new Error('PDF.js failed to load.');
+            pdfjsLib.GlobalWorkerOptions.workerSrc =
+                'https://cdn.jsdelivr.net/npm/pdfjs-dist@' + PDFJS_VER + '/build/pdf.worker.min.js';
+
+            const buf = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+
+            const pages = [];
+            for (let p = 1; p <= pdf.numPages; p++) {
+                pages.push(await _pageText(await pdf.getPage(p)));
+            }
+            const fullText = pages.join('\n\n');
+
+            // 1) Perfect round-trip if this is one of our own exports: read the
+            //    literal source embedded between the EDUWEBSRC markers.
+            let source = null;
+            const hit = SRC_RE.exec(fullText);
+            if (hit) {
+                source = hit[1]
+                    .replace(/\s+/g, ' ')        // normalize extraction whitespace
+                    .replace(NL_RE, '\n')        // restore real line breaks
+                    .trim();
+            }
+            // 2) Otherwise best-effort conversion (strip any stray embed first)
+            if (!source) {
+                source = _textToSource(fullText.replace(SRC_RE, ''));
+            }
+
+            if (!source.trim()) { alert('No extractable text was found in that PDF.'); return; }
+
+            // Append (non-destructive) at the end of the document
+            const needsGap = wysiwyg.textContent.trim().length > 0;
+            wysiwyg.appendChild(sourceToFragment((needsGap ? '\n\n' : '') + source));
+            syncToTextarea();
+            wysiwyg.focus({ preventScroll: true });
+        } catch (e) {
+            alert('Could not import that PDF:\n' + (e && e.message ? e.message : e));
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = label || 'Import PDF'; }
+        }
+    }
+
+    function _wire() {
+        const btn = document.getElementById('import-pdf-btn');
+        const inp = document.getElementById('import-pdf-input');
+        if (!btn || !inp) return;
+        btn.addEventListener('click', () => inp.click());
+        inp.addEventListener('change', () => {
+            const f = inp.files && inp.files[0];
+            inp.value = '';                 // allow re-importing the same file
+            if (f) _importFromFile(f, btn);
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _wire);
+    else _wire();
+})();
+</script>
+
 
     <script>
         let input = document.getElementById("content-input");
@@ -1556,8 +2503,8 @@ a{color:#1a3a6e}
             fd.append('rendered_html', fullHtml);
             fd.append('title', title);
             fd.append('page_format', _D.fmt);
-            fd.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
-            const res = await fetch('{% url "export_pdf" %}', { method: 'POST', body: fd });
+            fd.append('csrfmiddlewaretoken', (document.querySelector('[name=csrfmiddlewaretoken]')||{}).value||'');
+            const res = await fetch(window.GENERAL_EDITOR_CONFIG.exportPdfUrl, { method: 'POST', body: fd });
             if (!res.ok) throw new Error(await res.text());
             return { blob: await res.blob(), title };
         }
@@ -3238,7 +4185,335 @@ a{color:#1a3a6e}
         });
     </script>
 
-    {% url 'home' as docsback %}{% include "catalog/_docs.html" with ns="general" backurl=docsback %}
+<style>
+/* Gallery uses the shared government palette (CSS variables) so it matches the
+   rest of the site and follows any staff-chosen theme. */
+#docs-gallery { display:none; position:fixed; inset:0; z-index:900; background:var(--bg);
+    overflow-y:auto; flex-direction:column; font-family:var(--font-ui); color:var(--text); }
+.dg-bar { display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 28px; background:var(--surface); border-bottom:2px solid var(--border-strong);
+    position:sticky; top:0; }
+.dg-bar .dg-title { font-size:1.15rem; font-weight:700; color:var(--text); }
+.dg-bar a, .dg-bar button { font-size:.9rem; }
+.dg-bar .dg-link { color:var(--accent); text-decoration:none; font-weight:600; }
+.dg-bar .dg-link:hover { text-decoration:underline; }
+.dg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+    gap:18px; padding:28px; max-width:1100px; margin:0 auto; width:100%; box-sizing:border-box; }
+.dg-card { position:relative; background:var(--surface); border:1px solid var(--border); border-radius:0;
+    padding:16px; cursor:pointer; display:flex; flex-direction:column; gap:6px; min-height:128px;
+    transition:border-color .12s; }
+.dg-card:hover { border-color:var(--accent); }
+.dg-card .dg-ct { font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.dg-card .dg-cs { font-size:.78rem; color:var(--text-muted); margin-top:auto; padding-right:24px; }
+.dg-kebab { position:absolute; top:8px; right:8px; width:28px; height:28px; border:none;
+    background:none; border-radius:0; cursor:pointer; color:var(--text-muted); font-size:1.15rem;
+    line-height:1; display:flex; align-items:center; justify-content:center; }
+.dg-kebab:hover { background:var(--surface-2); color:var(--text); }
+#dg-menu { position:absolute; z-index:950; display:none; background:var(--surface); border:1px solid var(--border-strong);
+    border-radius:0; box-shadow:none; min-width:170px; padding:5px; }
+#dg-menu button { display:block; width:100%; text-align:left; background:none; border:none;
+    padding:8px 12px; font-size:.88rem; color:var(--text); border-radius:0; cursor:pointer; }
+#dg-menu button:hover { background:var(--surface-2); }
+#dg-menu button.danger { color:var(--danger); }
+#dg-menu button.danger:hover { background:var(--danger-light); }
+.dg-new { align-items:center; justify-content:center; border:2px dashed var(--border); background:var(--surface-2);
+    color:var(--accent); font-weight:600; }
+.dg-new:hover { border-color:var(--accent); background:var(--accent-light); }
+.dg-new .dg-plus { font-size:2.2rem; line-height:1; }
+.dg-empty-hint { color:var(--text-muted); font-size:.9rem; }
+/* hard-locked size dialog */
+#docsize-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.5);
+    align-items:center; justify-content:center; padding:16px; }
+#docsize-modal .ws-card { background:var(--surface); border:1px solid var(--border-strong); border-radius:0;
+    width:100%; max-width:420px; box-shadow:none; overflow:hidden; }
+#docsize-modal .ws-head { padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700;
+    color:var(--text); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.ws-x { background:none; border:none; cursor:pointer; font-size:1.4rem; line-height:1; color:var(--text-muted);
+    padding:0 4px; border-radius:0; }
+.ws-x:hover { color:var(--text); background:var(--surface-2); }
+.ws-sizebody { padding:20px 18px; color:var(--text); }
+.ws-sizebtns { display:flex; gap:12px; margin-top:14px; }
+.ws-sizebtns button { flex:1; padding:18px 10px; border:1px solid var(--border); border-radius:0;
+    background:var(--surface-2); cursor:pointer; font-size:.95rem; font-weight:600; color:var(--text); }
+.ws-sizebtns button:hover { border-color:var(--accent); background:var(--accent-light); color:var(--accent); }
+.ws-sizebtns small { display:block; font-weight:400; color:var(--text-muted); margin-top:4px; }
+#ws-toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:var(--accent);
+    color:var(--on-accent); padding:9px 16px; border-radius:0; font-size:.9rem; z-index:1100; opacity:0;
+    transition:opacity .2s; pointer-events:none; }
+#ws-toast.show { opacity:1; }
+</style>
+<script>
+(function () {
+    const NS = "general";
+    const BACK_URL = ((window.GENERAL_EDITOR_CONFIG||{}).docsBackUrl||'#');
+    const STORE_KEY = 'eduDocs_' + NS;
+
+    function loadAll() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { return []; } }
+    function saveAll(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function fmtDate(ms) { try { return new Date(ms).toLocaleString(); } catch (e) { return ''; } }
+
+    let curId = null;
+    let curSize = 'letter';
+    window._docSize = function () { return curSize; };
+
+    function titleField() { return document.querySelector('input[name="title"]'); }
+    function curTitle() { const t = titleField(); return t ? t.value.trim() : ''; }
+    function setTitleField(v) { const t = titleField(); if (t) t.value = v || ''; }
+    function findDoc(id) { return loadAll().find(d => d.id === id); }
+
+    let _toastTimer = null;
+    function flash(msg) {
+        const el = document.getElementById('ws-toast'); if (!el) return;
+        el.textContent = msg; el.classList.add('show');
+        clearTimeout(_toastTimer); _toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    function autosave() {
+        if (!curId) return;
+        const list = loadAll();
+        const rec = { id: curId, title: curTitle(), source: serializeWysiwyg(), size: curSize, updatedAt: Date.now() };
+        const i = list.findIndex(d => d.id === curId);
+        if (i >= 0) list[i] = rec; else list.unshift(rec);
+        saveAll(list);
+    }
+    let _saveTimer = null;
+    function scheduleSave() { if (curId) { clearTimeout(_saveTimer); _saveTimer = setTimeout(autosave, 700); } }
+
+    function applySize() {
+        const sel = document.getElementById('docsize-select');
+        if (sel) sel.value = curSize;
+        if (typeof updateLivePreview === 'function') updateLivePreview();
+    }
+
+    // ── gallery ⇄ editor ───────────────────────────────────────────────────
+    function gallery() { return document.getElementById('docs-gallery'); }
+
+    function enterEditor(d) {
+        curId = d.id; curSize = (d.size === 'a4') ? 'a4' : 'letter';
+        loadWysiwyg(d.source || '');
+        setTitleField(d.title || '');
+        applySize();
+        if (typeof syncToTextarea === 'function') syncToTextarea();
+        gallery().style.display = 'none';
+        wysiwyg.focus({ preventScroll: true });
+    }
+
+    function exitToGallery() {
+        autosave();
+        curId = null;
+        showGallery();
+    }
+    window._exitToDocs = exitToGallery;
+
+    function showGallery() { renderGallery(); gallery().style.display = 'flex'; }
+
+    function renderGallery() {
+        const grid = document.getElementById('dg-grid'); if (!grid) return;
+        const list = loadAll().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        let html = '<div class="dg-card dg-new" data-act="new"><div class="dg-plus">+</div><div>New document</div></div>';
+        html += list.map(d =>
+            '<div class="dg-card" data-act="open" data-id="' + d.id + '">' +
+                '<button type="button" class="dg-kebab" data-id="' + d.id + '" title="More options" aria-label="More options">&#8942;</button>' +
+                '<div class="dg-ct">' + esc(d.title || 'Untitled') + '</div>' +
+                '<div class="dg-cs">' + (d.size === 'a4' ? 'A4' : 'US Letter') + ' &middot; ' + esc(fmtDate(d.updatedAt)) + '</div>' +
+            '</div>'
+        ).join('');
+        grid.innerHTML = html;
+    }
+
+    function createAndEnter(size, seed, title) {
+        const d = { id: uid(), title: title || '', source: seed || '',
+                    size: (size === 'a4') ? 'a4' : 'letter', updatedAt: Date.now() };
+        const list = loadAll(); list.unshift(d); saveAll(list);
+        enterEditor(d);
+    }
+
+    function deleteDoc(id) {
+        if (!confirm('Delete this document?')) return;
+        saveAll(loadAll().filter(d => d.id !== id));
+        if (id === curId) curId = null;
+        renderGallery();
+    }
+    function renameDoc(id) {
+        const list = loadAll();
+        const d = list.find(x => x.id === id); if (!d) return;
+        const name = prompt('Rename document', d.title || '');
+        if (name === null) return;
+        d.title = name.trim();
+        d.updatedAt = Date.now();
+        saveAll(list);
+        if (id === curId) setTitleField(d.title);
+        renderGallery();
+    }
+    function duplicateDoc(id) {
+        const d = findDoc(id); if (!d) return;
+        const copy = { id: uid(), title: ((d.title || 'Untitled') + ' (copy)'),
+                       source: d.source || '', size: d.size === 'a4' ? 'a4' : 'letter', updatedAt: Date.now() };
+        const list = loadAll(); list.unshift(copy); saveAll(list);
+        renderGallery(); flash('Duplicated');
+    }
+    function downloadDoc(id) {
+        const d = findDoc(id); if (!d) return;
+        const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = ((d.title || 'document').replace(/[^\w\-]+/g, '_') || 'document') + '.edudoc.json';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function importFile(file) {
+        const r = new FileReader();
+        r.onload = () => {
+            try {
+                const d = JSON.parse(r.result);
+                if (!d || typeof d.source !== 'string') throw new Error('bad');
+                const list = loadAll();
+                list.unshift({ id: uid(), title: d.title || 'Imported', source: d.source,
+                               size: (d.size === 'a4') ? 'a4' : 'letter', updatedAt: Date.now() });
+                saveAll(list); renderGallery(); flash('Document imported');
+            } catch (e) { alert('That is not a valid document file.'); }
+        };
+        r.readAsText(file);
+    }
+
+    // ── hard-locked size dialog ─────────────────────────────────────────────
+    let _sizeCb = null;
+    function askSize(cb) { _sizeCb = cb; document.getElementById('docsize-modal').style.display = 'flex'; }
+    function chooseSize(size) {
+        document.getElementById('docsize-modal').style.display = 'none';
+        const cb = _sizeCb; _sizeCb = null;
+        if (cb) cb(size);
+    }
+
+    function buildUI() {
+        if (document.getElementById('docs-gallery')) return;
+        const g = document.createElement('div');
+        g.id = 'docs-gallery';
+        g.innerHTML =
+            '<div class="dg-bar">' +
+                '<span style="display:flex;gap:18px;align-items:center;">' +
+                    '<a class="dg-link" href="' + BACK_URL + '">&lsaquo; Back</a>' +
+                    '<span class="dg-title">Documents</span>' +
+                '</span>' +
+            '</div>' +
+            '<div id="dg-grid" class="dg-grid"></div>';
+        document.body.appendChild(g);
+
+        const sz = document.createElement('div');
+        sz.id = 'docsize-modal';
+        sz.innerHTML =
+            '<div class="ws-card"><div class="ws-head"><span>Choose a page size</span>' +
+                '<button type="button" id="docsize-close" class="ws-x" aria-label="Close">&times;</button></div>' +
+                '<div class="ws-sizebody">' +
+                    '<div class="ws-sizebtns">' +
+                        '<button type="button" data-size="letter">US Letter<small>8.5 × 11 in</small></button>' +
+                        '<button type="button" data-size="a4">A4<small>210 × 297 mm</small></button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        document.body.appendChild(sz);
+
+        const toast = document.createElement('div'); toast.id = 'ws-toast'; document.body.appendChild(toast);
+
+        // per-card kebab menu (Google-Docs style)
+        const menu = document.createElement('div');
+        menu.id = 'dg-menu';
+        menu.innerHTML =
+            '<button type="button" data-mact="open">Open</button>' +
+            '<button type="button" data-mact="rename">Rename</button>' +
+            '<button type="button" data-mact="duplicate">Make a copy</button>' +
+            '<button type="button" data-mact="download">Download</button>' +
+            '<button type="button" class="danger" data-mact="delete">Delete</button>';
+        document.body.appendChild(menu);
+
+        function closeMenu() { menu.style.display = 'none'; menu.dataset.id = ''; }
+        function openMenu(kebab, id) {
+            menu.dataset.id = id;
+            menu.style.display = 'block';
+            const r = kebab.getBoundingClientRect();
+            const mw = menu.offsetWidth || 170, mh = menu.offsetHeight || 200;
+            let left = r.right - mw, top = r.bottom + 4;
+            if (top + mh > window.innerHeight) top = Math.max(8, r.top - mh - 4);
+            if (left < 8) left = 8;
+            menu.style.left = (left + window.scrollX) + 'px';
+            menu.style.top = (top + window.scrollY) + 'px';
+        }
+
+        // gallery clicks (new / open / kebab)
+        document.getElementById('dg-grid').addEventListener('click', e => {
+            const kebab = e.target.closest('.dg-kebab');
+            if (kebab) { e.stopPropagation();
+                if (menu.style.display === 'block' && menu.dataset.id === kebab.dataset.id) closeMenu();
+                else openMenu(kebab, kebab.dataset.id);
+                return;
+            }
+            const card = e.target.closest('.dg-card'); if (!card) return;
+            if (card.dataset.act === 'new') {
+                askSize(size => createAndEnter(size, '', ''));
+            } else if (card.dataset.act === 'open') {
+                const d = findDoc(card.dataset.id); if (d) enterEditor(d);
+            }
+        });
+        menu.addEventListener('click', e => {
+            const b = e.target.closest('button[data-mact]'); if (!b) return;
+            const id = menu.dataset.id; closeMenu();
+            if (!id) return;
+            const act = b.dataset.mact;
+            if (act === 'open') { const d = findDoc(id); if (d) enterEditor(d); }
+            else if (act === 'rename') renameDoc(id);
+            else if (act === 'duplicate') duplicateDoc(id);
+            else if (act === 'download') downloadDoc(id);
+            else if (act === 'delete') deleteDoc(id);
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#dg-menu') && !e.target.closest('.dg-kebab')) closeMenu();
+        });
+        window.addEventListener('scroll', closeMenu, true);
+        window.addEventListener('resize', closeMenu);
+
+        // size dialog: pick a size, or close with the X (cancel back to the gallery)
+        sz.querySelectorAll('.ws-sizebtns button').forEach(b =>
+            b.addEventListener('click', () => chooseSize(b.dataset.size)));
+        sz.querySelector('#docsize-close').addEventListener('click', () => {
+            sz.style.display = 'none'; _sizeCb = null;
+        });
+    }
+
+    function wire() {
+        buildUI();
+        const exitBtn = document.getElementById('editor-exit');
+        if (exitBtn) exitBtn.addEventListener('click', e => { e.preventDefault(); exitToGallery(); });
+        const sel = document.getElementById('docsize-select');
+        if (sel) sel.addEventListener('change', () => {
+            curSize = (sel.value === 'a4') ? 'a4' : 'letter';
+            autosave();
+            if (typeof updateLivePreview === 'function') updateLivePreview();
+        });
+
+        wysiwyg.addEventListener('input', scheduleSave);
+        const t = titleField(); if (t) t.addEventListener('input', scheduleSave);
+        window.addEventListener('beforeunload', autosave);
+
+        // Seed a document from already-loaded content (textbook/notes pages) so the
+        // published page shows up as a card the first time.
+        if (!loadAll().length) {
+            const seed = (typeof serializeWysiwyg === 'function') ? serializeWysiwyg() : '';
+            if (seed.trim()) {
+                saveAll([{ id: uid(), title: curTitle(), source: seed, size: 'letter', updatedAt: Date.now() }]);
+            }
+        }
+        // Always land on the gallery — never auto-open the editor.
+        showGallery();
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+    else wire();
+})();
+</script>
+
 
 </body>
 </html>

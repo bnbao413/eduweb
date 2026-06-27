@@ -90,6 +90,34 @@ class FinalExam(models.Model):
         return self.title
 
 
+class PageOverlay(models.Model):
+    """Staff-placed free-form overlay items (images/GIFs/text) for a given page
+    URL path. Rendered on top of the page for everyone; editable by staff."""
+    path = models.CharField(max_length=300, unique=True)
+    items = models.JSONField(default=list, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"overlay {self.path} ({len(self.items or [])} items)"
+
+
+class SiteTheme(models.Model):
+    """Singleton-ish row of site-wide colour overrides, editable by staff from
+    the Edit-page panel. Each field holds a hex colour; blank = fall back to the
+    default government palette defined in app.css."""
+    bg = models.CharField(max_length=20, blank=True)         # desktop background
+    surface = models.CharField(max_length=20, blank=True)    # paper / cards
+    surface_2 = models.CharField(max_length=20, blank=True)  # panels
+    border = models.CharField(max_length=20, blank=True)     # lines
+    text = models.CharField(max_length=20, blank=True)       # ink
+    accent = models.CharField(max_length=20, blank=True)     # links / buttons
+    on_accent = models.CharField(max_length=20, blank=True)  # text on accent
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return "site theme"
+
+
 
 
 

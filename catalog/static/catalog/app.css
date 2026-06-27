@@ -1,46 +1,46 @@
 /* ===========================================================================
-   EduWeb design system — lean, clean, solid colors. Indigo accent.
+   Didelta design system — lean, clean, solid colors. Indigo accent.
    =========================================================================== */
 
 :root {
-    --bg:            #f7f8fa;
-    --surface:       #ffffff;
-    --surface-2:     #f9fafb;
-    --border:        #e5e7eb;
-    --border-strong: #d1d5db;
+    /* "Crappy 1960s government office" palette: manila paper, drab olive/tan,
+       navy ink, hard borders, no rounded corners, no shadows, Times type. */
+    --bg:            #b7b29c;   /* drab olive/tan desktop */
+    --surface:       #f4f1e6;   /* manila folder paper */
+    --surface-2:     #e3ddca;   /* slightly darker panel */
+    --border:        #8a8163;
+    --border-strong: #5b5440;
 
-    --text:          #111827;
-    --text-muted:    #6b7280;
-    --text-subtle:   #9ca3af;
+    --text:          #1a1a1a;
+    --text-muted:    #4c4636;
+    --text-subtle:   #6f6650;
 
-    --accent:        #4f46e5;
-    --accent-hover:  #4338ca;
-    --accent-active: #3730a3;
-    --accent-light:  #eef2ff;
-    --accent-border: #c7d2fe;
+    --accent:        #0a246a;   /* government navy */
+    --accent-hover:  #1c3a8f;
+    --accent-active: #06163f;
+    --accent-light:  #dfe2ec;
+    --accent-border: #0a246a;
     --on-accent:     #ffffff;
 
-    --danger:        #dc2626;
-    --danger-hover:  #b91c1c;
-    --danger-light:  #fef2f2;
-    --success:       #059669;
+    --danger:        #8b0000;
+    --danger-hover:  #b00000;
+    --danger-light:  #f1d9d9;
+    --success:       #1f5c1f;
 
-    --radius:    10px;
-    --radius-sm: 7px;
-    --radius-lg: 14px;
+    --radius:    0;
+    --radius-sm: 0;
+    --radius-lg: 0;
 
-    --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
-    --shadow:    0 1px 3px rgba(17, 24, 39, 0.08), 0 1px 2px rgba(17, 24, 39, 0.04);
-    --shadow-md: 0 4px 12px rgba(17, 24, 39, 0.08);
-    --shadow-lg: 0 12px 32px rgba(17, 24, 39, 0.14);
+    --shadow-sm: none;
+    --shadow:    none;
+    --shadow-md: none;
+    --shadow-lg: none;
 
-    --ring: 0 0 0 3px rgba(79, 70, 229, 0.25);
+    --ring: 0 0 0 2px #0a246a;
 
-    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-               Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-    --font-serif: Georgia, "Times New Roman", serif;
-    --font-mono: "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", Menlo,
-                 monospace;
+    --font-ui:    "Times New Roman", Times, Georgia, serif;
+    --font-serif: "Times New Roman", Times, Georgia, serif;
+    --font-mono:  "Courier New", Courier, monospace;
 }
 
 /* ----- reset --------------------------------------------------------------- */
@@ -62,8 +62,8 @@ body {
 
 h1, h2, h3, h4 {
     line-height: 1.25;
-    font-weight: 650;
-    letter-spacing: -0.01em;
+    font-weight: bold;
+    letter-spacing: normal;
     color: var(--text);
     margin: 0 0 0.5em;
 }
@@ -75,11 +75,14 @@ h3 { font-size: 1.15rem; }
 p { margin: 0 0 1rem; }
 
 a {
-    color: var(--accent);
-    text-decoration: none;
+    color: #0000ee;
+    text-decoration: underline;
     transition: color 0.12s ease;
 }
-a:hover { color: var(--accent-hover); text-decoration: underline; }
+a:visited { color: #551a8b; }
+a:hover { color: #0000ee; text-decoration: underline; }
+/* keep chrome/components from rendering as underlined body links */
+.nav a, .list-card, .list-card:hover, .btn, .backlink { text-decoration: none; }
 
 hr {
     border: none;
@@ -95,10 +98,10 @@ small { font-size: 0.85rem; }
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: saturate(180%) blur(10px);
-    -webkit-backdrop-filter: saturate(180%) blur(10px);
-    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: 2px solid var(--border-strong);
 }
 
 .topbar-inner {
@@ -109,29 +112,6 @@ small { font-size: 0.85rem; }
     display: flex;
     align-items: center;
     gap: 1.5rem;
-}
-
-.brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    font-weight: 700;
-    font-size: 1.08rem;
-    letter-spacing: -0.02em;
-    color: var(--text);
-}
-.brand:hover { color: var(--text); text-decoration: none; }
-
-.brand-mark {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    background: var(--accent);
-    display: inline-grid;
-    place-items: center;
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: 800;
 }
 
 .nav {
@@ -299,6 +279,13 @@ small { font-size: 0.85rem; }
     color: #fff;
 }
 .btn-danger:hover { background: var(--danger-hover); color: #fff; text-decoration: none; }
+
+/* keep button text colour regardless of link visited/unvisited state
+   (so navy primary buttons stay white, not purple) */
+.btn-primary:link, .btn-primary:visited { color: var(--on-accent); }
+.btn-secondary:link, .btn-secondary:visited { color: var(--text); }
+.btn-ghost:link, .btn-ghost:visited { color: var(--text-muted); }
+.btn-danger:link, .btn-danger:visited { color: #fff; }
 
 .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
 .btn-block { width: 100%; }

@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}EduWeb{% endblock %}</title>
+    <title>{% block title %}Didelta{% endblock %}</title>
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="stylesheet" href="{% static 'catalog/app.css' %}?v=2">
+    <link rel="stylesheet" href="{% static 'catalog/app.css' %}?v=6">
+    {% if site_theme_css %}<style>{{ site_theme_css|safe }}</style>{% endif %}
 
     <script>
         window.MathJax = {
@@ -22,10 +23,6 @@
 <body>
     <header class="topbar">
         <div class="topbar-inner">
-            <a href="{% url 'home' %}" class="brand">
-                <span class="brand-mark">E</span>
-                <span>EduWeb</span>
-            </a>
             <a href="{% url 'general_editor' %}" class="btn btn-primary btn-sm">Open editor</a>
             <nav class="nav">
                 <a href="{% url 'home' %}">Home</a>
@@ -36,6 +33,9 @@
                 <div id="search-results" class="search-results" style="display:none;"></div>
             </div>
             <div class="topbar-actions">
+                {% if user.is_staff %}
+                    <button type="button" id="po-toggle" class="btn btn-secondary btn-sm">Edit page</button>
+                {% endif %}
                 {% if user.is_authenticated %}
                     <span>Signed in as <span class="user">{{ user.username }}</span></span>
                     <form method="post" action="{% url 'logout' %}" style="display:inline;">
@@ -53,6 +53,91 @@
     <main class="page-shell">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- staff free-form page overlay (images / GIFs / text), shown to everyone -->
+    <div id="page-overlay">
+        {% for it in page_overlay_items %}
+            {% if it.type == 'image' %}
+                <div class="po-item po-img" data-rot="{{ it.rot|default:0 }}" data-fx="{{ it.fx|default:1 }}" data-fy="{{ it.fy|default:1 }}" style="left:{{ it.x }}px;top:{{ it.y }}px;width:{{ it.w }}px;{% if it.h %}height:{{ it.h }}px;{% endif %}transform:rotate({{ it.rot|default:0 }}deg) scaleX({{ it.fx|default:1 }}) scaleY({{ it.fy|default:1 }});"><img src="{{ it.url }}" alt=""></div>
+            {% elif it.type == 'text' %}
+                <div class="po-item po-text" data-rot="{{ it.rot|default:0 }}" data-fx="{{ it.fx|default:1 }}" data-fy="{{ it.fy|default:1 }}" style="left:{{ it.x }}px;top:{{ it.y }}px;width:{{ it.w }}px;{% if it.h %}height:{{ it.h }}px;{% endif %}transform:rotate({{ it.rot|default:0 }}deg) scaleX({{ it.fx|default:1 }}) scaleY({{ it.fy|default:1 }});"><span class="po-text-body{% if it.font %} po-font-{{ it.font }}{% endif %}" data-color="{{ it.color }}" data-size="{{ it.size }}" data-font="{{ it.font }}" style="{% if it.color %}color:{{ it.color }};{% endif %}{% if it.size %}font-size:{{ it.size }}px;{% endif %}">{{ it.text }}</span></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% if user.is_staff %}
+    <div id="po-tools" style="display:none;">
+        <strong style="font-size:.8rem;">Edit mode</strong>
+        <button type="button" id="po-add-img" class="btn btn-secondary btn-sm">Add image / GIF</button>
+        <input type="file" id="po-img-file" accept="image/*" style="display:none;">
+        <button type="button" id="po-add-text" class="btn btn-secondary btn-sm">Add text</button>
+        <span class="po-hint">Drag to move · drag edges/corners to resize · right-click for options (text: font, size, colour). Click “Save page” when done.</span>
+        <hr style="width:100%;border:none;border-top:1px solid var(--border);margin:6px 0 2px;">
+        <strong style="font-size:.8rem;">Site theme</strong>
+        <span class="po-hint">Colours apply to the whole site (including the editors).</span>
+        <label class="po-th-row">Desktop <input type="color" id="po-th-bg"></label>
+        <label class="po-th-row">Paper <input type="color" id="po-th-surface"></label>
+        <label class="po-th-row">Panels <input type="color" id="po-th-surface2"></label>
+        <label class="po-th-row">Lines <input type="color" id="po-th-border"></label>
+        <label class="po-th-row">Ink (text) <input type="color" id="po-th-text"></label>
+        <label class="po-th-row">Accent <input type="color" id="po-th-accent"></label>
+        <label class="po-th-row">Accent text <input type="color" id="po-th-onaccent"></label>
+        <button type="button" id="po-th-apply" class="btn btn-secondary btn-sm">Apply theme</button>
+        <button type="button" id="po-th-reset" class="btn btn-ghost btn-sm">Reset to default</button>
+        {% csrf_token %}
+    </div>
+    {% endif %}
+
+    <style>
+    /* z-index above the sticky topbar (100) so items can be placed over the top bar */
+    #page-overlay { position:absolute; top:0; left:0; width:100%; height:0; z-index:150; pointer-events:none; }
+    .po-item { position:absolute; box-sizing:border-box; max-width:none; }
+    .po-img { overflow:hidden; }
+    .po-img img { display:block; width:100%; height:100%; object-fit:fill; pointer-events:none; }
+    .po-text { font-family:var(--font-ui); color:var(--text); }
+    .po-text-body { display:block; white-space:pre-wrap; }
+    /* whitelisted text fonts (selected from the right-click menu) */
+    .po-font-sans    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .po-font-serif   { font-family: Georgia, "Times New Roman", serif; }
+    .po-font-mono    { font-family: ui-monospace, "Courier New", monospace; }
+    .po-font-cursive { font-family: "Comic Sans MS", "Segoe Script", cursive; }
+    .po-font-fancy   { font-family: Impact, Haettenschweiler, fantasy; }
+    body.po-editing .po-item { pointer-events:auto; outline:1px dashed #0a246a; }
+    body.po-editing .po-img { cursor:move; }
+    body.po-editing .po-text .po-text-body { min-width:40px; outline:none; }
+    #po-ctx { position:fixed; z-index:1100; display:none; background:var(--surface);
+        border:1px solid var(--border-strong); min-width:170px; padding:5px; }
+    #po-ctx button { display:block; width:100%; text-align:left; background:none; border:none;
+        padding:7px 12px; font-size:.86rem; color:var(--text); cursor:pointer; font-family:var(--font-ui); }
+    #po-ctx button:hover { background:var(--surface-2); }
+    #po-ctx hr { border:none; border-top:1px solid var(--border); margin:4px 0; }
+    #po-ctx .danger { color:#8b0000; }
+    #po-ctx .po-ctx-style { padding:6px 10px; display:flex; flex-direction:column; gap:6px; }
+    #po-ctx .po-ctx-style label { display:flex; align-items:center; justify-content:space-between;
+        gap:10px; font-size:.82rem; color:var(--text); font-family:var(--font-ui); }
+    #po-ctx .po-ctx-style select, #po-ctx .po-ctx-style input[type=number] {
+        flex:1; min-width:0; max-width:120px; padding:3px 5px; font-family:var(--font-ui);
+        border:1px solid var(--border-strong); background:var(--surface); color:var(--text); box-sizing:border-box; }
+    #po-ctx .po-ctx-style input[type=color] { width:36px; height:24px; padding:0; border:1px solid var(--border-strong); background:none; }
+    /* free (non-proportional) resize handles on every side and corner */
+    .po-rs { position:absolute; width:10px; height:10px; background:#0a246a; border:1px solid #fff;
+        box-sizing:border-box; display:none; z-index:3; }
+    body.po-editing .po-rs { display:block; }
+    .po-rs.n  { top:-5px;    left:50%;  margin-left:-5px; cursor:ns-resize; }
+    .po-rs.s  { bottom:-5px; left:50%;  margin-left:-5px; cursor:ns-resize; }
+    .po-rs.e  { right:-5px;  top:50%;   margin-top:-5px;  cursor:ew-resize; }
+    .po-rs.w  { left:-5px;   top:50%;   margin-top:-5px;  cursor:ew-resize; }
+    .po-rs.ne { top:-5px;    right:-5px;  cursor:nesw-resize; }
+    .po-rs.sw { bottom:-5px; left:-5px;   cursor:nesw-resize; }
+    .po-rs.se { bottom:-5px; right:-5px;  cursor:nwse-resize; }
+    .po-rs.nw { top:-5px;    left:-5px;   cursor:nwse-resize; }
+    #po-tools { position:fixed; top:64px; right:10px; z-index:1000; background:var(--surface);
+        border:1px solid var(--border-strong); padding:10px; display:flex; flex-direction:column;
+        gap:6px; max-width:240px; }
+    .po-hint { font-size:.72rem; color:var(--text-muted); line-height:1.3; }
+    .po-th-row { display:flex; align-items:center; justify-content:space-between; gap:8px;
+        font-size:.76rem; color:var(--text); }
+    .po-th-row input[type=color] { width:40px; height:24px; padding:0; border:1px solid var(--border-strong); background:none; cursor:pointer; }
+    </style>
 
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -138,6 +223,362 @@
         });
     })();
     </script>
+    {% if user.is_staff %}
+    <script>
+    (function () {
+        const toggle = document.getElementById('po-toggle');
+        const overlay = document.getElementById('page-overlay');
+        const tools = document.getElementById('po-tools');
+        if (!toggle || !overlay) return;
+        const SAVE_URL = "{% url 'page_overlay_save' %}";
+        const PATH = "{{ request.path|escapejs }}";
+        let editing = false;
+
+        function csrf() { const el = tools && tools.querySelector('[name=csrfmiddlewaretoken]'); return el ? el.value : ''; }
+
+        // ── site theme: recolour the whole site (CSS variables) ──
+        (function () {
+            const THEME_URL = "{% url 'theme_save' %}";
+            const applyBtn = document.getElementById('po-th-apply');
+            const resetBtn = document.getElementById('po-th-reset');
+            if (!applyBtn) return;
+            const root = document.documentElement;
+            // field key → its colour picker + the CSS variable it reads its current value from
+            const PICK = { bg: 'po-th-bg', surface: 'po-th-surface', surface_2: 'po-th-surface2',
+                           border: 'po-th-border', text: 'po-th-text', accent: 'po-th-accent', on_accent: 'po-th-onaccent' };
+            const VAR = { bg: '--bg', surface: '--surface', surface_2: '--surface-2',
+                          border: '--border', text: '--text', accent: '--accent', on_accent: '--on-accent' };
+
+            // a picker change pushes the colour live onto the page (saved on Apply)
+            function preview(key, val) {
+                if (key === 'border') { root.style.setProperty('--border', val); root.style.setProperty('--border-strong', val); }
+                else if (key === 'accent') {
+                    ['--accent', '--accent-hover', '--accent-active', '--accent-border'].forEach(v => root.style.setProperty(v, val));
+                    root.style.setProperty('--ring', '0 0 0 2px ' + val);
+                } else { root.style.setProperty(VAR[key], val); }
+            }
+
+            // seed each picker from the current effective colour
+            Object.keys(PICK).forEach(key => {
+                const el = document.getElementById(PICK[key]); if (!el) return;
+                const cur = getComputedStyle(root).getPropertyValue(VAR[key]).trim();
+                if (/^#[0-9a-fA-F]{6}$/.test(cur)) el.value = cur;
+                el.addEventListener('input', () => preview(key, el.value));
+            });
+
+            applyBtn.addEventListener('click', () => {
+                const fd = new FormData();
+                Object.keys(PICK).forEach(key => { const el = document.getElementById(PICK[key]); if (el) fd.append(key, el.value); });
+                fd.append('csrfmiddlewaretoken', csrf());
+                applyBtn.disabled = true; applyBtn.textContent = 'Saving…';
+                fetch(THEME_URL, { method: 'POST', body: fd })
+                    .then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t); }); return r.json(); })
+                    .then(() => { applyBtn.textContent = 'Saved ✓'; setTimeout(() => { applyBtn.textContent = 'Apply theme'; }, 1200); })
+                    .catch(err => { alert('Could not save theme: ' + (err.message || err)); applyBtn.textContent = 'Apply theme'; })
+                    .finally(() => { applyBtn.disabled = false; });
+            });
+
+            if (resetBtn) resetBtn.addEventListener('click', () => {
+                if (!confirm('Reset the site theme back to the default look?')) return;
+                const fd = new FormData(); fd.append('reset', '1'); fd.append('csrfmiddlewaretoken', csrf());
+                fetch(THEME_URL, { method: 'POST', body: fd })
+                    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+                    .then(() => location.reload())
+                    .catch(() => alert('Could not reset the theme.'));
+            });
+        })();
+
+        // Drag from anywhere on the item. A small movement threshold means a plain
+        // click on a text body still places the caret for editing (only a real drag
+        // moves it).
+        let drag = null;
+        function itemMouseDown(e, item) {
+            if (!editing) return;
+            if (e.button !== 0) return;
+            if (e.target.closest('.po-rs')) return;
+            drag = {
+                item, active: false,
+                sx: e.pageX, sy: e.pageY,
+                bl: parseInt(item.style.left) || 0,
+                bt: parseInt(item.style.top) || 0,
+            };
+            document.addEventListener('mousemove', itemMouseMove);
+            document.addEventListener('mouseup', itemMouseUp);
+        }
+        function itemMouseMove(e) {
+            if (!drag) return;
+            const dx = e.pageX - drag.sx, dy = e.pageY - drag.sy;
+            if (!drag.active) {
+                if (Math.abs(dx) + Math.abs(dy) < 4) return;   // below threshold = a click, not a drag
+                drag.active = true;
+                if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            }
+            e.preventDefault();
+            drag.item.style.left = (drag.bl + dx) + 'px';
+            drag.item.style.top = (drag.bt + dy) + 'px';
+        }
+        function itemMouseUp() {
+            document.removeEventListener('mousemove', itemMouseMove);
+            document.removeEventListener('mouseup', itemMouseUp);
+            drag = null;
+        }
+
+        // Free, non-proportional resize from any side or corner.
+        function startResize(e, item, dir) {
+            if (!editing) return;
+            e.preventDefault(); e.stopPropagation();
+            const sx = e.pageX, sy = e.pageY;
+            const sl = parseInt(item.style.left) || 0, st = parseInt(item.style.top) || 0;
+            const sw = item.offsetWidth, sh = item.offsetHeight;
+            const MIN = 8;
+            function mv(ev) {
+                const dx = ev.pageX - sx, dy = ev.pageY - sy;
+                let L = sl, T = st, W = sw, H = sh;
+                if (dir.indexOf('e') >= 0) W = Math.max(MIN, sw + dx);
+                if (dir.indexOf('s') >= 0) H = Math.max(MIN, sh + dy);
+                if (dir.indexOf('w') >= 0) { W = Math.max(MIN, sw - dx); L = sl + (sw - W); }
+                if (dir.indexOf('n') >= 0) { H = Math.max(MIN, sh - dy); T = st + (sh - H); }
+                item.style.width = W + 'px'; item.style.height = H + 'px';
+                item.style.left = L + 'px'; item.style.top = T + 'px';
+            }
+            function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); }
+            document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+        }
+
+        function applyTransform(item) {
+            const r = parseInt(item.dataset.rot) || 0;
+            const fx = item.dataset.fx === '-1' ? -1 : 1;
+            const fy = item.dataset.fy === '-1' ? -1 : 1;
+            item.style.transform = 'rotate(' + r + 'deg) scaleX(' + fx + ') scaleY(' + fy + ')';
+        }
+
+        function decorate(item) {
+            if (item.dataset.decorated) return;
+            item.dataset.decorated = '1';
+            item.addEventListener('mousedown', e => itemMouseDown(e, item));
+            item.addEventListener('contextmenu', e => {
+                if (!editing) return;
+                e.preventDefault();
+                showCtx(e.clientX, e.clientY, item);
+            });
+            ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
+                const r = document.createElement('span');
+                r.className = 'po-rs ' + dir;
+                r.addEventListener('mousedown', e => startResize(e, item, dir));
+                item.appendChild(r);
+            });
+        }
+
+        // ── right-click context menu (delete / duplicate / rotate / flip / order) ──
+        const ctx = document.createElement('div');
+        ctx.id = 'po-ctx';
+        ctx.innerHTML =
+            '<div class="po-ctx-style">' +
+                '<label>Font<select data-s="font">' +
+                    '<option value="">Default</option>' +
+                    '<option value="sans">Sans</option>' +
+                    '<option value="serif">Serif</option>' +
+                    '<option value="mono">Mono</option>' +
+                    '<option value="cursive">Handwriting</option>' +
+                    '<option value="fancy">Display</option>' +
+                '</select></label>' +
+                '<label>Size<input type="number" data-s="size" min="8" max="400" step="1" placeholder="auto"></label>' +
+                '<label>Colour<input type="color" data-s="color"></label>' +
+            '</div>' +
+            '<hr class="po-ctx-style-sep">' +
+            '<button data-a="dup">Duplicate</button>' +
+            '<button data-a="rotr">Rotate right 90°</button>' +
+            '<button data-a="rotl">Rotate left 90°</button>' +
+            '<button data-a="fliph">Flip horizontal</button>' +
+            '<button data-a="flipv">Flip vertical</button>' +
+            '<hr>' +
+            '<button data-a="front">Bring to front</button>' +
+            '<button data-a="back">Send to back</button>' +
+            '<hr>' +
+            '<button class="danger" data-a="del">Delete</button>';
+        document.body.appendChild(ctx);
+        let ctxItem = null;
+
+        // ── text styling (font / size / colour), shown only for text items ──
+        const styleBox = ctx.querySelector('.po-ctx-style');
+        const styleSep = ctx.querySelector('.po-ctx-style-sep');
+        const fontSel = ctx.querySelector('[data-s=font]');
+        const sizeIn = ctx.querySelector('[data-s=size]');
+        const colorIn = ctx.querySelector('[data-s=color]');
+        function applyTextStyle(which, val) {
+            if (!ctxItem) return;
+            const body = ctxItem.querySelector('.po-text-body');
+            if (!body) return;
+            if (which === 'font') {
+                body.dataset.font = val;
+                body.className = 'po-text-body' + (val ? ' po-font-' + val : '');
+            } else if (which === 'size') {
+                const n = parseInt(val) || 0;
+                body.dataset.size = n || '';
+                body.style.fontSize = n ? n + 'px' : '';
+            } else if (which === 'color') {
+                body.dataset.color = val;
+                body.style.color = val;
+            }
+        }
+        if (fontSel) fontSel.addEventListener('change', e => applyTextStyle('font', e.target.value));
+        if (sizeIn) sizeIn.addEventListener('input', e => applyTextStyle('size', e.target.value));
+        if (colorIn) colorIn.addEventListener('input', e => applyTextStyle('color', e.target.value));
+
+        function showCtx(x, y, item) {
+            ctxItem = item;
+            const isText = item.classList.contains('po-text');
+            styleBox.style.display = isText ? 'flex' : 'none';
+            styleSep.style.display = isText ? 'block' : 'none';
+            if (isText) {
+                const body = item.querySelector('.po-text-body');
+                fontSel.value = (body && body.dataset.font) || '';
+                sizeIn.value = (body && parseInt(body.dataset.size)) || '';
+                colorIn.value = (body && body.dataset.color) || '#1a1a1a';
+            }
+            ctx.style.display = 'block';
+            const w = ctx.offsetWidth || 180, h = ctx.offsetHeight || 260;
+            ctx.style.left = Math.min(x, window.innerWidth - w - 6) + 'px';
+            ctx.style.top = Math.min(y, window.innerHeight - h - 6) + 'px';
+        }
+        function hideCtx() { ctx.style.display = 'none'; ctxItem = null; }
+        function duplicate(item) {
+            const c = item.cloneNode(true);
+            c.querySelectorAll('.po-rs').forEach(n => n.remove());
+            delete c.dataset.decorated;
+            c.style.left = ((parseInt(item.style.left) || 0) + 16) + 'px';
+            c.style.top = ((parseInt(item.style.top) || 0) + 16) + 'px';
+            overlay.appendChild(c); decorate(c); applyTransform(c);
+            if (editing && c.classList.contains('po-text')) {
+                const b = c.querySelector('.po-text-body'); if (b) b.contentEditable = 'true';
+            }
+        }
+        ctx.addEventListener('click', e => {
+            const b = e.target.closest('button[data-a]'); if (!b || !ctxItem) return;
+            const a = b.dataset.a, item = ctxItem;
+            if (a === 'del') item.remove();
+            else if (a === 'dup') duplicate(item);
+            else if (a === 'rotr') { item.dataset.rot = ((parseInt(item.dataset.rot) || 0) + 90) % 360; applyTransform(item); }
+            else if (a === 'rotl') { item.dataset.rot = ((parseInt(item.dataset.rot) || 0) + 270) % 360; applyTransform(item); }
+            else if (a === 'fliph') { item.dataset.fx = item.dataset.fx === '-1' ? '1' : '-1'; applyTransform(item); }
+            else if (a === 'flipv') { item.dataset.fy = item.dataset.fy === '-1' ? '1' : '-1'; applyTransform(item); }
+            else if (a === 'front') overlay.appendChild(item);
+            else if (a === 'back') overlay.insertBefore(item, overlay.firstChild);
+            hideCtx();
+        });
+        document.addEventListener('click', e => { if (!e.target.closest('#po-ctx')) hideCtx(); });
+        document.addEventListener('scroll', hideCtx, true);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtx(); });
+
+        function setEditable(on) {
+            overlay.querySelectorAll('.po-text-body').forEach(b => b.contentEditable = on ? 'true' : 'false');
+        }
+
+        const UPLOAD_URL = "{% url 'page_overlay_upload' %}";
+        const imgFile = document.getElementById('po-img-file');
+
+        function placeImage(url) {
+            const d = document.createElement('div');
+            d.className = 'po-item po-img';
+            d.dataset.rot = '0'; d.dataset.fx = '1'; d.dataset.fy = '1';
+            d.style.left = (window.scrollX + 120) + 'px';
+            d.style.top = (window.scrollY + 120) + 'px';
+            d.style.width = '240px';
+            d.style.height = '160px';
+            const img = document.createElement('img'); img.alt = '';
+            img.onload = function () {
+                if (img.naturalWidth) d.style.height = Math.round(240 * img.naturalHeight / img.naturalWidth) + 'px';
+            };
+            img.src = url;
+            d.appendChild(img); overlay.appendChild(d); decorate(d);
+        }
+
+        function addImage() { if (imgFile) imgFile.click(); }   // pick a file from disk
+
+        if (imgFile) imgFile.addEventListener('change', () => {
+            const f = imgFile.files && imgFile.files[0];
+            imgFile.value = '';
+            if (!f) return;
+            const fd = new FormData();
+            fd.append('file', f);
+            fd.append('csrfmiddlewaretoken', csrf());
+            const ai = document.getElementById('po-add-img');
+            if (ai) { ai.disabled = true; ai.textContent = 'Uploading…'; }
+            fetch(UPLOAD_URL, { method: 'POST', body: fd })
+                .then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t); }); return r.json(); })
+                .then(d => placeImage(d.url))
+                .catch(err => alert('Upload failed: ' + (err.message || err)))
+                .finally(() => { if (ai) { ai.disabled = false; ai.textContent = 'Add image / GIF'; } });
+        });
+        function addText() {
+            const d = document.createElement('div');
+            d.className = 'po-item po-text';
+            d.dataset.rot = '0'; d.dataset.fx = '1'; d.dataset.fy = '1';
+            d.style.left = (window.scrollX + 120) + 'px';
+            d.style.top = (window.scrollY + 120) + 'px';
+            d.style.width = '220px';
+            const span = document.createElement('span');
+            span.className = 'po-text-body'; span.textContent = 'New text';
+            d.appendChild(span); overlay.appendChild(d); decorate(d);
+            span.contentEditable = 'true'; span.focus();
+        }
+
+        function collect() {
+            return [...overlay.querySelectorAll('.po-item')].map(el => {
+                const x = parseInt(el.style.left) || 0, y = parseInt(el.style.top) || 0,
+                      w = parseInt(el.style.width) || 200,
+                      h = parseInt(el.style.height) || (el.classList.contains('po-img') ? el.offsetHeight : 0),
+                      rot = parseInt(el.dataset.rot) || 0,
+                      fx = el.dataset.fx === '-1' ? -1 : 1,
+                      fy = el.dataset.fy === '-1' ? -1 : 1;
+                if (el.classList.contains('po-img')) {
+                    const img = el.querySelector('img');
+                    return { type: 'image', url: img ? img.getAttribute('src') : '', x, y, w, h, rot, fx, fy };
+                }
+                const body = el.querySelector('.po-text-body');
+                return { type: 'text', text: body ? body.innerText : '', x, y, w, h, rot, fx, fy,
+                         color: (body && body.dataset.color) || '',
+                         size: (body && parseInt(body.dataset.size)) || 0,
+                         font: (body && body.dataset.font) || '' };
+            });
+        }
+
+        function save() {
+            const fd = new FormData();
+            fd.append('path', PATH);
+            fd.append('items', JSON.stringify(collect()));
+            fd.append('csrfmiddlewaretoken', csrf());
+            return fetch(SAVE_URL, { method: 'POST', body: fd }).then(r => { if (!r.ok) throw new Error(); return r.json(); });
+        }
+
+        function enter() {
+            editing = true;
+            document.body.classList.add('po-editing');
+            tools.style.display = 'flex';
+            toggle.textContent = 'Save page';
+            toggle.classList.add('btn-primary'); toggle.classList.remove('btn-secondary');
+            overlay.querySelectorAll('.po-item').forEach(decorate);
+            setEditable(true);
+        }
+        function exit() {
+            editing = false;
+            document.body.classList.remove('po-editing');
+            tools.style.display = 'none';
+            toggle.textContent = 'Edit page';
+            toggle.classList.remove('btn-primary'); toggle.classList.add('btn-secondary');
+            setEditable(false);
+        }
+
+        toggle.addEventListener('click', () => {
+            if (!editing) { enter(); return; }
+            toggle.disabled = true;
+            save().then(exit).catch(() => alert('Could not save the page overlay.')).finally(() => { toggle.disabled = false; });
+        });
+        const ai = document.getElementById('po-add-img'); if (ai) ai.addEventListener('click', addImage);
+        const at = document.getElementById('po-add-text'); if (at) at.addEventListener('click', addText);
+    })();
+    </script>
+    {% endif %}
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Edit Notes Page — EduWeb</title>
+    <title>Edit Notes Page — Didelta</title>
     <link rel="stylesheet" href="{% static 'catalog/app.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.25/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
@@ -13,21 +13,21 @@
         /* Local design tokens — keeps this standalone editor self-contained
            even if the shared app.css is cached/blocked/late. Mirrors app.css. */
         :root {
-            --bg:#f7f8fa; --surface:#ffffff; --surface-2:#f9fafb;
-            --border:#e5e7eb; --border-strong:#d1d5db;
-            --text:#111827; --text-muted:#6b7280; --text-subtle:#9ca3af;
-            --accent:#4f46e5; --accent-hover:#4338ca; --accent-active:#3730a3;
-            --accent-light:#eef2ff; --accent-border:#c7d2fe; --on-accent:#ffffff;
-            --danger:#dc2626; --danger-hover:#b91c1c; --danger-light:#fef2f2; --success:#059669;
-            --radius:10px; --radius-sm:7px; --radius-lg:14px;
-            --shadow-sm:0 1px 2px rgba(17,24,39,0.05);
-            --shadow:0 1px 3px rgba(17,24,39,0.08),0 1px 2px rgba(17,24,39,0.04);
-            --shadow-md:0 4px 12px rgba(17,24,39,0.08);
-            --shadow-lg:0 12px 32px rgba(17,24,39,0.14);
-            --ring:0 0 0 3px rgba(79,70,229,0.25);
-            --font-ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-            --font-serif:Georgia,"Times New Roman",serif;
-            --font-mono:"SF Mono","Cascadia Mono",Consolas,"Liberation Mono",Menlo,monospace;
+            --bg:#b7b29c; --surface:#f4f1e6; --surface-2:#e3ddca;
+            --border:#8a8163; --border-strong:#5b5440;
+            --text:#1a1a1a; --text-muted:#4c4636; --text-subtle:#6f6650;
+            --accent:#0a246a; --accent-hover:#1c3a8f; --accent-active:#06163f;
+            --accent-light:#dfe2ec; --accent-border:#0a246a; --on-accent:#ffffff;
+            --danger:#8b0000; --danger-hover:#b00000; --danger-light:#f1d9d9; --success:#1f5c1f;
+            --radius:0; --radius-sm:0; --radius-lg:0;
+            --shadow-sm:none;
+            --shadow:none;
+            --shadow-md:none;
+            --shadow-lg:none;
+            --ring:0 0 0 2px #0a246a;
+            --font-ui:"Times New Roman",Times,Georgia,serif;
+            --font-serif:"Times New Roman",Times,Georgia,serif;
+            --font-mono:"Courier New",Courier,monospace;
         }
         body {
             font-family: var(--font-ui);
@@ -367,6 +367,7 @@
             .math-modal-box { min-width: 0; width: 94vw; padding: 1.25rem; }
         }
     </style>
+    {% if site_theme_css %}<style>{{ site_theme_css|safe }}</style>{% endif %}
 </head>
 <body>
     <form method="post">
@@ -709,10 +710,7 @@
                     <div class="toolbar-group">
                         <div class="toolbar-group-label">Matrix</div>
                         <div class="toolbar-group-buttons">
-                            <button type="button" title="2×2 matrix" onclick="openMatrixModal(2,2,'pmatrix')">M₂</button>
-                            <button type="button" title="3×3 matrix" onclick="openMatrixModal(3,3,'pmatrix')">M₃</button>
-                            <button type="button" title="2×2 determinant" onclick="openMatrixModal(2,2,'vmatrix')">|D|</button>
-                            <button type="button" title="Column vector (3)" onclick="openMatrixModal(3,1,'pmatrix')">v₃</button>
+                            <button type="button" title="Insert matrix" onclick="openMatrixModal(2,2,'pmatrix')">▦</button>
                         </div>
                     </div>
                     <div class="toolbar-group">
@@ -815,7 +813,22 @@
 
     <div id="matrix-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(17,24,39,0.5);z-index:1100;align-items:center;justify-content:center;">
         <div style="background:var(--surface);padding:1.5rem 1.75rem;border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);min-width:340px;max-width:680px;width:95vw;">
-            <h3 id="matrix-modal-title" style="margin:0 0 1rem;font-size:1.05rem;"></h3>
+            <h3 id="matrix-modal-title" style="margin:0 0 0.9rem;font-size:1.05rem;">Insert matrix</h3>
+            <div id="matrix-controls" style="display:flex;flex-wrap:wrap;align-items:center;gap:1.1rem;margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;">Rows
+                    <input type="number" id="matrix-rows" min="1" max="10" value="2" style="width:56px;padding:3px 5px;">
+                </label>
+                <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;">Columns
+                    <input type="number" id="matrix-cols" min="1" max="10" value="2" style="width:56px;padding:3px 5px;">
+                </label>
+                <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.9rem;">Brackets
+                    <span id="matrix-bracket" style="display:flex;gap:0.25rem;">
+                        <button type="button" data-env="pmatrix" title="Parentheses ( )" style="padding:3px 11px;border:1px solid var(--border-strong);cursor:pointer;font-family:serif;font-size:1rem;line-height:1;">( )</button>
+                        <button type="button" data-env="bmatrix" title="Brackets [ ]" style="padding:3px 11px;border:1px solid var(--border-strong);cursor:pointer;font-family:serif;font-size:1rem;line-height:1;">[ ]</button>
+                        <button type="button" data-env="vmatrix" title="Vertical bars | |" style="padding:3px 11px;border:1px solid var(--border-strong);cursor:pointer;font-family:serif;font-size:1rem;line-height:1;">| |</button>
+                    </span>
+                </span>
+            </div>
             <div id="matrix-grid" style="display:inline-grid;gap:6px;margin-bottom:1.25rem;"></div>
             <input type="text" id="matrix-sym-search" placeholder="Search symbols…" autocomplete="off" spellcheck="false" style="display:block;width:100%;box-sizing:border-box;margin-bottom:0.5rem;font-size:0.88rem;">
             <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:1.25rem;">
@@ -1078,7 +1091,7 @@
         // ── Clipboard: copy/cut chips as their LaTeX source; paste source → chips ──
         // Copy serialises the selection the same way the document is saved, so chips
         // travel as \(latex\) / \[latex\] and render perfectly wherever they land
-        // (a LaTeX/Markdown doc, or another EduWeb editor where paste rebuilds chips).
+        // (a LaTeX/Markdown doc, or another Didelta editor where paste rebuilds chips).
         function _clipboardCopy(e, isCut) {
             const sel = window.getSelection();
             if (!sel.rangeCount || sel.isCollapsed) return;
@@ -2285,6 +2298,11 @@ a{color:#1a3a6e}
 
         // ── Matrix modal ─────────────────────────────────────────────
         let _mRows, _mCols, _mEnv, _mSavedRange, _mFields, _mActiveCell;
+        // Matrix-as-embed: a matrix can live INSIDE the equation modal as a clickable
+        // chip. _mtxStore maps an embed id -> its LaTeX; _matrixTarget routes the
+        // builder's result ('doc' = insert a document chip, 'mathEmbed' = write/update
+        // a clickable chip in the MathQuill field).
+        let _mtxStore = {}, _mtxSeq = 0, _matrixTarget = 'doc', _matrixEditId = null;
 
         function _mSymGrid() { return document.getElementById('matrix-sym-grid'); }
         function _mSearch(q) { return document.getElementById('matrix-sym-search'); }
@@ -2378,12 +2396,51 @@ a{color:#1a3a6e}
             });
         }
 
-        function openMatrixModal(rows, cols, env) {
-            _mRows = rows; _mCols = cols; _mEnv = env;
-            const _mSel = window.getSelection();
-            _mSavedRange = _mSel.rangeCount ? _mSel.getRangeAt(0).cloneRange() : null;
-            const titles = { pmatrix: cols === 1 ? `Column Vector (${rows})` : `${rows}×${cols} Matrix`, vmatrix: `${rows}×${cols} Determinant` };
-            document.getElementById('matrix-modal-title').textContent = titles[env] || `${rows}×${cols} Matrix`;
+        // ── matrix-as-embed helpers ───────────────────────────────────
+        function _mtxEmbedInner(latex) {
+            try { return katex.renderToString(latex || '\\square', { throwOnError: false, displayMode: false }); }
+            catch (e) { return '<span style="opacity:.6;">[matrix]</span>'; }
+        }
+        function _mtxEmbedHtml(id) {
+            return '<span class="mtx-embed" data-mtx="' + id + '" title="Click to edit this matrix">'
+                 + _mtxEmbedInner(_mtxStore[id]) + '</span>';
+        }
+        function _rerenderMtxEmbed(id) {
+            const el = document.querySelector('#mq-field [data-mtx="' + id + '"]');
+            if (el) el.innerHTML = _mtxEmbedInner(_mtxStore[id]);
+        }
+        // Parse a builder-made matrix LaTeX back into rows/cols/env + cell contents.
+        function _parseMatrix(latex) {
+            const m = (latex || '').match(/\\begin\{(pmatrix|bmatrix|vmatrix)\}([\s\S]*?)\\end\{\1\}/);
+            if (!m) return null;
+            const cells = m[2].split('\\\\').map(r => r.split('&').map(c => c.trim()));
+            while (cells.length > 1 && cells[cells.length - 1].every(c => c === '')) cells.pop();
+            const nc = Math.max(1, ...cells.map(r => r.length));
+            return { env: m[1], nr: cells.length, nc, cells };
+        }
+        function _fillMatrixCells(cells) {
+            for (let r = 0; r < cells.length && r < _mFields.length; r++)
+                for (let c = 0; c < cells[r].length && c < _mFields[r].length; c++)
+                    if (cells[r][c]) { try { _mFields[r][c].latex(cells[r][c]); } catch (e) {} }
+        }
+
+        function _clampMatrixSize(v, fallback) {
+            v = parseInt(v, 10);
+            if (!Number.isFinite(v)) v = fallback;
+            return Math.max(1, Math.min(10, v));
+        }
+
+        // Build (or rebuild) the grid of input cells. Anything already typed is kept
+        // across a resize, so changing rows/columns never wipes your work.
+        function _buildMatrixGrid(rows, cols) {
+            const prev = [];
+            if (_mFields) for (let r = 0; r < _mFields.length; r++) {
+                prev[r] = [];
+                for (let c = 0; c < _mFields[r].length; c++) {
+                    try { prev[r][c] = _mFields[r][c].latex(); } catch (e) { prev[r][c] = ''; }
+                }
+            }
+            _mRows = rows; _mCols = cols;
             const grid = document.getElementById('matrix-grid');
             grid.style.gridTemplateColumns = `repeat(${cols}, minmax(64px, auto))`;
             grid.innerHTML = '';
@@ -2414,11 +2471,51 @@ a{color:#1a3a6e}
                             edit: function() { _mActiveCell = mf; }
                         }
                     });
+                    if (prev[r] && prev[r][c]) { try { mf.latex(prev[r][c]); } catch (e) {} }
                     wrap.addEventListener('focusin', () => { _mActiveCell = mf; }, true);
                     wrap.addEventListener('keydown', e => { if (e.key === 'Escape') closeMatrixModal(); }, true);
                     _mFields[r][c] = mf;
                 }
             }
+            _mActiveCell = _mFields[0][0];
+        }
+
+        // Reflect _mRows / _mCols / _mEnv into the control inputs + bracket buttons.
+        function _syncMatrixControls() {
+            const ri = document.getElementById('matrix-rows');
+            const ci = document.getElementById('matrix-cols');
+            if (ri) ri.value = _mRows;
+            if (ci) ci.value = _mCols;
+            document.querySelectorAll('#matrix-bracket button').forEach(b => {
+                const on = b.dataset.env === _mEnv;
+                b.style.background = on ? 'var(--accent)' : 'var(--surface-2)';
+                b.style.color = on ? 'var(--on-accent)' : 'var(--text)';
+                b.style.borderColor = on ? 'var(--accent)' : 'var(--border-strong)';
+            });
+        }
+
+        // One general matrix modal: pick rows, columns and bracket style, fill the
+        // cells, Insert. The arguments are just the starting values.
+        function openMatrixModal(rows, cols, env, target, editId) {
+            _matrixTarget = (target === 'mathEmbed') ? 'mathEmbed' : 'doc';
+            _matrixEditId = (_matrixTarget === 'mathEmbed') ? (editId != null ? editId : null) : null;
+            const _mSel = window.getSelection();
+            _mSavedRange = _mSel.rangeCount ? _mSel.getRangeAt(0).cloneRange() : null;
+            _mRows = _clampMatrixSize(rows, 2);
+            _mCols = _clampMatrixSize(cols, 2);
+            _mEnv = ['pmatrix', 'bmatrix', 'vmatrix'].includes(env) ? env : 'pmatrix';
+            _mFields = null;                       // fresh grid — nothing to preserve
+            _buildMatrixGrid(_mRows, _mCols);
+            _syncMatrixControls();
+
+            const ri = document.getElementById('matrix-rows');
+            const ci = document.getElementById('matrix-cols');
+            if (ri) ri.onchange = function () { const n = _clampMatrixSize(this.value, _mRows); this.value = n; _buildMatrixGrid(n, _mCols); };
+            if (ci) ci.onchange = function () { const n = _clampMatrixSize(this.value, _mCols); this.value = n; _buildMatrixGrid(_mRows, n); };
+            document.querySelectorAll('#matrix-bracket button').forEach(b => {
+                b.onclick = function () { _mEnv = this.dataset.env; _syncMatrixControls(); };
+            });
+
             _mRenderCatTabs();
             _mSelectCat('Calculus');
             const msearch = document.getElementById('matrix-sym-search');
@@ -2436,17 +2533,45 @@ a{color:#1a3a6e}
 
         function closeMatrixModal() {
             document.getElementById('matrix-modal').style.display = 'none';
-            wysiwyg.focus({ preventScroll: true });
+            const embed = (_matrixTarget === 'mathEmbed');
+            _matrixTarget = 'doc'; _matrixEditId = null;
+            if (embed) { mathField.focus(); }       // back to the equation modal
+            else { wysiwyg.focus({ preventScroll: true }); }
         }
 
         function doInsertMatrix() {
-            const rowStrs = [];
+            // Collapse: keep only rows/columns that have something in them, and render
+            // any remaining empty cells as blanks (not \square) — so a matrix where you
+            // filled just one row, column, or cell renders as exactly that, no empty boxes.
+            const grid = [];
             for (let r = 0; r < _mRows; r++) {
-                const cells = [];
-                for (let c = 0; c < _mCols; c++) cells.push(_mFields[r][c].latex().trim() || '\\square');
-                rowStrs.push(cells.join(' & '));
+                const row = [];
+                for (let c = 0; c < _mCols; c++) row.push(_mFields[r][c].latex().trim());
+                grid.push(row);
             }
+            const rowsKeep = [];
+            for (let r = 0; r < _mRows; r++) if (grid[r].some(v => v !== '')) rowsKeep.push(r);
+            const colsKeep = [];
+            for (let c = 0; c < _mCols; c++) if (grid.some(row => row[c] !== '')) colsKeep.push(c);
+            const rowStrs = (rowsKeep.length && colsKeep.length)
+                ? rowsKeep.map(r => colsKeep.map(c => grid[r][c]).join(' & '))
+                : ['\\square'];               // nothing entered → keep a single placeholder box
             const latex = `\\begin{${_mEnv}} ${rowStrs.join(' \\\\ ')} \\end{${_mEnv}}`;
+
+            if (_matrixTarget === 'mathEmbed') {
+                // live inside the equation modal as a clickable chip
+                if (_matrixEditId != null && (_matrixEditId in _mtxStore)) {
+                    _mtxStore[_matrixEditId] = latex;        // editing an existing one
+                    _rerenderMtxEmbed(_matrixEditId);
+                } else {
+                    const id = 'm' + (_mtxSeq++);            // brand new one
+                    _mtxStore[id] = latex;
+                    mathField.write('\\embed{mtx}[' + id + ']');
+                }
+                closeMatrixModal();                          // resets target, refocuses the field
+                return;
+            }
+
             const display = document.querySelector('input[name="math-mode"]:checked').value === 'display';
             const chip = makeMathChip(latex, display);
             wysiwyg.focus({ preventScroll: true });
@@ -2479,25 +2604,48 @@ a{color:#1a3a6e}
         const _MQ_SH_PATS = [
             /\\left\(([A-Za-z0-9]+)\\right\)/,
             /\\left\[([A-Za-z0-9]+)\\right\]/,
-            /\\left\\\{([A-Za-z0-9]+)\\right\\\}/,
-            /\\left\|([A-Za-z0-9]+)\\right\|/
+            /\\left\\\{([A-Za-z0-9]+)\\right\\\}/
         ];
         let _mqShBusy = false;
+        // Apply a matched shorthand inside the field. makeLatex(repl) returns the full
+        // field LaTeX with the matched border+name span swapped for `repl`.
+        function _fireMqEntry(e, makeLatex) {
+            if (e.l) {                              // plain LaTeX (incl. modal templates)
+                _mqShBusy = true; mathField.latex(makeLatex(e.l)); _mqShBusy = false;
+                return true;
+            }
+            if (e.sym) {                            // multi/surface integrals: proxy + defer
+                const s = e.sym;
+                _mqShBusy = true; mathField.latex(makeLatex(s.proxy)); _mqShBusy = false;
+                _mathSymSub = { from: s.from, to: s.to };
+                if (s.disp) setTimeout(() => _startMqSymWatch(s.disp, s.src), 50);
+                return true;
+            }
+            if (e.mat) {                            // matrix → clickable embed chip
+                _mqShBusy = true; mathField.latex(makeLatex('')); _mqShBusy = false;
+                openMatrixModal(e.mat.r, e.mat.c, e.mat.env, 'mathEmbed');
+                return true;
+            }
+            return false;
+        }
         function _mqShorthandCheck() {
-            const lat = mathField.latex();
+            const lat = mathField.latex();           // borders in the modal: ( ) [ ] { }
             for (const re of _MQ_SH_PATS) {
                 const m = lat.match(re);
                 if (!m) continue;
                 const e = SHORTHAND[m[1]] || SHORTHAND[m[1].toLowerCase()];
-                if (!e || !e.l) continue;          // only insert entries with plain LaTeX
-                _mqShBusy = true;
-                mathField.latex(lat.replace(re, () => e.l));
-                _mqShBusy = false;
-                return;
+                if (e && _fireMqEntry(e, repl => lat.replace(re, () => repl))) return;
             }
         }
 
         function _prepareForMQ(latex) {
+            // turn any matrix LaTeX into a clickable embed chip (MathQuill can't edit
+            // matrices inline, so they ride along as embeds and expand back on insert)
+            latex = latex.replace(/\\begin\{(pmatrix|bmatrix|vmatrix)\}[\s\S]*?\\end\{\1\}/g, function (block) {
+                const id = 'm' + (_mtxSeq++);
+                _mtxStore[id] = block;
+                return '\\embed{mtx}[' + id + ']';
+            });
             return latex
                 .replace(/\\left\(/g, '(')
                 .replace(/\\right\)/g, ')')
@@ -2568,6 +2716,8 @@ a{color:#1a3a6e}
             let latex = mathField.latex();
             latex = latex.replace(/\\placeholder\{[^}]*\}/g, '{}');
             latex = latex.replace(/\\MathQuillMathField\{[^}]*\}/g, '{}');
+            // expand any matrix chips back to their real LaTeX so KaTeX renders them
+            latex = latex.replace(/\\embed\{mtx\}\[([A-Za-z0-9]+)\]/g, (mm, id) => _mtxStore[id] || '');
             if (_mathSymSub) { latex = latex.split(_mathSymSub.from).join(_mathSymSub.to); _mathSymSub = null; }
             if (!latex) { closeMathModal(); return; }
             const display = document.querySelector('input[name="math-mode"]:checked').value === 'display';
@@ -2667,6 +2817,32 @@ a{color:#1a3a6e}
         // ── Init after all deferred scripts have loaded ──────────────
         document.addEventListener('DOMContentLoaded', () => {
             const MQ = MathQuill.getInterface(2);
+            // Matrix chip embedded in the equation field: renders the matrix and, on
+            // click, reopens the matrix builder to edit it.
+            MQ.registerEmbed('mtx', function (id) {
+                return {
+                    htmlString: _mtxEmbedHtml(id),
+                    text: function () { return _mtxStore[id] || ''; },
+                    latex: function () { return '\\embed{mtx}[' + id + ']'; }
+                };
+            });
+            (function () {
+                const st = document.createElement('style');
+                st.textContent = '.mtx-embed{cursor:pointer;display:inline-block;padding:0 2px;border:1px solid transparent;border-radius:3px;}'
+                               + '.mtx-embed:hover{border-color:var(--accent);background:var(--accent-light);}';
+                document.head.appendChild(st);
+                const mq = document.getElementById('mq-field');
+                mq.addEventListener('click', function (e) {
+                    const chip = e.target.closest('.mtx-embed');
+                    if (!chip) return;
+                    e.preventDefault(); e.stopPropagation();
+                    const id = chip.dataset.mtx;
+                    if (!(id in _mtxStore)) return;
+                    const p = _parseMatrix(_mtxStore[id]);
+                    openMatrixModal(p ? p.nr : 2, p ? p.nc : 2, p ? p.env : 'pmatrix', 'mathEmbed', id);
+                    if (p) _fillMatrixCells(p.cells);
+                }, true);
+            })();
             mathField = MQ.MathField(document.getElementById('mq-field'), {
                 handlers: {
                     enter: insertMath,
@@ -2687,7 +2863,7 @@ a{color:#1a3a6e}
             (function () {
                 const ta = document.querySelector('#mq-field textarea');
                 if (!ta) return;
-                const CLOSERS = new Set([')', ']', '}', '|']);
+                const CLOSERS = new Set([')', ']', '}']);
                 ta.addEventListener('keydown', e => {
                     if (e.key === '\\') { e.preventDefault(); return; }
                     if (CLOSERS.has(e.key)) setTimeout(_mqShorthandCheck, 0);

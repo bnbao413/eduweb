@@ -1,3 +1,4 @@
+import json
 import markdown
 import re
 
@@ -20,6 +21,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from .models import (
     Subject, Course, Unit, TextbookPage, NotesPage, PracticeSet, UnitTest, FinalExam,
+    PageOverlay, SiteTheme,
 )
 from .forms import TextbookPageForm, NotesPageForm, RegisterForm
 
@@ -50,6 +52,109 @@ def general_editor(request):
     """Standalone math/markdown editor, open to any logged-in account
     (not staff-only, unlike the textbook/notes editors)."""
     return render(request, 'catalog/general_edit.html')
+
+
+@staff_member_required
+@require_POST
+def page_overlay_save(request):
+    """Save staff-placed overlay items (images/GIFs/text) for a page path."""
+    from django.http import JsonResponse
+
+    path = (request.POST.get('path') or '').strip()
+    if not path or not path.startswith('/'):
+        return HttpResponse('valid path required', status=400, content_type='text/plain')
+    try:
+        raw = json.loads(request.POST.get('items', '[]'))
+        if not isinstance(raw, list):
+            raise ValueError
+    except (ValueError, TypeError):
+        return HttpResponse('invalid items', status=400, content_type='text/plain')
+
+    def _i(v, default=0):
+        try:
+            return int(float(v))
+        except (ValueError, TypeError):
+            return default
+
+    def _flip(v):
+        return -1 if _i(v, 1) < 0 else 1
+
+    clean = []
+    for it in raw[:200]:                       # cap how many items per page
+        if not isinstance(it, dict):
+            continue
+        t = it.get('type')
+        geo = {'x': _i(it.get('x')), 'y': _i(it.get('y')),
+               'rot': _i(it.get('rot')) % 360, 'fx': _flip(it.get('fx')), 'fy': _flip(it.get('fy'))}
+        if t == 'image':
+            url = str(it.get('url', ''))[:2000]
+            if not url:
+                continue
+            clean.append({'type': 'image', 'url': url,
+                          'w': _i(it.get('w'), 200), 'h': _i(it.get('h')), **geo})
+        elif t == 'text':
+            color = str(it.get('color', '')).strip()
+            if not re.fullmatch(r'#[0-9A-Fa-f]{3,8}', color):
+                color = ''                          # only a safe hex colour, else inherit
+            size = _i(it.get('size'))
+            size = max(8, min(400, size)) if size else 0
+            font = str(it.get('font', ''))
+            if font not in ('sans', 'serif', 'mono', 'cursive', 'fancy'):
+                font = ''                           # whitelist → maps to a .po-font-* class
+            clean.append({'type': 'text', 'text': str(it.get('text', ''))[:5000],
+                          'w': _i(it.get('w'), 220), 'h': _i(it.get('h')),
+                          'color': color, 'size': size, 'font': font, **geo})
+
+    PageOverlay.objects.update_or_create(path=path, defaults={'items': clean})
+    return JsonResponse({'ok': True, 'count': len(clean)})
+
+
+@staff_member_required
+@require_POST
+def page_overlay_upload(request):
+    """Upload an image/GIF file for a page overlay; returns its media URL."""
+    import os
+    import uuid
+    from django.http import JsonResponse
+    from django.core.files.storage import default_storage
+
+    f = request.FILES.get('file')
+    if not f:
+        return HttpResponse('no file', status=400, content_type='text/plain')
+    if not (f.content_type or '').lower().startswith('image/'):
+        return HttpResponse('only image / GIF files are allowed', status=400, content_type='text/plain')
+    if f.size > 15 * 1024 * 1024:
+        return HttpResponse('file too large (max 15 MB)', status=400, content_type='text/plain')
+
+    ext = os.path.splitext(f.name)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.apng', '.avif'):
+        ext = '.img'
+    saved = default_storage.save('overlays/' + uuid.uuid4().hex + ext, f)
+    return JsonResponse({'url': default_storage.url(saved)})
+
+
+@staff_member_required
+@require_POST
+def theme_save(request):
+    """Save the site-wide colour theme (staff only, from the Edit-page panel).
+    Each posted field is kept only if it's a safe hex colour, else cleared so it
+    falls back to the default palette. `reset=1` clears the whole theme."""
+    from django.http import JsonResponse
+
+    t = SiteTheme.objects.first() or SiteTheme()
+    fields = ('bg', 'surface', 'surface_2', 'border', 'text', 'accent', 'on_accent')
+
+    if request.POST.get('reset'):
+        for f in fields:
+            setattr(t, f, '')
+    else:
+        for f in fields:
+            if f in request.POST:
+                v = (request.POST.get(f) or '').strip()
+                setattr(t, f, v if re.fullmatch(r'#[0-9A-Fa-f]{3,8}', v) else '')
+
+    t.save()
+    return JsonResponse({'ok': True})
 
 
 def search(request):
