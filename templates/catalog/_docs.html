@@ -313,7 +313,10 @@ syncToTextarea(), updateLivePreview(). Hooks: #docsize-select, #editor-exit.
     function wire() {
         buildUI();
         const exitBtn = document.getElementById('editor-exit');
-        if (exitBtn) exitBtn.addEventListener('click', e => { e.preventDefault(); exitToGallery(); });
+        if (exitBtn) exitBtn.addEventListener('click', e => {
+            e.preventDefault();
+            {% if pageid %}window.location.href = BACK_URL;{% else %}exitToGallery();{% endif %}
+        });
         const sel = document.getElementById('docsize-select');
         if (sel) sel.addEventListener('change', () => {
             curSize = (sel.value === 'a4') ? 'a4' : 'letter';
@@ -325,16 +328,22 @@ syncToTextarea(), updateLivePreview(). Hooks: #docsize-select, #editor-exit.
         const t = titleField(); if (t) t.addEventListener('input', scheduleSave);
         window.addEventListener('beforeunload', autosave);
 
-        // Seed a document from already-loaded content (textbook/notes pages) so the
-        // published page shows up as a card the first time.
+        {% if pageid %}
+        // Server-backed page (notes/textbook): edit the loaded server content
+        // directly — no gallery overlay, no localStorage seeding. Publish saves to
+        // the server; the back button returns to the page (see editor-exit above).
+        if (typeof updateLivePreview === 'function') updateLivePreview();
+        {% else %}
+        // Scratch editor (general): seed a card from any preloaded content, then
+        // land on the gallery to pick or create a document.
         if (!loadAll().length) {
             const seed = (typeof serializeWysiwyg === 'function') ? serializeWysiwyg() : '';
             if (seed.trim()) {
                 saveAll([{ id: uid(), title: curTitle(), source: seed, size: 'letter', updatedAt: Date.now() }]);
             }
         }
-        // Always land on the gallery — never auto-open the editor.
         showGallery();
+        {% endif %}
     }
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
