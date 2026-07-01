@@ -1,46 +1,46 @@
 /* ===========================================================================
-   Didelta design system — lean, clean, solid colors. Indigo accent.
+   Didelta design system — modern academic. Editorial serif headings on a warm
+   paper canvas, clean sans body, oxford-blue accent, soft shadows.
    =========================================================================== */
 
 :root {
-    /* "Crappy 1960s government office" palette: manila paper, drab olive/tan,
-       navy ink, hard borders, no rounded corners, no shadows, Times type. */
-    --bg:            #b7b29c;   /* drab olive/tan desktop */
-    --surface:       #f4f1e6;   /* manila folder paper */
-    --surface-2:     #e3ddca;   /* slightly darker panel */
-    --border:        #8a8163;
-    --border-strong: #5b5440;
+    /* Editorial palette: warm off-white paper, white cards, oxford-blue accent. */
+    --bg:            #f2f0ea;   /* warm paper canvas */
+    --surface:       #ffffff;   /* card / panel surface */
+    --surface-2:     #f6f4ef;   /* subtle raised / hover panel */
+    --border:        #e6e2d8;   /* soft hairline */
+    --border-strong: #d6d1c4;   /* input / stronger divider */
 
-    --text:          #1a1a1a;
-    --text-muted:    #4c4636;
-    --text-subtle:   #6f6650;
+    --text:          #1c1b18;   /* warm near-black ink */
+    --text-muted:    #5f5a4e;   /* secondary text */
+    --text-subtle:   #8b8474;   /* tertiary / placeholder */
 
-    --accent:        #0a246a;   /* government navy */
-    --accent-hover:  #1c3a8f;
-    --accent-active: #06163f;
-    --accent-light:  #dfe2ec;
-    --accent-border: #0a246a;
+    --accent:        #274690;   /* oxford blue */
+    --accent-hover:  #1f3873;
+    --accent-active: #182c5c;
+    --accent-light:  #e7ebf6;   /* pale blue tint (badges, active nav) */
+    --accent-border: #274690;
     --on-accent:     #ffffff;
 
-    --danger:        #8b0000;
-    --danger-hover:  #b00000;
-    --danger-light:  #f1d9d9;
-    --success:       #1f5c1f;
+    --danger:        #b3261e;
+    --danger-hover:  #911a14;
+    --danger-light:  #fbe9e7;
+    --success:       #1f7a4d;
 
-    --radius:    0;
-    --radius-sm: 0;
-    --radius-lg: 0;
+    --radius:    10px;
+    --radius-sm: 7px;
+    --radius-lg: 16px;
 
-    --shadow-sm: none;
-    --shadow:    none;
-    --shadow-md: none;
-    --shadow-lg: none;
+    --shadow-sm: 0 1px 2px rgba(28, 27, 24, 0.05);
+    --shadow:    0 1px 3px rgba(28, 27, 24, 0.07), 0 1px 2px rgba(28, 27, 24, 0.04);
+    --shadow-md: 0 4px 14px rgba(28, 27, 24, 0.08), 0 2px 5px rgba(28, 27, 24, 0.05);
+    --shadow-lg: 0 14px 36px rgba(28, 27, 24, 0.13), 0 5px 12px rgba(28, 27, 24, 0.06);
 
-    --ring: 0 0 0 2px #0a246a;
+    --ring: 0 0 0 3px rgba(39, 70, 144, 0.25);
 
-    --font-ui:    "Times New Roman", Times, Georgia, serif;
-    --font-serif: "Times New Roman", Times, Georgia, serif;
-    --font-mono:  "Courier New", Courier, monospace;
+    --font-ui:    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-serif: "Source Serif 4", "Source Serif Pro", Georgia, Cambria, "Times New Roman", serif;
+    --font-mono:  ui-monospace, "SFMono-Regular", "Cascadia Code", "JetBrains Mono", "Courier New", monospace;
 }
 
 /* ----- reset --------------------------------------------------------------- */
@@ -61,26 +61,28 @@ body {
 }
 
 h1, h2, h3, h4 {
-    line-height: 1.25;
-    font-weight: bold;
-    letter-spacing: normal;
+    font-family: var(--font-serif);
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.011em;
     color: var(--text);
     margin: 0 0 0.5em;
 }
 
-h1 { font-size: 1.9rem; }
-h2 { font-size: 1.4rem; }
-h3 { font-size: 1.15rem; }
+h1 { font-size: 2.1rem; }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1.18rem; }
 
 p { margin: 0 0 1rem; }
 
 a {
-    color: #0000ee;
-    text-decoration: underline;
+    color: var(--accent);
+    text-decoration: none;
+    text-underline-offset: 2px;
     transition: color 0.12s ease;
 }
-a:visited { color: #551a8b; }
-a:hover { color: #0000ee; text-decoration: underline; }
+a:visited { color: var(--accent); }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
 /* keep chrome/components from rendering as underlined body links */
 .nav a, .list-card, .list-card:hover, .btn, .backlink { text-decoration: none; }
 
@@ -98,10 +100,10 @@ small { font-size: 0.85rem; }
     position: sticky;
     top: 0;
     z-index: 100;
-    background: var(--surface-2);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-bottom: 2px solid var(--border-strong);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: saturate(1.4) blur(10px);
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--border);
 }
 
 .topbar-inner {

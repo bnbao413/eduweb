@@ -7,7 +7,10 @@
     <title>{% block title %}Didelta{% endblock %}</title>
 
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="stylesheet" href="{% static 'catalog/app.css' %}?v=6">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap">
+    <link rel="stylesheet" href="{% static 'catalog/app.css' %}?v=7">
     {% if site_theme_css %}<style>{{ site_theme_css|safe }}</style>{% endif %}
 
     <script>
@@ -54,13 +57,15 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- staff free-form page overlay (images / GIFs / text), shown to everyone -->
+    <!-- staff free-form page overlay (images / GIFs / text / link-buttons), shown to everyone -->
     <div id="page-overlay">
         {% for it in page_overlay_items %}
             {% if it.type == 'image' %}
                 <div class="po-item po-img" data-rot="{{ it.rot|default:0 }}" data-fx="{{ it.fx|default:1 }}" data-fy="{{ it.fy|default:1 }}" style="left:{{ it.x }}px;top:{{ it.y }}px;width:{{ it.w }}px;{% if it.h %}height:{{ it.h }}px;{% endif %}transform:rotate({{ it.rot|default:0 }}deg) scaleX({{ it.fx|default:1 }}) scaleY({{ it.fy|default:1 }});"><img src="{{ it.url }}" alt=""></div>
             {% elif it.type == 'text' %}
                 <div class="po-item po-text" data-rot="{{ it.rot|default:0 }}" data-fx="{{ it.fx|default:1 }}" data-fy="{{ it.fy|default:1 }}" style="left:{{ it.x }}px;top:{{ it.y }}px;width:{{ it.w }}px;{% if it.h %}height:{{ it.h }}px;{% endif %}transform:rotate({{ it.rot|default:0 }}deg) scaleX({{ it.fx|default:1 }}) scaleY({{ it.fy|default:1 }});"><span class="po-text-body{% if it.font %} po-font-{{ it.font }}{% endif %}" data-color="{{ it.color }}" data-size="{{ it.size }}" data-font="{{ it.font }}" style="{% if it.color %}color:{{ it.color }};{% endif %}{% if it.size %}font-size:{{ it.size }}px;{% endif %}">{{ it.text }}</span></div>
+            {% elif it.type == 'button' %}
+                <div class="po-item po-button" data-rot="{{ it.rot|default:0 }}" data-fx="{{ it.fx|default:1 }}" data-fy="{{ it.fy|default:1 }}" style="left:{{ it.x }}px;top:{{ it.y }}px;width:{{ it.w }}px;{% if it.h %}height:{{ it.h }}px;{% endif %}transform:rotate({{ it.rot|default:0 }}deg) scaleX({{ it.fx|default:1 }}) scaleY({{ it.fy|default:1 }});"><a class="po-btn-link po-shape-{{ it.shape|default:'round' }}{% if it.font %} po-font-{{ it.font }}{% endif %}" href="{{ it.url|default:'#' }}" data-url="{{ it.url }}" data-shape="{{ it.shape|default:'round' }}" data-color="{{ it.color }}" data-bg="{{ it.bg }}" data-size="{{ it.size }}" data-font="{{ it.font }}" style="{% if it.color %}color:{{ it.color }};{% endif %}{% if it.bg %}background:{{ it.bg }};{% endif %}{% if it.size %}font-size:{{ it.size }}px;{% endif %}">{{ it.text }}</a></div>
             {% endif %}
         {% endfor %}
     </div>
@@ -70,7 +75,8 @@
         <button type="button" id="po-add-img" class="btn btn-secondary btn-sm">Add image / GIF</button>
         <input type="file" id="po-img-file" accept="image/*" style="display:none;">
         <button type="button" id="po-add-text" class="btn btn-secondary btn-sm">Add text</button>
-        <span class="po-hint">Drag to move · drag edges/corners to resize · right-click for options (text: font, size, colour). Click “Save page” when done.</span>
+        <button type="button" id="po-add-btn" class="btn btn-secondary btn-sm">Add button</button>
+        <span class="po-hint">Drag to move · drag edges/corners to resize · right-click for options (text: font/size/colour · button: link, shape, colours). A button’s label hides its link and clicks open it in the same tab. Click “Save page” when done.</span>
         <hr style="width:100%;border:none;border-top:1px solid var(--border);margin:6px 0 2px;">
         <strong style="font-size:.8rem;">Site theme</strong>
         <span class="po-hint">Colours apply to the whole site (including the editors).</span>
@@ -101,16 +107,30 @@
     .po-font-mono    { font-family: ui-monospace, "Courier New", monospace; }
     .po-font-cursive { font-family: "Comic Sans MS", "Segoe Script", cursive; }
     .po-font-fancy   { font-family: Impact, Haettenschweiler, fantasy; }
-    body.po-editing .po-item { pointer-events:auto; outline:1px dashed #0a246a; }
+    body.po-editing .po-item { pointer-events:auto; outline:1px dashed var(--accent); }
     body.po-editing .po-img { cursor:move; }
     body.po-editing .po-text .po-text-body { min-width:40px; outline:none; }
+    /* link-buttons: a resizable shape whose label masks its URL; clicking it
+       navigates in the SAME tab, for every visitor (not just staff). */
+    .po-button { pointer-events:auto; }
+    .po-btn-link { display:flex; align-items:center; justify-content:center; width:100%; height:100%;
+        box-sizing:border-box; padding:6px 14px; text-align:center; text-decoration:none; cursor:pointer;
+        font-family:var(--font-ui); font-weight:600; line-height:1.2; white-space:pre-wrap; overflow:hidden;
+        background:var(--accent); color:var(--on-accent); }
+    .po-btn-link:hover, .po-btn-link:visited { text-decoration:none; color:var(--on-accent); }
+    .po-shape-rect    { border-radius:0; }
+    .po-shape-round   { border-radius:10px; }
+    .po-shape-pill    { border-radius:999px; }
+    .po-shape-ellipse { border-radius:50%; }
+    body.po-editing .po-button { cursor:move; }
+    body.po-editing .po-btn-link { cursor:text; outline:none; }
     #po-ctx { position:fixed; z-index:1100; display:none; background:var(--surface);
         border:1px solid var(--border-strong); min-width:170px; padding:5px; }
     #po-ctx button { display:block; width:100%; text-align:left; background:none; border:none;
         padding:7px 12px; font-size:.86rem; color:var(--text); cursor:pointer; font-family:var(--font-ui); }
     #po-ctx button:hover { background:var(--surface-2); }
     #po-ctx hr { border:none; border-top:1px solid var(--border); margin:4px 0; }
-    #po-ctx .danger { color:#8b0000; }
+    #po-ctx .danger { color:var(--danger); }
     #po-ctx .po-ctx-style { padding:6px 10px; display:flex; flex-direction:column; gap:6px; }
     #po-ctx .po-ctx-style label { display:flex; align-items:center; justify-content:space-between;
         gap:10px; font-size:.82rem; color:var(--text); font-family:var(--font-ui); }
@@ -118,8 +138,14 @@
         flex:1; min-width:0; max-width:120px; padding:3px 5px; font-family:var(--font-ui);
         border:1px solid var(--border-strong); background:var(--surface); color:var(--text); box-sizing:border-box; }
     #po-ctx .po-ctx-style input[type=color] { width:36px; height:24px; padding:0; border:1px solid var(--border-strong); background:none; }
+    #po-ctx.for-btn { min-width:220px; }
+    #po-ctx .po-ctx-btn { padding:6px 10px; display:flex; flex-direction:column; gap:6px; }
+    #po-ctx .po-ctx-btn label { display:flex; flex-direction:column; gap:3px; font-size:.8rem; color:var(--text); font-family:var(--font-ui); }
+    #po-ctx .po-ctx-btn input, #po-ctx .po-ctx-btn select { width:100%; padding:4px 6px; box-sizing:border-box;
+        font-family:var(--font-ui); font-size:.82rem; border:1px solid var(--border-strong); background:var(--surface); color:var(--text); }
+    #po-ctx .po-ctx-btn input[type=color] { height:26px; padding:1px; cursor:pointer; }
     /* free (non-proportional) resize handles on every side and corner */
-    .po-rs { position:absolute; width:10px; height:10px; background:#0a246a; border:1px solid #fff;
+    .po-rs { position:absolute; width:10px; height:10px; background:var(--accent); border:1px solid #fff;
         box-sizing:border-box; display:none; z-index:3; }
     body.po-editing .po-rs { display:block; }
     .po-rs.n  { top:-5px;    left:50%;  margin-left:-5px; cursor:ns-resize; }
@@ -361,6 +387,10 @@
                 e.preventDefault();
                 showCtx(e.clientX, e.clientY, item);
             });
+            // a link-button navigates for visitors, but while editing a click just
+            // places the caret to rename it (never follows the link)
+            const link = item.querySelector('.po-btn-link');
+            if (link) link.addEventListener('click', e => { if (editing) e.preventDefault(); });
             ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(dir => {
                 const r = document.createElement('span');
                 r.className = 'po-rs ' + dir;
@@ -373,6 +403,16 @@
         const ctx = document.createElement('div');
         ctx.id = 'po-ctx';
         ctx.innerHTML =
+            '<div class="po-ctx-btn">' +
+                '<label>Link (URL)<input type="text" data-b="url" placeholder="https://…  or  /path"></label>' +
+                '<label>Shape<select data-b="shape">' +
+                    '<option value="round">Rounded</option>' +
+                    '<option value="rect">Rectangle</option>' +
+                    '<option value="pill">Pill</option>' +
+                    '<option value="ellipse">Ellipse</option>' +
+                '</select></label>' +
+                '<label>Fill colour<input type="color" data-b="bg"></label>' +
+            '</div>' +
             '<div class="po-ctx-style">' +
                 '<label>Font<select data-s="font">' +
                     '<option value="">Default</option>' +
@@ -399,42 +439,64 @@
         document.body.appendChild(ctx);
         let ctxItem = null;
 
-        // ── text styling (font / size / colour), shown only for text items ──
+        // ── styling menu: text items get font/size/colour; link-buttons also
+        //    get a link, a shape and a fill colour. ──
         const styleBox = ctx.querySelector('.po-ctx-style');
+        const btnBox = ctx.querySelector('.po-ctx-btn');
         const styleSep = ctx.querySelector('.po-ctx-style-sep');
         const fontSel = ctx.querySelector('[data-s=font]');
         const sizeIn = ctx.querySelector('[data-s=size]');
         const colorIn = ctx.querySelector('[data-s=color]');
+        const urlIn = ctx.querySelector('[data-b=url]');
+        const shapeSel = ctx.querySelector('[data-b=shape]');
+        const bgIn = ctx.querySelector('[data-b=bg]');
+
+        function styledEl() { return ctxItem && ctxItem.querySelector('.po-text-body, .po-btn-link'); }
+        function swapClass(el, prefix, val) {
+            el.className = el.className.replace(new RegExp('\\s*' + prefix + '\\w+', 'g'), '');
+            if (val) el.classList.add(prefix + val);
+        }
         function applyTextStyle(which, val) {
-            if (!ctxItem) return;
-            const body = ctxItem.querySelector('.po-text-body');
-            if (!body) return;
-            if (which === 'font') {
-                body.dataset.font = val;
-                body.className = 'po-text-body' + (val ? ' po-font-' + val : '');
-            } else if (which === 'size') {
-                const n = parseInt(val) || 0;
-                body.dataset.size = n || '';
-                body.style.fontSize = n ? n + 'px' : '';
-            } else if (which === 'color') {
-                body.dataset.color = val;
-                body.style.color = val;
-            }
+            const el = styledEl();
+            if (!el) return;
+            if (which === 'font') { swapClass(el, 'po-font-', val); el.dataset.font = val; }
+            else if (which === 'size') { const n = parseInt(val) || 0; el.dataset.size = n || ''; el.style.fontSize = n ? n + 'px' : ''; }
+            else if (which === 'color') { el.dataset.color = val; el.style.color = val; }
+        }
+        function applyBtnStyle(which, val) {
+            const link = ctxItem && ctxItem.querySelector('.po-btn-link');
+            if (!link) return;
+            if (which === 'url') { link.dataset.url = val; link.setAttribute('href', val || '#'); }
+            else if (which === 'shape') { swapClass(link, 'po-shape-', val || 'round'); link.dataset.shape = val || 'round'; }
+            else if (which === 'bg') { link.dataset.bg = val; link.style.background = val; }
         }
         if (fontSel) fontSel.addEventListener('change', e => applyTextStyle('font', e.target.value));
         if (sizeIn) sizeIn.addEventListener('input', e => applyTextStyle('size', e.target.value));
         if (colorIn) colorIn.addEventListener('input', e => applyTextStyle('color', e.target.value));
+        if (urlIn) urlIn.addEventListener('input', e => applyBtnStyle('url', e.target.value));
+        if (shapeSel) shapeSel.addEventListener('change', e => applyBtnStyle('shape', e.target.value));
+        if (bgIn) bgIn.addEventListener('input', e => applyBtnStyle('bg', e.target.value));
 
         function showCtx(x, y, item) {
             ctxItem = item;
             const isText = item.classList.contains('po-text');
-            styleBox.style.display = isText ? 'flex' : 'none';
-            styleSep.style.display = isText ? 'block' : 'none';
-            if (isText) {
-                const body = item.querySelector('.po-text-body');
-                fontSel.value = (body && body.dataset.font) || '';
-                sizeIn.value = (body && parseInt(body.dataset.size)) || '';
-                colorIn.value = (body && body.dataset.color) || '#1a1a1a';
+            const isBtn = item.classList.contains('po-button');
+            const styled = isText || isBtn;
+            styleBox.style.display = styled ? 'flex' : 'none';
+            btnBox.style.display = isBtn ? 'flex' : 'none';
+            styleSep.style.display = styled ? 'block' : 'none';
+            ctx.classList.toggle('for-btn', isBtn);
+            if (styled) {
+                const el = item.querySelector('.po-text-body, .po-btn-link');
+                fontSel.value = (el && el.dataset.font) || '';
+                sizeIn.value = (el && parseInt(el.dataset.size)) || '';
+                colorIn.value = (el && el.dataset.color) || '#1a1a1a';
+            }
+            if (isBtn) {
+                const link = item.querySelector('.po-btn-link');
+                urlIn.value = (link && link.dataset.url) || '';
+                shapeSel.value = (link && link.dataset.shape) || 'round';
+                bgIn.value = (link && link.dataset.bg) || '#274690';
             }
             ctx.style.display = 'block';
             const w = ctx.offsetWidth || 180, h = ctx.offsetHeight || 260;
@@ -449,8 +511,8 @@
             c.style.left = ((parseInt(item.style.left) || 0) + 16) + 'px';
             c.style.top = ((parseInt(item.style.top) || 0) + 16) + 'px';
             overlay.appendChild(c); decorate(c); applyTransform(c);
-            if (editing && c.classList.contains('po-text')) {
-                const b = c.querySelector('.po-text-body'); if (b) b.contentEditable = 'true';
+            if (editing && (c.classList.contains('po-text') || c.classList.contains('po-button'))) {
+                const b = c.querySelector('.po-text-body, .po-btn-link'); if (b) b.contentEditable = 'true';
             }
         }
         ctx.addEventListener('click', e => {
@@ -471,7 +533,7 @@
         document.addEventListener('keydown', e => { if (e.key === 'Escape') hideCtx(); });
 
         function setEditable(on) {
-            overlay.querySelectorAll('.po-text-body').forEach(b => b.contentEditable = on ? 'true' : 'false');
+            overlay.querySelectorAll('.po-text-body, .po-btn-link').forEach(b => b.contentEditable = on ? 'true' : 'false');
         }
 
         const UPLOAD_URL = "{% url 'page_overlay_upload' %}";
@@ -522,18 +584,51 @@
             d.appendChild(span); overlay.appendChild(d); decorate(d);
             span.contentEditable = 'true'; span.focus();
         }
+        function addButton() {
+            const d = document.createElement('div');
+            d.className = 'po-item po-button';
+            d.dataset.rot = '0'; d.dataset.fx = '1'; d.dataset.fy = '1';
+            d.style.left = (window.scrollX + 120) + 'px';
+            d.style.top = (window.scrollY + 120) + 'px';
+            d.style.width = '160px';
+            d.style.height = '48px';
+            const a = document.createElement('a');
+            a.className = 'po-btn-link po-shape-round';
+            a.setAttribute('href', '#');
+            a.dataset.url = ''; a.dataset.shape = 'round';
+            a.textContent = 'Button';
+            d.appendChild(a); overlay.appendChild(d); decorate(d);
+            a.contentEditable = 'true';
+            // open the options menu (deferred so this same click doesn't dismiss it)
+            // so the link can be pasted in right away
+            setTimeout(() => {
+                const r = d.getBoundingClientRect();
+                showCtx(r.right + 8, r.top, d);
+                if (urlIn) urlIn.focus();
+            }, 0);
+        }
 
         function collect() {
             return [...overlay.querySelectorAll('.po-item')].map(el => {
+                const isShape = el.classList.contains('po-img') || el.classList.contains('po-button');
                 const x = parseInt(el.style.left) || 0, y = parseInt(el.style.top) || 0,
                       w = parseInt(el.style.width) || 200,
-                      h = parseInt(el.style.height) || (el.classList.contains('po-img') ? el.offsetHeight : 0),
+                      h = parseInt(el.style.height) || (isShape ? el.offsetHeight : 0),
                       rot = parseInt(el.dataset.rot) || 0,
                       fx = el.dataset.fx === '-1' ? -1 : 1,
                       fy = el.dataset.fy === '-1' ? -1 : 1;
                 if (el.classList.contains('po-img')) {
                     const img = el.querySelector('img');
                     return { type: 'image', url: img ? img.getAttribute('src') : '', x, y, w, h, rot, fx, fy };
+                }
+                if (el.classList.contains('po-button')) {
+                    const link = el.querySelector('.po-btn-link');
+                    return { type: 'button', text: link ? link.innerText : '', url: (link && link.dataset.url) || '',
+                             x, y, w, h, rot, fx, fy,
+                             color: (link && link.dataset.color) || '', bg: (link && link.dataset.bg) || '',
+                             size: (link && parseInt(link.dataset.size)) || 0,
+                             font: (link && link.dataset.font) || '',
+                             shape: (link && link.dataset.shape) || 'round' };
                 }
                 const body = el.querySelector('.po-text-body');
                 return { type: 'text', text: body ? body.innerText : '', x, y, w, h, rot, fx, fy,
@@ -576,6 +671,7 @@
         });
         const ai = document.getElementById('po-add-img'); if (ai) ai.addEventListener('click', addImage);
         const at = document.getElementById('po-add-text'); if (at) at.addEventListener('click', addText);
+        const ab = document.getElementById('po-add-btn'); if (ab) ab.addEventListener('click', addButton);
     })();
     </script>
     {% endif %}

@@ -57,7 +57,7 @@ def general_editor(request):
 @staff_member_required
 @require_POST
 def page_overlay_save(request):
-    """Save staff-placed overlay items (images/GIFs/text) for a page path."""
+    """Save staff-placed overlay items (images/GIFs/text/link-buttons) for a page path."""
     from django.http import JsonResponse
 
     path = (request.POST.get('path') or '').strip()
@@ -104,6 +104,33 @@ def page_overlay_save(request):
             clean.append({'type': 'text', 'text': str(it.get('text', ''))[:5000],
                           'w': _i(it.get('w'), 220), 'h': _i(it.get('h')),
                           'color': color, 'size': size, 'font': font, **geo})
+        elif t == 'button':
+            label = str(it.get('text', ''))[:300]
+            url = str(it.get('url', '')).strip()[:2000]
+            low = url.lower()
+            # only safe link targets (staff-only, but still block javascript:/data: etc.)
+            if url and not (url.startswith('/') or url.startswith('#')
+                            or low.startswith('http://') or low.startswith('https://')
+                            or low.startswith('mailto:')):
+                url = ''
+            color = str(it.get('color', '')).strip()
+            if not re.fullmatch(r'#[0-9A-Fa-f]{3,8}', color):
+                color = ''
+            bg = str(it.get('bg', '')).strip()
+            if not re.fullmatch(r'#[0-9A-Fa-f]{3,8}', bg):
+                bg = ''
+            size = _i(it.get('size'))
+            size = max(8, min(400, size)) if size else 0
+            font = str(it.get('font', ''))
+            if font not in ('sans', 'serif', 'mono', 'cursive', 'fancy'):
+                font = ''
+            shape = str(it.get('shape', ''))
+            if shape not in ('rect', 'round', 'pill', 'ellipse'):
+                shape = 'round'
+            clean.append({'type': 'button', 'text': label, 'url': url,
+                          'w': _i(it.get('w'), 160), 'h': _i(it.get('h'), 48),
+                          'color': color, 'bg': bg, 'size': size, 'font': font,
+                          'shape': shape, **geo})
 
     PageOverlay.objects.update_or_create(path=path, defaults={'items': clean})
     return JsonResponse({'ok': True, 'count': len(clean)})
