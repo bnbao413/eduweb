@@ -1,18 +1,6 @@
-<h1>My OCW Site</h1>
+{% extends "base.html" %}
 
-<h2>Courses</h2>
+{% block title %}Didelta{% endblock %}
 
-{% if courses %}
-    <ul>
-    {% for course in courses %}
-        <li>
-            <a href="{% url 'course_detail' course.id %}">
-                <strong>{{ course.title }}</strong>
-            </a><br>
-            {{ course.description }}
-        </li>
-    {% endfor %}
-    </ul>
-{% else %}
-    <p>No courses yet.</p>
-{% endif %}
+{% block content %}
+{% endblock %}

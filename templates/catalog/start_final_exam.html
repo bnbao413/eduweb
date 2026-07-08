@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ exam.title }} — Didelta{% endblock %}
+
+{% block content %}
+<a href="{% url 'course_detail' exam.course.id %}" class="backlink">&lsaquo; Back to course</a>
+
+<div class="page-header">
+    <span class="badge badge-accent" style="margin-bottom:0.6rem;">Final Exam</span>
+    <h1 style="margin-top:0.4rem;">{{ exam.title }}</h1>
+    <p class="meta" style="margin-bottom:0;">{{ exam.course.title }}</p>
+</div>
+
+{% if exam.instructions %}
+    <div class="card content-area" style="padding:1.5rem;margin-top:0;">{{ exam.instructions }}</div>
+{% endif %}
+{% endblock %}

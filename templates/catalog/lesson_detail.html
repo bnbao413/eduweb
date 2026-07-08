@@ -1,12 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<p class="meta">
+    <a href="{% url 'course_detail' lesson.unit.course.id %}">{{ lesson.unit.course.title }}</a>
+    › {{ lesson.unit.title }}
+</p>
+
 <h1>{{ lesson.title }}</h1>
 
-<p><strong>Course:</strong> {{ lesson.unit.course.title }}</p>
-<p><strong>Unit:</strong> {{ lesson.unit.title }}</p>
+{% if not lesson.is_published %}
+    <p style="background:#fff3cd; border:1px solid #ffc107; padding:8px 12px; border-radius:4px;">
+        <strong>Draft</strong> — this lesson is not published yet.
+    </p>
+{% endif %}
 
-<div>
-    {{ lesson.content }}
+{% if lesson.content %}
+    <div class="content-area">
+        {{ lesson.content }}
+    </div>
+{% endif %}
+
+<div class="nav-links" style="margin-top: 32px;">
+    <div>
+        {% if prev_lesson %}
+            <a href="{% url 'lesson_detail' prev_lesson.id %}">← {{ prev_lesson.title }}</a>
+        {% endif %}
+    </div>
+    <div>
+        {% if next_lesson %}
+            <a href="{% url 'lesson_detail' next_lesson.id %}">{{ next_lesson.title }} →</a>
+        {% endif %}
+    </div>
 </div>
 
-<p>
+<p style="margin-top: 24px;">
     <a href="{% url 'course_detail' lesson.unit.course.id %}">← Back to course</a>
 </p>
+
+{% endblock %}

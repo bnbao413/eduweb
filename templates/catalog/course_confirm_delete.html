@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Delete course — Didelta{% endblock %}
+
+{% block content %}
+<div class="narrow">
+    <div class="auth-card" style="border-color:#fecaca;">
+        <h1 style="font-size:1.4rem;">Delete "{{ course.title }}"?</h1>
+        <p class="muted">This permanently deletes the course and all its units, lessons, textbook pages, notes, practice sets, and tests. This cannot be undone.</p>
+        <form method="post" style="display:flex;gap:0.6rem;align-items:center;margin-top:1.25rem;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, delete permanently</button>
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{{ subject.title }} — Didelta{% endblock %}
+
+{% block content %}
+<a href="{% url 'home' %}" class="backlink">&lsaquo; All subjects</a>
+
+<div class="page-header">
+    <h1>{{ subject.title }}</h1>
+    {% if subject.description %}
+        <p class="page-subtitle">{{ subject.description }}</p>
+    {% endif %}
+</div>
+
+{% if courses %}
+    <div class="card-stack">
+        {% for course in courses %}
+            <div class="list-card" style="cursor:default;">
+                <div>
+                    <a href="{% url 'course_detail' course.id %}" class="lc-title" style="display:inline-block;">{{ course.title }}</a>
+                    {% if course.description %}
+                        <p class="lc-desc">{{ course.description }}</p>
+                    {% endif %}
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;flex-shrink:0;">
+                    {% if user.is_staff %}
+                        <a href="{% url 'course_delete' course.id %}" class="btn btn-ghost btn-sm" style="color:var(--danger);">Delete</a>
+                    {% endif %}
+                    <a href="{% url 'course_detail' course.id %}" class="lc-arrow" aria-hidden="true">&rsaquo;</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">No courses yet.</div>
+{% endif %}
+{% endblock %}
